@@ -67,6 +67,7 @@ Audio unlocks on Ready or Click to Play. When the countdown ends (or an invite j
 npm test
 npm run test:integration
 npm run test:lobby
+npm run test:lobby:flow
 npm run test:soak
 npm run test:lifecycle
 npm run typecheck
@@ -78,6 +79,8 @@ Unit tests cover ray/hitbox and ramp math, damage zones, weapon falloff, spread/
 The integration test runs a real ephemeral HTTP/WebSocket server and two clients, sends actual input packets, and checks movement replication, all four primaries, damage to another connected client, headshot/kill events, reloads, respawn, historical hitscan, input rejection, round reset, reconnect identity, and delta compression. Deterministic test positions are set in the test process; the production protocol has no teleport or test endpoints.
 
 `npm run test:production` targets an already running production server at `http://127.0.0.1:8080` (override with `GAME_URL`) and verifies asset serving and two independent clients navigating and killing through input packets only. See [VERIFICATION.md](VERIFICATION.md) for measured results and the remaining external browser checks.
+
+`npm run test:lobby:flow` starts its own real server and two isolated Node processes, each with its own jsdom, production UI/Network classes, storage and WebSocket. They click create/join/ready/start controls and assert replicated readiness, countdown deadlines, actual match starts, host permissions and host migration. Run `GAME_URL=http://127.0.0.1:8080 npm run test:lobby:flow` against an already running production server. It uses no browser, WebGL, or CDP. The lobby polls independently at 10 Hz and writes only changed values; inspect `window.__arena.metrics.lobby` for poll/update/write counts.
 
 The soak test advances two minutes with seven bots and validates finite states, movement, and combat activity. `test:lobby` covers live readiness, countdowns and cancellation, settings ownership, host handover, duplicate names, late join, reconnects, results/rematches, room capacity, and replacement of a disconnected slot.
 
