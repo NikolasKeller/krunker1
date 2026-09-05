@@ -34,6 +34,11 @@ for (const state of ['lobby', 'ffa', 'tdm', 'headshot', 'multikill'] as const) {
         const ui = new UI(net);
         ui.menu = state === 'lobby';
         ui.visibility();
+        const originalFetch = globalThis.fetch;
+        try {
+            globalThis.fetch = async () => Response.json({ publicUrl: location.origin, lan: [] });
+            await ui.welcomed();
+        } finally { globalThis.fetch = originalFetch; }
         ui.updateLobby();
         const kill: GameEvent = { type: 'kill', killer: a.id, victim: b.id, killerName: a.name, victimName: b.name, team: a.team, headshot: true, weapon: 'sniper' };
         if (state === 'headshot' || state === 'multikill') {
