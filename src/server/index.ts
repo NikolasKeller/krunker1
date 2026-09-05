@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { networkInterfaces } from 'node:os';
 import { randomBytes } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -7,7 +8,7 @@ import { performance } from 'node:perf_hooks';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Room, type Actor } from './simulation';
 import { CLASS_IDS } from '../shared/weapons';
-import { MAX_PLAYERS, TICK_RATE, type ClientMessage, type PlayerPatch, type PlayerState, type ServerMessage } from '../shared/types';
+import { MAX_HUMANS, MAX_BOTS, TICK_RATE, type ClientMessage, type PlayerPatch, type PlayerState, type ServerMessage } from '../shared/types';
 interface Connection {
     ws: WebSocket;
     room?: Room;
@@ -38,9 +39,19 @@ export function createGameServer() {
             res.end(JSON.stringify({ ok: true, ...stats, configuredTickRate: TICK_RATE, rooms: rooms.size, players: [...connections].filter(c => c.actor).length }));
             return;
         }
+        if (url.pathname === '/api/connection') {
+            const address = server.address();
+            const port = typeof address === 'object' && address ? address.port : 3000;
+            const lan = Object.values(networkInterfaces()).flat().filter(i => i && !i.internal && i.family === 'IPv4').map(i => `http://${i!.address}:${port}`);
+            const domain = process.env.RAILWAY_PUBLIC_DOMAIN;
+            const publicUrl = process.env.PUBLIC_URL || (domain ? `https://${domain}` : null);
+            res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+            res.end(JSON.stringify({ publicUrl, lan }));
+            return;
+        }
         if (url.pathname === '/api/rooms') {
             res.writeHead(200, { 'content-type': 'application/json' });
-            res.end(JSON.stringify([...rooms.values()].map(r => ({ id: r.id, players: [...r.players.values()].filter(a => !a.state.bot).length, phase: r.round.phase, mode: r.round.mode }))));
+            res.end(JSON.stringify([...rooms.values()].map(r => ({ id: r.id, players: [...r.players.values()].filter(a => !a.state.bot && a.connected).length, phase: r.round.phase, mode: r.round.mode }))));
             return;
         }
         try {
@@ -113,7 +124,11 @@ export function createGameServer() {
             if (m.type === 'join' && !c.actor) {
                 if (!CLASS_IDS.includes(m.classId) || !['blue', 'red'].includes(m.team))
                     return;
-                const id = String(m.room ?? 'YARD-01').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18) || 'YARD-01';
+                let id = String(m.room ?? '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18);
+                if (m.create || !id) {
+                    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    do { id = [...randomBytes(5)].map(n => alphabet[n % alphabet.length]).join(''); } while (rooms.has(id));
+                }
                 if (m.token && sessions.has(m.token)) {
                     const s = sessions.get(m.token)!;
                     if (s.room.id === id && s.expires > now) {
@@ -144,22 +159,27 @@ export function createGameServer() {
                         rooms.set(id, new Room(id));
                     }
                     const r = rooms.get(id)!;
-                    if ([...r.players.values()].filter(a => !a.state.bot).length >= MAX_PLAYERS) {
+                    // Disconnected identities retain a reconnect grace period, but never reserve a human slot.
+                    if ([...r.players.values()].filter(a => !a.state.bot && a.connected).length >= MAX_HUMANS) {
                         send(c, { type: 'error', message: 'This room is full. Join a different room.' });
                         return;
                     }
-                    const bot = [...r.players.values()].find(a => a.state.bot);
-                    if (r.players.size >= MAX_PLAYERS && bot)
-                        r.remove(bot.state.id);
+                    for (const [token, session] of sessions) {
+                        if (session.room === r && !session.actor.connected && [...r.players.values()].filter(a => !a.state.bot).length >= MAX_HUMANS) {
+                            r.remove(session.actor.state.id);
+                            sessions.delete(token);
+                        }
+                    }
                     const name = String(m.name ?? 'Guest').replace(/[<>\x00-\x1f]/g, '').trim().slice(0, 16) || 'Guest';
                     c.room = r;
                     c.actor = r.add(name, m.classId, m.team);
                     c.token = randomBytes(24).toString('hex');
                     sessions.set(c.token, { room: r, actor: c.actor, expires: Infinity, connection: c });
                     r.fillBots(now);
-                    r.events.push({ type: 'notice', text: `${name} joined the yard` });
+                    r.events.push({ type: 'notice', text: `${c.actor.state.name} joined the yard` });
                 }
                 c.room!.lastActive = now;
+                c.room!.updateLobby(now);
                 send(c, { type: 'welcome', id: c.actor.state.id, token: c.token!, room: c.room!.id, host: c.room!.host, serverTime: now });
                 snapshot(c, true);
                 return;
@@ -173,8 +193,21 @@ export function createGameServer() {
             }
             if (m.type === 'sync')
                 snapshot(c, true);
+            if (m.type === 'profile' && typeof m.name === 'string' && r.round.phase !== 'playing') {
+                const name = r.uniqueName(m.name, a.state.id);
+                if (name !== a.state.name) { a.state.name = name; a.state.ready = false; r.cancelCountdown(); }
+            }
+            if (m.type === 'ready' && typeof m.ready === 'boolean' && ['lobby', 'countdown'].includes(r.round.phase)) {
+                a.state.ready = m.ready;
+                if (!m.ready) r.cancelCountdown();
+                r.updateLobby(now);
+            }
             if (m.type === 'class' && CLASS_IDS.includes(m.classId) && ['blue', 'red'].includes(m.team)) {
                 if (r.round.phase !== 'playing') {
+                    if (a.state.classId !== m.classId || a.state.team !== m.team) {
+                        a.state.ready = false;
+                        r.cancelCountdown();
+                    }
                     a.state.classId = m.classId;
                     a.state.team = m.team;
                     r.spawn(a, now);
@@ -184,19 +217,23 @@ export function createGameServer() {
                 }
             }
             if (m.type === 'configure' && r.host === a.state.id && r.round.phase !== 'playing') {
+                r.resetReady();
+                if (Number.isInteger(m.scoreLimit)) r.round.scoreLimit = Math.max(5, Math.min(200, m.scoreLimit!));
+                if (Number.isInteger(m.duration)) r.round.duration = Math.max(60000, Math.min(1800000, m.duration!));
                 if (m.mode === 'ffa' || m.mode === 'tdm')
                     r.round.mode = m.mode;
                 if (['easy', 'normal', 'hard'].includes(m.difficulty ?? ''))
                     r.difficulty = m.difficulty!;
                 if (Number.isInteger(m.bots))
-                    r.botCount = Math.max(0, Math.min(7, m.bots!));
+                    r.botCount = Math.max(0, Math.min(MAX_BOTS, m.bots!));
                 r.fillBots(now);
             }
             if (m.type === 'start' && r.host === a.state.id && r.round.phase === 'lobby')
-                r.start(now);
+                r.countdown(now, true);
         });
         ws.on('close', () => { connections.delete(c); if (c.actor) {
             c.actor.connected = false;
+            c.actor.state.ready = false;
             c.actor.queue = [];
             c.actor.state.alive = false;
             c.actor.state.hp = 0;
@@ -210,6 +247,7 @@ export function createGameServer() {
             }
             if (c.room?.host === c.actor.state.id)
                 c.room.host = [...c.room.players.values()].find(a => !a.state.bot && a.connected)?.state.id ?? '';
+            c.room?.updateLobby(Date.now());
         } });
     });
     let snapshotId = 0;
@@ -222,6 +260,7 @@ export function createGameServer() {
         }
         const full = force || !c.baseline.size || snapshotId % 60 === 0, patches: PlayerPatch[] = [], removed: string[] = [];
         for (const a of c.room.players.values()) {
+            if (!a.connected) continue;
             const p = { ...a.state };
             for (const key of ['x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'pitch', 'bloom'] as const)
                 p[key] = Math.round(p[key] * 10000) / 10000;
@@ -239,7 +278,7 @@ export function createGameServer() {
             c.baseline.set(p.id, p);
         }
         for (const id of c.baseline.keys())
-            if (!c.room.players.has(id)) {
+            if (!c.room.players.get(id)?.connected) {
                 removed.push(id);
                 c.baseline.delete(id);
             }
@@ -294,7 +333,7 @@ export function createGameServer() {
                     sessions.delete(token);
                 }
             for (const [id, r] of rooms) {
-                if ([...r.players.values()].some(a => !a.state.bot))
+                if ([...r.players.values()].some(a => !a.state.bot && a.connected))
                     r.lastActive = now;
                 else if (now - r.lastActive > 30000)
                     rooms.delete(id);

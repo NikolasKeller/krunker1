@@ -1750,3 +1750,69 @@ td small {
     white-space:nowrap
   }
 }
+
+/* The lobby stays usable with a full ten-player roster on short laptop screens. */
+.room-panel { width:370px; top:110px; bottom:62px; display:flex; flex-direction:column; }
+.room-panel .panel-heading { flex-shrink:0; padding:13px 18px; }
+.room-panel .map-thumb { height:75px; min-height:75px; padding:8px 18px; }
+.room-panel .map-thumb strong { font-size:26px; margin:5px 0 2px; }
+.room-options { overflow-y:auto; min-height:0; scrollbar-width:thin; padding-bottom:12px; }
+.lobby-actions { flex-shrink:0; padding:10px 18px 0; border-top:1px solid #ffffff18; background:#192429; }
+.lobby-actions .deploy-button { font-size:21px; padding:10px 14px; }
+.lobby-actions .secondary-button { margin:7px 0 0; padding:8px; font-size:10px; }
+.lobby-actions .is-ready { background:#334f3b; color:#d4ff9c; border-color:#9aca49; }
+#lobby-status { color:#bbc9c6; font-size:12px; line-height:1.45; padding:0 0 12px; }
+#lobby-status.counting { color:var(--lime); font-weight:800; font-size:17px; }
+.share-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.share-heading strong { font:800 27px var(--heading); color:var(--lime); letter-spacing:3px; }
+.copy-button { font-size:9px; background:#c7f451; color:#1b2a22; padding:9px 10px; font-weight:800; }
+.lobby-sharing { border:1px solid #c7f45133; padding:10px; margin-bottom:12px; }
+.lobby-sharing input { font-size:10px; margin-bottom:6px; }
+#lan-links,#copy-status { font-size:10px; color:#9cadab; overflow-wrap:anywhere; line-height:1.5; }
+#lan-links a { color:#b5d9e2; }
+#copy-status { color:var(--lime); }
+#roster { max-height:none; }
+.roster-player { min-height:26px; height:auto; padding:5px 0; font-size:11px; }
+.roster-player>span:nth-child(2) { overflow-wrap:anywhere; min-width:0; }
+.roster-player .ready-state { width:64px; text-align:right; flex-shrink:0; font-size:8px; }
+.roster-player .ready { color:var(--lime); }
+.room-options details { margin-top:12px; border-top:1px solid #ffffff1c; }
+.room-options summary { font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer; padding:12px 0; }
+.room-options summary span { float:right; color:#93aaa1; font-size:8px; }
+.join-options .secondary-button { padding:8px; font-size:10px; }
+#lobby-results { background:#c7f4510c; border-left:3px solid var(--lime); padding:10px; margin:0 0 14px; }
+#lobby-results>strong { display:block; color:var(--lime); font:800 23px var(--heading); }
+#lobby-results>span { display:block; font-size:9px; margin:4px 0 8px; }
+.result-list { max-height:150px; overflow:auto; }
+.result-list>div { display:flex; justify-content:space-between; gap:10px; font-size:11px; padding:4px 0; }
+.result-list small { color:#b5c1bb; white-space:nowrap; }
+.class-picker { right:calc(3.3% + 395px); }
+.preview-label { left:40%; }
+.score-panel { max-height:85vh; overflow:auto; }
+@media (max-width:1100px) {
+  .room-panel { width:340px; right:2.4%; }
+  .class-picker { right:calc(2.4% + 360px); }
+  .class-cards { gap:6px; }
+  .class-card { padding:12px 7px; }
+  .class-card strong { font-size:18px; }
+  .preview-label { display:none; }
+}
+@media (max-height:760px) and (min-width:761px) {
+  .class-detail { top:115px; }
+  .class-detail h1 { font-size:44px; margin:12px 0; }
+  .class-detail p { margin:8px 0; }
+  .class-stats,.class-health { display:none; }
+  .class-card { height:110px; }
+  .card-weapon { height:50px; }
+}
+@media (max-width:760px) {
+  .menu { overflow-y:auto; }
+  .menu-header { position:relative; top:auto; left:auto; right:auto; margin:16px 4%; }
+  .class-detail { display:none; }
+  .room-panel { position:relative; top:auto; bottom:auto; right:auto; width:92%; margin:20px auto; max-height:none; }
+  .room-options { overflow:visible; }
+  .class-picker { position:relative; left:auto; right:auto; bottom:auto; margin:20px 4%; }
+  .menu-footer { position:relative; bottom:auto; left:auto; right:auto; margin:0 4%; }
+  .menu-footer>span:last-child { display:none; }
+  #roster { max-height:none; }
+}

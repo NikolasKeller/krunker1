@@ -3,7 +3,10 @@ export const STEP = 1 / TICK_RATE;
 export const SNAPSHOT_RATE = 20;
 export const INTERPOLATION_MS = 100;
 export const MAX_REWIND_MS = 250;
-export const MAX_PLAYERS = 8;
+export const MAX_HUMANS = 10;
+export const MAX_BOTS = 7;
+export const MAX_PLAYERS = MAX_HUMANS + MAX_BOTS;
+export const COUNTDOWN_MS = 3000;
 export type Vec3 = {
     x: number;
     y: number;
@@ -50,6 +53,7 @@ export interface PlayerState extends MoveState {
     classId: ClassId;
     team: Team;
     bot: boolean;
+    ready: boolean;
     yaw: number;
     pitch: number;
     hp: number;
@@ -70,7 +74,7 @@ export interface PlayerState extends MoveState {
     life: number;
 }
 export interface RoundState {
-    phase: 'lobby' | 'playing' | 'results';
+    phase: 'lobby' | 'countdown' | 'playing' | 'results';
     mode: Mode;
     endsAt: number;
     round: number;
@@ -80,6 +84,7 @@ export interface RoundState {
     red: number;
     winner: string;
     nextAt: number;
+    results?: Pick<PlayerState, 'id' | 'name' | 'team' | 'kills' | 'deaths' | 'score' | 'bot'>[];
 }
 export interface RoomInfo {
     id: string;
@@ -126,6 +131,13 @@ export type ClientMessage = {
     classId: ClassId;
     team: Team;
     token?: string;
+    create?: boolean;
+} | {
+    type: 'profile';
+    name: string;
+} | {
+    type: 'ready';
+    ready: boolean;
 } | {
     type: 'input';
     inputs: Input[];
@@ -134,6 +146,8 @@ export type ClientMessage = {
     mode?: Mode;
     difficulty?: Difficulty;
     bots?: number;
+    scoreLimit?: number;
+    duration?: number;
 } | {
     type: 'class';
     classId: ClassId;

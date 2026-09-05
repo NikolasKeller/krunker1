@@ -136,9 +136,13 @@ try {
     actorA.state.kills = 1;
     await waitFor(() => a.phase === 'results' && b.phase === 'results', 'round results');
     r.round.nextAt = Date.now() + 100;
-    await waitFor(() => a.phase === 'playing', 'automatic new round');
+    await waitFor(() => a.phase === 'lobby' && b.phase === 'lobby', 'return to the same lobby');
+    assert.equal(actorA.state.kills, 1);
+    a.send({ type: 'ready', ready: true });
+    b.send({ type: 'ready', ready: true });
+    await waitFor(() => a.phase === 'playing', 'ready up for another round');
     assert.equal(actorA.state.kills, 0);
-    console.log('PASS: score limit, results, reset and automatic next round');
+    console.log('PASS: score limit, results, lobby return, ready countdown and score reset');
     const token = b.token, id = b.id;
     b.close();
     await delay(100);

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { CLASS_IDS, CLASSES, damageFor, recoilFor, shotDirections, spreadFor, WEAPONS } from '../shared/weapons';
-import { STEP, MAX_PLAYERS, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
+import { STEP, MAX_PLAYERS, COUNTDOWN_MS, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import { SPAWNS } from '../shared/map';
 import { eyeHeight, move, moveState, neutralInput, validInput } from '../shared/movement';
 import { distance, hitPlayer, worldHit } from '../shared/math';
@@ -33,10 +33,45 @@ export class Room {
     difficulty: Difficulty = 'normal';
     botCount = 5;
     lastActive = Date.now();
+    forcedCountdown = false;
     constructor(public id: string) { }
+    uniqueName(value: unknown, exclude = '') {
+        const base = String(value ?? 'Guest').replace(/[<>\x00-\x1f]/g, '').trim().slice(0, 16) || 'Guest';
+        const used = new Set([...this.players.values()].filter(a => a.state.id !== exclude).map(a => a.state.name.toLowerCase()));
+        let name = base, suffix = 2;
+        while (used.has(name.toLowerCase())) {
+            const tail = ` (${suffix++})`;
+            name = base.slice(0, 16 - tail.length) + tail;
+        }
+        return name;
+    }
+    cancelCountdown() {
+        if (this.round.phase === 'countdown') {
+            this.round.phase = 'lobby';
+            this.round.nextAt = 0;
+        }
+        this.forcedCountdown = false;
+    }
+    resetReady() {
+        this.cancelCountdown();
+        for (const a of this.players.values()) a.state.ready = false;
+    }
+    countdown(now: number, force = false) {
+        if (this.round.phase !== 'lobby') return;
+        this.forcedCountdown = force;
+        this.round.phase = 'countdown';
+        this.round.nextAt = now + COUNTDOWN_MS;
+    }
+    updateLobby(now: number) {
+        const humans = [...this.players.values()].filter(a => !a.state.bot && a.connected);
+        const ready = humans.length > 0 && humans.every(a => a.state.ready);
+        if (!humans.length || (!ready && !this.forcedCountdown)) this.cancelCountdown();
+        if (this.round.phase === 'lobby' && ready) this.countdown(now);
+        if (this.round.phase === 'countdown' && now >= this.round.nextAt) this.start(now);
+    }
     add(name: string, classId: ClassId, team: Team, bot = false): Actor {
         const id = randomUUID().slice(0, 8), c = CLASSES[classId];
-        const state: PlayerState = { ...moveState(), id, name, classId, team, bot, yaw: 0, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, kills: 0, deaths: 0, score: 0, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: 0, ack: 0, aiming: false, bloom: 0, streak: 0, life: 0 };
+        const state: PlayerState = { ...moveState(), id, name: this.uniqueName(name), classId, team, bot, ready: false, yaw: 0, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, kills: 0, deaths: 0, score: 0, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: 0, ack: 0, aiming: false, bloom: 0, streak: 0, life: 0 };
         const a: Actor = { state, queue: [], lastSeq: 0, lastInputAt: Date.now(), credit: 1, nextShot: 0, recoilIndex: 0, lastShot: 0, aimTime: 0, ammo: ammo(), rtt: 0, connected: true, botBrain: bot ? brain() : undefined };
         this.players.set(id, a);
         if (!this.host && !bot)
@@ -80,9 +115,9 @@ export class Room {
             bots.push(a);
         }
     }
-    start(now: number) { startRound(this.round, now); this.history.frames = []; for (const a of this.players.values()) {
-        Object.assign(a.state, { kills: 0, deaths: 0, score: 0, streak: 0 });
-        this.spawn(a, now);
+    start(now: number) { this.forcedCountdown = false; startRound(this.round, now); this.history.frames = []; for (const a of this.players.values()) {
+        Object.assign(a.state, { kills: 0, deaths: 0, score: 0, streak: 0, ready: false });
+        if (a.connected) this.spawn(a, now);
     } this.events.push({ type: 'notice', text: 'ROUND LIVE · GOOD LUCK, HAVE FUN' }); }
     enqueue(a: Actor, inputs: unknown, now: number): boolean {
         if (!Array.isArray(inputs) || inputs.length > 12)
@@ -101,10 +136,15 @@ export class Room {
         return true;
     }
     tick(now: number) {
-        if (this.round.phase === 'results' && now >= this.round.nextAt)
-            this.start(now);
+        if (this.round.phase === 'results' && now >= this.round.nextAt) {
+            this.round.phase = 'lobby';
+            this.round.nextAt = 0;
+        }
+        this.updateLobby(now);
+        const states = [...this.players.values()].map(a => a.state);
         for (const a of this.players.values()) {
             const p = a.state;
+            if (!a.connected) continue;
             a.credit = Math.min(3, a.credit + 1);
             if (!p.alive && this.round.phase === 'playing' && now >= p.respawnAt)
                 this.spawn(a, now);
@@ -117,7 +157,7 @@ export class Room {
             if (now - a.lastShot > 450)
                 a.recoilIndex = 0;
             if (a.botBrain && this.round.phase === 'playing' && p.alive)
-                a.queue = [botInput(p, a.botBrain, [...this.players.values()].map(a => a.state), this.round.mode, this.difficulty, now)];
+                a.queue = [botInput(p, a.botBrain, states, this.round.mode, this.difficulty, now)];
             let processed = 0;
             while (a.queue.length && a.credit >= 1 && processed < 3) {
                 const i = a.queue.shift()!;
@@ -160,8 +200,8 @@ export class Room {
                 move(p, i, CLASSES[p.classId].speed);
             }
         }
-        this.history.record(now, [...this.players.values()].map(a => a.state));
-        checkRound(this.round, [...this.players.values()].map(a => a.state), now);
+        if (this.round.phase === 'playing') this.history.record(now, states);
+        if (checkRound(this.round, states, now)) this.resetReady();
     }
     fire(a: Actor, i: Input, now: number) {
         const p = a.state, w = WEAPONS[p.weapon];

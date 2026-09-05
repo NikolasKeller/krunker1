@@ -1,6 +1,6 @@
 import { CLASS_IDS, CLASSES, WEAPONS } from '../shared/weapons';
 import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
-import type { ClassId, GameEvent, PlayerState, Team, WeaponId } from '../shared/types';
+import { MAX_HUMANS, type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import type { Network } from './network';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
@@ -51,16 +51,30 @@ export class UI {
         <header class="menu-header"><div class="brand"><span class="brand-mark">K</span><div>KRUNKER<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
         <section class="class-detail"><div class="eyebrow"><span class="small-line"></span> SELECT YOUR LOADOUT</div><h1>CHOOSE<br>YOUR CLASS<span class="lime">.</span></h1><div class="class-index"><span id="class-num">01</span><span>/ 04</span><span id="class-role">PRECISION</span></div><h2 id="class-name">HUNTER</h2><div class="weapon-label"><span class="tiny-cross">+</span><span id="weapon-name">TRIANGLE .50</span></div><p id="class-description"></p><div class="class-stats" id="class-stats"></div><div class="class-health"><span>+</span><strong id="class-hp">60</strong><small>STARTING HEALTH</small></div></section>
         <div class="preview-label"><span class="status-dot"></span><span>READY TO DROP</span><small>STANDARD ISSUE / DEFAULT</small></div>
-        <aside class="room-panel"><div class="panel-heading"><span>MATCH SETUP</span><span class="tag">LOCAL / LAN</span></div><div class="map-thumb"><div class="map-lines"></div><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div><div class="room-options"><label>CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name"/></label><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false"/><button id="join-room" title="Join room">↗</button></div></label><div class="label-row"><span>GAME MODE</span><span id="host-label">HOST OPTIONS</span></div><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div id="team-select" class="team-select"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>FILL SLOTS<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i} bots</option>`).join('')}</select></label></div><div class="label-row roster-label"><span>IN THE ROOM</span><span id="player-count">0 / 8</span></div><div id="roster"></div></div><button id="deploy" class="deploy-button"><span>DEPLOY</span><span>↗</span></button><div class="deploy-note" id="deploy-note">PICK A CLASS. JUMP RIGHT IN.</div></aside>
+        <aside class="room-panel">
+          <div class="panel-heading"><span id="lobby-heading">YOUR NEXT ROUND</span><span class="tag">10 FRIENDS + BOTS</span></div>
+          <div class="map-thumb"><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div>
+          <div class="room-options">
+            <div id="lobby-status" role="status" aria-live="polite">Create a lobby, then invite your friends.</div>
+            <div id="lobby-results" class="hidden"></div>
+            <label>YOUR CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name" autocomplete="nickname"/></label>
+            <div class="lobby-sharing hidden" id="lobby-sharing"><div class="share-heading"><strong id="share-code"></strong><button id="copy-link" class="copy-button">COPY INVITE LINK</button></div><label>INVITE URL<input id="share-url" readonly aria-label="Lobby invite URL"/></label><div id="lan-links"></div><div id="copy-status" role="status" aria-live="polite"></div></div>
+            <div id="team-select" class="team-select visible"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div>
+            <div class="label-row roster-label"><span>PLAYERS / TEAM / READY</span><span id="player-count">0 / 10</span></div><div id="roster" aria-live="polite"></div>
+            <details id="host-options"><summary>MATCH SETTINGS <span id="host-label">HOST CONTROLS</span></summary><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div class="two-fields"><label>SCORE LIMIT<input id="score-limit" type="number" min="5" max="200" value="25"/></label><label>TIME LIMIT<select id="time-limit">${[1, 2, 3, 4, 5, 10, 15, 30].map(n => `<option value="${n * 60000}" ${n === 4 ? 'selected' : ''}>${n} minutes</option>`).join('')}</select></label></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>EXTRA BOTS<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i} bots</option>`).join('')}</select></label></div></details>
+            <details class="join-options"><summary>JOIN ANOTHER LOBBY</summary><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false" placeholder="AB7K4"/><button id="join-room" title="Join room" aria-label="Join room code">↗</button></div></label><button id="create-room" class="secondary-button">CREATE NEW LOBBY</button></details>
+          </div>
+          <div class="lobby-actions"><button id="deploy" class="deploy-button"><span>CREATE LOBBY</span><span>↗</span></button><button id="force-start" class="secondary-button hidden">HOST: START EARLY</button><div class="deploy-note" id="deploy-note">SEND A LINK. GET EVERYONE READY.</div></div>
+        </aside>
         <section class="class-picker"><div class="picker-heading"><span>THE LINEUP</span><small>4 CLASSES <span> / </span> FIND YOUR PLAYSTYLE</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
         <footer class="menu-footer"><span><kbd>W A S D</kbd> MOVE <kbd>SPACE</kbd> HOP <kbd>SHIFT</kbd> SLIDE <kbd>R</kbd> RELOAD</span><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
       </div>
       <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" width="300" height="300"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="killfeed" id="killfeed"></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><span class="health-plus">+</span><strong id="health">100</strong><span class="health-max" id="health-max">/ 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line"><strong id="ammo">3</strong><span>/</span><b id="ammo-max">3</b><i id="ammo-alert">▰▰▰</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
-      <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>PAUSED<span class="lime">.</span></h2><p>The match is still live.</p><button id="resume" class="deploy-button">BACK TO THE YARD <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
+      <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>ROUND LIVE<span class="lime">.</span></h2><p>Click to capture your mouse and play.</p><button id="resume" class="deploy-button">CLICK TO PLAY <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
       <div id="scoreboard" class="modal-layer hidden"><div class="score-panel"><div class="panel-heading"><span id="board-eyebrow">LIVE SCOREBOARD</span><span id="board-round">ROUND 01</span></div><h2 id="board-title">SANDYARD</h2><p id="board-subtitle">FREE FOR ALL / FIRST TO 25 KILLS</p><div id="board-table"></div><div id="board-footer">HOLD TAB TO VIEW</div></div></div>
       <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity') ?? 0.0022}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume') ?? 0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><p>Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
     `;
-        const room = new URLSearchParams(location.search).get('room') ?? localStorage.getItem('arena-room') ?? 'YARD-01';
+        const room = new URLSearchParams(location.search).get('room') ?? '';
         $('player-name').setAttribute('value', localStorage.getItem('arena-name') ?? `Guest_${Math.floor(Math.random() * 900 + 100)}`);
         $('room-code').setAttribute('value', room);
         document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => b.onclick = () => this.choose(b.dataset.class as ClassId));
@@ -68,6 +82,14 @@ export class UI {
         document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'class', classId: this.selected, team: this.team }); });
         $('difficulty').onchange = () => net.send({ type: 'configure', difficulty: $<HTMLSelectElement>('difficulty').value as 'easy' | 'normal' | 'hard' });
         $('bot-count').onchange = () => net.send({ type: 'configure', bots: Number($<HTMLSelectElement>('bot-count').value) });
+        $('score-limit').onchange = () => net.send({ type: 'configure', scoreLimit: Number($<HTMLInputElement>('score-limit').value) });
+        $('time-limit').onchange = () => net.send({ type: 'configure', duration: Number($<HTMLSelectElement>('time-limit').value) });
+        $('player-name').onchange = () => this.saveProfile();
+        $('player-name').onkeydown = e => { if (e.key === 'Enter') { this.saveProfile(); $<HTMLInputElement>('player-name').blur(); } };
+        $('room-code').onkeydown = e => { if (e.key === 'Enter') this.onRoom(); };
+        $('create-room').onclick = () => { $<HTMLInputElement>('room-code').value = ''; this.onRoom(); };
+        $('force-start').onclick = () => { this.saveProfile(); net.send({ type: 'start' }); };
+        $('copy-link').onclick = () => void this.copyLink();
         $('deploy').onclick = () => this.onDeploy();
         $('join-room').onclick = () => this.onRoom();
         $('resume').onclick = () => this.onResume();
@@ -81,7 +103,38 @@ export class UI {
         this.choose(this.selected, false);
         this.visibility();
     }
-    get joinConfig() { const name = $<HTMLInputElement>('player-name').value, room = $<HTMLInputElement>('room-code').value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18) || 'YARD-01'; localStorage.setItem('arena-name', name); localStorage.setItem('arena-room', room); return { name, room, classId: this.selected, team: this.team }; }
+    get joinConfig() { const name = $<HTMLInputElement>('player-name').value, room = $<HTMLInputElement>('room-code').value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18); localStorage.setItem('arena-name', name); localStorage.setItem('arena-room', room); return { name, room, classId: this.selected, team: this.team, create: !room }; }
+    saveProfile() {
+        const name = $<HTMLInputElement>('player-name').value;
+        localStorage.setItem('arena-name', name);
+        if (this.net.id && this.net.local?.name !== name) this.net.send({ type: 'profile', name });
+    }
+    async copyLink() {
+        const field = $<HTMLInputElement>('share-url');
+        try {
+            if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(field.value);
+            else { field.select(); if (!document.execCommand('copy')) throw new Error('Clipboard unavailable'); }
+            $('copy-status').textContent = 'Invite link copied. Send it to your friends.';
+        } catch { field.select(); $('copy-status').textContent = 'Link selected. Press Ctrl+C / ⌘C to copy.'; }
+    }
+    async welcomed() {
+        const url = new URL(location.href);
+        url.searchParams.set('room', this.net.room);
+        history.replaceState(null, '', url);
+        $<HTMLInputElement>('room-code').value = this.net.room;
+        $('share-code').textContent = this.net.room;
+        $('lobby-sharing').classList.remove('hidden');
+        $<HTMLInputElement>('share-url').value = url.href;
+        $('lan-links').textContent = 'Finding LAN address…';
+        const room = this.net.room;
+        try {
+            const info = await (await fetch('/api/connection')).json();
+            if (this.net.room !== room) return;
+            if (info.publicUrl) { const publicUrl = new URL(info.publicUrl); publicUrl.searchParams.set('room', room); $<HTMLInputElement>('share-url').value = publicUrl.href; }
+            const origins: string[] = info.lan ?? [];
+            $('lan-links').innerHTML = origins.length ? origins.map(origin => { const lan = new URL(origin); lan.searchParams.set('room', room); return `<div>LAN <a href="${escapeHTML(lan.href)}">${escapeHTML(lan.href)}</a></div>`; }).join('') : 'LAN address unavailable on this host. Use the invite URL.';
+        } catch { $('lan-links').textContent = 'Use the invite URL on this network.'; }
+    }
     choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
         this.net.send({ type: 'class', classId: id, team: this.team }); }
     visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); }
@@ -134,27 +187,50 @@ export class UI {
         $('network-warning').classList.toggle('hidden', !warning);
         $('network-warning').textContent = net.status;
         const host = net.host === net.id;
-        $('deploy').classList.toggle('disabled', !net.id || (!host && round?.phase === 'lobby'));
-        $('deploy-note').textContent = !net.id ? 'CONNECTING TO ARENA…' : !host && round?.phase === 'lobby' ? 'WAITING FOR THE HOST TO START' : round?.phase === 'playing' ? (net.local?.classId !== this.selected ? 'NEW CLASS EQUIPS ON NEXT RESPAWN' : 'MATCH IN PROGRESS · JUMP IN') : 'PICK A CLASS. JUMP RIGHT IN.';
+        const local = net.local, connected = !!local && net.status === 'CONNECTED';
+        const countdown = round?.phase === 'countdown';
+        const active = round?.phase === 'playing';
+        const results = round?.phase === 'results';
+        const seconds = Math.max(0, Math.ceil(((round?.nextAt ?? 0) - serverNow) / 1000));
+        const ready = local?.ready ?? false;
+        $<HTMLButtonElement>('deploy').disabled = results || (!!net.ws && !connected);
+        $('deploy').classList.toggle('is-ready', ready && !active);
+        $('deploy').setAttribute('aria-pressed', String(ready));
+        $('deploy').innerHTML = `<span>${!net.ws ? 'CREATE LOBBY' : !connected ? 'CONNECTING…' : active ? 'JOIN MATCH' : results ? `NEXT ROUND IN ${seconds}` : ready ? '✓ READY · CLICK TO UNREADY' : 'READY UP'}</span><span>${countdown ? seconds : '↗'}</span>`;
+        $('force-start').classList.toggle('hidden', !host || !connected || round?.phase !== 'lobby');
+        $('deploy-note').textContent = active ? 'MATCH IN PROGRESS · SPAWN AND PLAY' : countdown ? `EVERYONE DEPLOYS IN ${seconds}…` : 'MATCH STARTS WHEN EVERY PLAYER IS READY';
+        $('lobby-heading').textContent = net.room && net.id ? `LOBBY / ${net.room}` : 'YOUR NEXT ROUND';
+        const humans = [...net.players.values()].filter(p => !p.bot);
+        $('lobby-status').textContent = !net.ws ? 'Create a lobby, then invite your friends.' : !connected ? net.status : countdown ? `MATCH STARTING IN ${seconds}…` : active ? 'Round live. You can join at any time.' : results ? 'Good game! Getting the lobby ready…' : `${humans.filter(p => p.ready).length} / ${humans.length} ready · Pick a team and ready up.`;
+        $('lobby-status').classList.toggle('counting', countdown);
         $('host-label').textContent = host ? 'YOU ARE THE HOST' : 'HOST CONTROLS';
         for (const b of document.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
             b.classList.toggle('selected', b.dataset.mode === round?.mode);
-            b.disabled = !host || round?.phase === 'playing';
+            b.disabled = !host || active || results;
         }
-        for (const id of ['difficulty', 'bot-count'])
-            $<HTMLSelectElement>(id).disabled = !host || round?.phase === 'playing';
+        for (const id of ['difficulty', 'bot-count', 'score-limit', 'time-limit'])
+            $<HTMLInputElement>(id).disabled = !host || active || results;
+        $<HTMLInputElement>('player-name').disabled = active;
+        if (local && document.activeElement !== $('player-name')) $<HTMLInputElement>('player-name').value = local.name;
         $<HTMLSelectElement>('difficulty').value = net.difficulty;
         $<HTMLSelectElement>('bot-count').value = String(net.bots);
-        $('team-select').classList.toggle('visible', round?.mode === 'tdm');
-        for (const b of document.querySelectorAll<HTMLElement>('[data-team]'))
-            b.classList.toggle('selected', b.dataset.team === net.local?.team);
+        if (round) {
+            if (document.activeElement !== $('score-limit')) $<HTMLInputElement>('score-limit').value = String(round.scoreLimit);
+            $<HTMLSelectElement>('time-limit').value = String(round.duration);
+        }
+        for (const b of document.querySelectorAll<HTMLButtonElement>('[data-team]')) {
+            b.classList.toggle('selected', b.dataset.team === (local?.team ?? this.team));
+            b.disabled = active;
+        }
         const players = [...net.players.values()].sort((a, b) => b.score - a.score || b.kills - a.kills || a.name.localeCompare(b.name));
-        const roster = players.map(p => `${p.id}:${p.name}:${p.classId}:${p.team}`).join('|');
+        const roster = net.host + players.map(p => `${p.id}:${p.name}:${p.classId}:${p.team}:${p.ready}`).join('|');
         if (roster !== this.lastRoster) {
             this.lastRoster = roster;
-            $('player-count').textContent = `${players.length} / 8`;
-            $('roster').innerHTML = players.map(p => `<div class="roster-player"><span class="roster-dot ${p.team}"></span><span>${escapeHTML(p.name)}${p.id === net.id ? ' <small>YOU</small>' : ''}</span><small>${p.bot ? 'BOT' : p.id === net.host ? 'HOST' : 'PLAYER'}</small></div>`).join('');
+            $('player-count').textContent = `${humans.length} / ${MAX_HUMANS} + ${players.length - humans.length} BOTS`;
+            $('roster').innerHTML = [...players].sort((a, b) => Number(a.bot) - Number(b.bot)).map(p => `<div class="roster-player"><span class="roster-dot ${p.team}"></span><span>${escapeHTML(p.name)}${p.id === net.id ? ' <small>YOU</small>' : ''}${p.id === net.host ? ' <small>HOST</small>' : ''}</span><small class="${p.team}">${p.team.toUpperCase()}</small><small class="ready-state ${p.ready || p.bot ? 'ready' : ''}">${p.bot ? 'BOT' : p.ready ? '✓ READY' : 'NOT READY'}</small></div>`).join('');
         }
+        $('lobby-results').classList.toggle('hidden', !round?.results);
+        if (round?.results) $('lobby-results').innerHTML = `<strong>${round.winner === 'DRAW' ? 'DRAW' : `${escapeHTML(round.winner)} WINS`}</strong><span>ROUND ${round.round} RESULTS</span><div class="result-list">${round.results.map((p, i) => `<div><b>${i + 1}. ${escapeHTML(p.name)}</b><small>${p.kills} K / ${p.deaths} D · ${p.score} PTS</small></div>`).join('')}</div>`;
         if (!round)
             return;
         const time = Math.max(0, Math.ceil((round.endsAt - serverNow) / 1000));
@@ -166,13 +242,12 @@ export class UI {
         $('mini-board').innerHTML = players.slice(0, 5).map((p, i) => `<div class="${p.id === net.id ? 'self' : ''}"><b>${i + 1}.</b><span>${escapeHTML(p.name)}</span><strong>${p.score}</strong></div>`).join('');
         this.feeds = this.feeds.filter(f => f.until > now);
         $('killfeed').innerHTML = this.feeds.map(({ event: e }) => `<div class="feed-row ${e.killer === net.id ? 'own' : ''}"><span class="${e.team}">${escapeHTML(e.killerName)}</span>${gunIcon(e.weapon)}${e.headshot ? '<b class="feed-head">⌖</b>' : ''}<span>${escapeHTML(e.victimName)}</span></div>`).join('');
-        const results = round.phase === 'results';
-        $('scoreboard').classList.toggle('hidden', !(results || this.scoreOpen));
+        $('scoreboard').classList.toggle('hidden', !this.scoreOpen);
         if (results) {
             $('board-eyebrow').textContent = 'ROUND COMPLETE';
             $('board-title').textContent = round.winner === 'DRAW' ? 'DRAW' : `${round.winner} WINS`;
             $('board-subtitle').textContent = 'GOOD GAME. SAME YARD. ONE MORE ROUND.';
-            $('board-footer').textContent = `NEXT ROUND IN ${Math.max(0, Math.ceil((round.nextAt - serverNow) / 1000))}s`;
+            $('board-footer').textContent = 'RETURN TO THE LOBBY · READY UP FOR ANOTHER ROUND';
         }
         else {
             $('board-eyebrow').textContent = 'LIVE SCOREBOARD';
@@ -182,7 +257,7 @@ export class UI {
         }
         $('board-round').textContent = `ROUND ${String(round.round).padStart(2, '0')}`;
         if (results || this.scoreOpen) {
-            const board = players.map(p => `${p.id}:${p.score}:${p.deaths}:${p.kills}`).join('|');
+            const board = players.map(p => `${p.id}:${p.name}:${p.classId}:${p.team}:${p.score}:${p.deaths}:${p.kills}`).join('|');
             if (board !== this.lastBoard) {
                 this.lastBoard = board;
                 $('board-table').innerHTML = `<table><thead><tr><th>#</th><th>PLAYER</th><th>CLASS</th><th>SCORE</th><th>K</th><th>D</th><th>K/D</th></tr></thead><tbody>${players.map((p, i) => `<tr class="${p.id === net.id ? 'self' : ''}"><td>${String(i + 1).padStart(2, '0')}</td><td><i class="roster-dot ${p.team}"></i>${escapeHTML(p.name)} ${p.bot ? '<small>BOT</small>' : p.id === net.id ? '<small>YOU</small>' : ''}</td><td>${CLASSES[p.classId].name}</td><td>${p.score}</td><td>${p.kills}</td><td>${p.deaths}</td><td>${(p.kills / Math.max(1, p.deaths)).toFixed(1)}</td></tr>`).join('')}</tbody></table>`;

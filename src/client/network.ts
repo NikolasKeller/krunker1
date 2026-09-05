@@ -6,7 +6,7 @@ export class Network {
     id = '';
     room = '';
     host = '';
-    status = 'CONNECTING';
+    status = 'CREATE OR JOIN A LOBBY';
     ping = 0;
     offset = 0;
     seq = 0;
@@ -38,6 +38,7 @@ export class Network {
         room: string;
         classId: ClassId;
         team: Team;
+        create?: boolean;
     };
     constructor() { setInterval(() => { this.send({ type: 'ping', time: Date.now() }); if (this.ws?.readyState === WebSocket.OPEN && Date.now() - this.receivedAt > 6000 && this.receivedAt > 0)
         this.status = 'CONNECTION STALLED'; }, 1500); }
@@ -46,6 +47,7 @@ export class Network {
         room: string;
         classId: ClassId;
         team: Team;
+        create?: boolean;
     }) {
         this.config = config;
         const generation = ++this.generation;
@@ -101,7 +103,9 @@ export class Network {
             this.room = m.room;
             this.host = m.host;
             this.offset = m.serverTime - Date.now();
-            sessionStorage.setItem(`arena-token-${this.config!.room}`, m.token);
+            this.config!.room = m.room;
+            this.config!.create = false;
+            sessionStorage.setItem(`arena-token-${m.room}`, m.token);
             this.onWelcome();
         }
         if (m.type === 'pong') {

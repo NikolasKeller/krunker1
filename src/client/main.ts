@@ -21,27 +21,21 @@ renderer.setClass(ui.selected);
 renderer.setQuality(localStorage.getItem('arena-quality') ?? 'balanced');
 let playing = false, nextShot = 0, shotIndex = 0, lastShot = 0, lastLife = -1, lastWeapon: WeaponId = 'sniper', previousReload = 0, lastStep = 0, lastTime = performance.now(), accumulator = 0;
 ui.onClass = id => { renderer.setClass(id); };
-ui.onRoom = () => { playing = false; net.connect(ui.joinConfig); };
+ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); document.exitPointerLock(); net.connect(ui.joinConfig); };
 const deploy = () => {
-    if (!net.id || (!net.host && net.round?.phase === 'lobby'))
-        return;
-    const name = ui.joinConfig.name;
-    if (net.local && name !== net.local.name) {
-        net.connect(ui.joinConfig);
-        ui.notice('Callsign updated. Deploy when connected.');
+    audio.unlock();
+    if (!net.ws) { ui.onRoom(); return; }
+    if (!net.id || !net.local) return;
+    ui.saveProfile();
+    if (net.round?.phase === 'lobby' || net.round?.phase === 'countdown') {
+        net.send({ type: 'ready', ready: !net.local.ready });
         return;
     }
-    if (net.round?.phase === 'lobby') {
-        if (net.host !== net.id)
-            return;
-        net.send({ type: 'start' });
-    }
-    net.send({ type: 'class', classId: ui.selected, team: ui.team });
+    if (net.round?.phase !== 'playing') return;
     ui.menu = false;
     ui.paused = false;
     playing = true;
     ui.visibility();
-    audio.unlock();
     controls.lock();
 };
 ui.onDeploy = deploy;
@@ -62,7 +56,8 @@ controls.onPause = () => { if (!controls.locked && playing && !ui.menu) {
     ui.visibility();
 } };
 net.onNotice = text => ui.notice(text);
-net.onWelcome = () => { nextShot = 0; lastLife = -1; };
+let phase = '';
+net.onWelcome = () => { nextShot = 0; lastLife = -1; phase = ''; void ui.welcomed(); };
 net.onEvents = events => {
     for (const e of events) {
         ui.event(e, renderer, performance.now());
@@ -91,12 +86,22 @@ net.onEvents = events => {
         }
     }
 };
-net.connect(ui.joinConfig);
+if (ui.joinConfig.room) net.connect(ui.joinConfig);
 function frame(time: number) {
     const dt = Math.min(0.05, (time - lastTime) / 1000);
     lastTime = time;
     accumulator = Math.min(0.1, accumulator + dt);
     const p = net.predicted, now = net.serverNow;
+    const currentPhase = net.round?.phase ?? '';
+    if (currentPhase !== phase) {
+        phase = currentPhase;
+        playing = phase === 'playing';
+        ui.menu = !playing;
+        ui.paused = playing && !controls.locked;
+        ui.scoreOpen = false;
+        if (!playing && controls.locked) document.exitPointerLock();
+        ui.visibility();
+    }
     if (p && p.life !== lastLife) {
         lastLife = p.life;
         controls.yaw = p.yaw;

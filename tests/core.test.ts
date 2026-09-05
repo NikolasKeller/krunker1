@@ -167,7 +167,7 @@ test('round transitions from lobby through time/score limits into results', () =
     p.name = 'Winner';
     assert.equal(checkRound(r, [p], 2100), true);
     assert.equal(r.winner, 'Winner');
-    assert.equal(r.nextAt, 14100);
+    assert.equal(r.nextAt, 8100);
     assert.equal(checkRound(r, [p], 2200), false);
     startRound(r, 15000);
     assert.equal(r.round, 2);
