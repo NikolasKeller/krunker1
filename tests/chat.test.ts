@@ -27,12 +27,14 @@ test('real sockets broadcast authenticated chat only inside the room, with lengt
     try {
         const a = await join('CHAT', 'Alpha'), b = await join('CHAT', 'Bravo'), other = await join('OTHER', 'Charlie');
         a.ws.send(JSON.stringify({ type: 'chat', text: '  Hello\n room  ', name: 'Spoof', team: 'red' }));
+        // Send the burst before awaiting delivery: a WAN round trip can exceed the cooldown.
+        a.ws.send(encodeClientMessage({ type: 'chat', text: 'spam' }));
         const end = Date.now() + 3000;
         while (!a.chats().length || !b.chats().length) { assert.ok(Date.now() < end, 'chat broadcast timeout'); await delay(10); }
         assert.equal(a.chats()[0].text, 'Hello room');
         assert.equal(b.chats()[0].name, 'Alpha'); assert.equal(b.chats()[0].team, 'blue');
         assert.equal(other.chats().length, 0);
-        a.ws.send(encodeClientMessage({ type: 'chat', text: 'spam' })); await delay(100);
+        await delay(100);
         assert.equal(b.chats().length, 1);
         await delay(750);
         a.ws.send(encodeClientMessage({ type: 'chat', text: 'x'.repeat(200) }));
