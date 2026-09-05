@@ -13,7 +13,7 @@ const connection = await (await fetch(origin + '/api/connection')).json();
 assert.ok(Array.isArray(connection.lan));
 assert.match(html, /<canvas id="game">/);
 const assets = [...html.matchAll(/(?:src|href)="(\/assets\/[^\"]+)"/g)].map(m => m[1]);
-for (const asset of [...assets, '/fonts/barlow.ttf', '/fonts/barlow-bold.ttf', '/fonts/barlow-condensed.ttf', '/favicon.svg']) {
+for (const asset of [...assets, '/fonts/lilita-one.ttf', '/favicon.svg']) {
     const response = await fetch(origin + asset);
     assert.equal(response.status, 200, asset);
     assert.ok((await response.arrayBuffer()).byteLength > 100);

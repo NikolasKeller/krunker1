@@ -1,18 +1,18 @@
 @font-face {
-  font-family:Teko;
-  src:url('/fonts/teko.ttf') format('truetype');
-  font-weight:300 700;
+  font-family:'Lilita One';
+  src:url('/fonts/lilita-one.ttf') format('truetype');
+  font-weight:400;
   font-display:swap
 }
 :root {
-  font-family:Teko,Impact,sans-serif;
+  font-family:'Lilita One',Impact,sans-serif;
   color:#f5f3e9;
   font-synthesis:none;
   font-weight:600;
   --lime:#c7f451;
   --dark:#1b2429;
   --muted:#9da8a8;
-  --heading:Teko,Impact,'Arial Narrow',sans-serif
+  --heading:'Lilita One',Impact,'Arial Narrow',sans-serif
 }
 * {
   box-sizing:border-box
@@ -88,7 +88,7 @@ button:disabled {
 }
 .brand-sub {
   display:block;
-  font:700 10px/1.8 Teko,Impact,sans-serif;
+  font:700 10px/1.8 'Lilita One',Impact,sans-serif;
   letter-spacing:3px;
   font-style:normal;
   color:#bdc5c2
@@ -172,7 +172,7 @@ h1 {
   font-weight:700
 }
 .class-index>span:last-child {
-  font:700 9px Teko,Impact,sans-serif;
+  font:700 9px 'Lilita One',Impact,sans-serif;
   letter-spacing:1.6px;
   color:#a9b4b0;
   border-left:1px solid #536063;
@@ -260,7 +260,7 @@ h2 {
   gap:8px;
   align-items:center;
   flex-wrap:wrap;
-  font:700 9px Teko,Impact,sans-serif;
+  font:700 9px 'Lilita One',Impact,sans-serif;
   letter-spacing:1.8px;
   text-shadow:0 2px 5px #000
 }
@@ -652,7 +652,7 @@ select {
   color:#4a5d53
 }
 kbd {
-  font:700 8px Teko,Impact,sans-serif;
+  font:700 8px 'Lilita One',Impact,sans-serif;
   display:inline-block;
   padding:3px 5px;
   border:1px solid #c0c8c044;
@@ -739,7 +739,7 @@ kbd {
 }
 .score-top small {
   display:block;
-  font:700 7px Teko,Impact,sans-serif;
+  font:700 7px 'Lilita One',Impact,sans-serif;
   letter-spacing:1px;
   margin-top:1px
 }
@@ -1292,7 +1292,7 @@ table {
   text-align:left
 }
 th {
-  font:700 9px Teko,Impact,sans-serif;
+  font:700 9px 'Lilita One',Impact,sans-serif;
   color:#8eaaa6;
   padding:12px 9px;
   letter-spacing:1px;
@@ -1314,7 +1314,7 @@ td .roster-dot {
   vertical-align:middle
 }
 td small {
-  font:700 7px Teko,Impact,sans-serif;
+  font:700 7px 'Lilita One',Impact,sans-serif;
   color:#9ea9a2;
   margin-left:7px
 }
