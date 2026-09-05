@@ -4,90 +4,251 @@ import type { ClassId, GameEvent, PlayerState, Team, WeaponId } from '../shared/
 import type { Network } from './network';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
-export const escapeHTML=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export function gunIcon(id:WeaponId){const paths:Record<WeaponId,string>={sniper:'M3 29h20v-5h25v-7h14v-5h30v7h-5v5h30v5h37v4h-38v4H71l-7 17H54l3-17H32L12 47H3z M60 16h25v-6H60z',rifle:'M4 25h21v-5h62v5h25v4h39v5h-48v7H72l9 17-14 6-15-23H32L9 49H4z M74 18h16v-6h-9z',shotgun:'M4 27h22l10-6h63v4h51v5H99v4h51v5H75l-13 13H48l7-13H31L8 49H4z',smg:'M9 25h20v-7h71v5h29v6h20v5h-30v6H82v23H67V40H48l-7 15H29V39H9z',pistol:'M31 14h90v23H76L63 62H39l9-25H31z',knife:'M15 47l35-11 3-10 14 8 65-22-37 31-27 5-8 13-14-9-28 10z'};return `<svg viewBox="0 0 160 72" aria-hidden="true"><path d="${paths[id]}" fill="currentColor"/></svg>`;}
-const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
+export const escapeHTML = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+export function gunIcon(id: WeaponId) { const paths: Record<WeaponId, string> = { sniper: 'M3 29h20v-5h25v-7h14v-5h30v7h-5v5h30v5h37v4h-38v4H71l-7 17H54l3-17H32L12 47H3z M60 16h25v-6H60z', rifle: 'M4 25h21v-5h62v5h25v4h39v5h-48v7H72l9 17-14 6-15-23H32L9 49H4z M74 18h16v-6h-9z', shotgun: 'M4 27h22l10-6h63v4h51v5H99v4h51v5H75l-13 13H48l7-13H31L8 49H4z', smg: 'M9 25h20v-7h71v5h29v6h20v5h-30v6H82v23H67V40H48l-7 15H29V39H9z', pistol: 'M31 14h90v23H76L63 62H39l9-25H31z', knife: 'M15 47l35-11 3-10 14 8 65-22-37 31-27 5-8 13-14-9-28 10z' }; return `<svg viewBox="0 0 160 72" aria-hidden="true"><path d="${paths[id]}" fill="currentColor"/></svg>`; }
+const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 export class UI {
-  menu=true;paused=false;scoreOpen=false;selected:ClassId=(localStorage.getItem('arena-class') as ClassId)||'hunter';team:Team=(localStorage.getItem('arena-team') as Team)||'blue';
-  onDeploy:()=>void=()=>{};onClass:(id:ClassId)=>void=()=>{};onRoom:()=>void=()=>{};onResume:()=>void=()=>{};onSettings:(key:string,value:string)=>void=()=>{};
-  private feeds:{event:Extract<GameEvent,{type:'kill'}>;until:number}[]=[];private numbers:{x:number;y:number;damage:number;head:boolean;until:number}[]=[];
-  private lastRoster='';private lastBoard='';private hurtUntil=0;private hitUntil=0;private killUntil=0;private noticeUntil=0;private lastDraw=0;private lastPhase='';private scoreLabel='';private damageAngle=0;
-  constructor(private net:Network){
-    if(!CLASS_IDS.includes(this.selected))this.selected='hunter';if(!['blue','red'].includes(this.team))this.team='blue';
-    $('ui').innerHTML=`
+    menu = true;
+    paused = false;
+    scoreOpen = false;
+    selected: ClassId = (localStorage.getItem('arena-class') as ClassId) || 'hunter';
+    team: Team = (localStorage.getItem('arena-team') as Team) || 'blue';
+    onDeploy: () => void = () => { };
+    onClass: (id: ClassId) => void = () => { };
+    onRoom: () => void = () => { };
+    onResume: () => void = () => { };
+    onSettings: (key: string, value: string) => void = () => { };
+    private feeds: {
+        event: Extract<GameEvent, {
+            type: 'kill';
+        }>;
+        until: number;
+    }[] = [];
+    private numbers: {
+        x: number;
+        y: number;
+        damage: number;
+        head: boolean;
+        until: number;
+    }[] = [];
+    private lastRoster = '';
+    private lastBoard = '';
+    private hurtUntil = 0;
+    private hitUntil = 0;
+    private killUntil = 0;
+    private noticeUntil = 0;
+    private lastDraw = 0;
+    private lastPhase = '';
+    private scoreLabel = '';
+    private damageAngle = 0;
+    constructor(private net: Network) {
+        if (!CLASS_IDS.includes(this.selected))
+            this.selected = 'hunter';
+        if (!['blue', 'red'].includes(this.team))
+            this.team = 'blue';
+        $('ui').innerHTML = `
       <div id="menu" class="menu">
         <header class="menu-header"><div class="brand"><span class="brand-mark">K</span><div>KRUNKER<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
         <section class="class-detail"><div class="eyebrow"><span class="small-line"></span> SELECT YOUR LOADOUT</div><h1>CHOOSE<br>YOUR CLASS<span class="lime">.</span></h1><div class="class-index"><span id="class-num">01</span><span>/ 04</span><span id="class-role">PRECISION</span></div><h2 id="class-name">HUNTER</h2><div class="weapon-label"><span class="tiny-cross">+</span><span id="weapon-name">TRIANGLE .50</span></div><p id="class-description"></p><div class="class-stats" id="class-stats"></div><div class="class-health"><span>+</span><strong id="class-hp">60</strong><small>STARTING HEALTH</small></div></section>
         <div class="preview-label"><span class="status-dot"></span><span>READY TO DROP</span><small>STANDARD ISSUE / DEFAULT</small></div>
-        <aside class="room-panel"><div class="panel-heading"><span>MATCH SETUP</span><span class="tag">LOCAL / LAN</span></div><div class="map-thumb"><div class="map-lines"></div><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div><div class="room-options"><label>CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name"/></label><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false"/><button id="join-room" title="Join room">↗</button></div></label><div class="label-row"><span>GAME MODE</span><span id="host-label">HOST OPTIONS</span></div><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div id="team-select" class="team-select"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>FILL SLOTS<select id="bot-count">${Array.from({length:8},(_,i)=>`<option value="${i}" ${i===5?'selected':''}>${i} bots</option>`).join('')}</select></label></div><div class="label-row roster-label"><span>IN THE ROOM</span><span id="player-count">0 / 8</span></div><div id="roster"></div></div><button id="deploy" class="deploy-button"><span>DEPLOY</span><span>↗</span></button><div class="deploy-note" id="deploy-note">PICK A CLASS. JUMP RIGHT IN.</div></aside>
-        <section class="class-picker"><div class="picker-heading"><span>THE LINEUP</span><small>4 CLASSES <span> / </span> FIND YOUR PLAYSTYLE</small></div><div class="class-cards">${CLASS_IDS.map((id,i)=>`<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i+1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
+        <aside class="room-panel"><div class="panel-heading"><span>MATCH SETUP</span><span class="tag">LOCAL / LAN</span></div><div class="map-thumb"><div class="map-lines"></div><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div><div class="room-options"><label>CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name"/></label><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false"/><button id="join-room" title="Join room">↗</button></div></label><div class="label-row"><span>GAME MODE</span><span id="host-label">HOST OPTIONS</span></div><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div id="team-select" class="team-select"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>FILL SLOTS<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i} bots</option>`).join('')}</select></label></div><div class="label-row roster-label"><span>IN THE ROOM</span><span id="player-count">0 / 8</span></div><div id="roster"></div></div><button id="deploy" class="deploy-button"><span>DEPLOY</span><span>↗</span></button><div class="deploy-note" id="deploy-note">PICK A CLASS. JUMP RIGHT IN.</div></aside>
+        <section class="class-picker"><div class="picker-heading"><span>THE LINEUP</span><small>4 CLASSES <span> / </span> FIND YOUR PLAYSTYLE</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
         <footer class="menu-footer"><span><kbd>W A S D</kbd> MOVE <kbd>SPACE</kbd> HOP <kbd>SHIFT</kbd> SLIDE <kbd>R</kbd> RELOAD</span><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
       </div>
       <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" width="300" height="300"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="killfeed" id="killfeed"></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><span class="health-plus">+</span><strong id="health">100</strong><span class="health-max" id="health-max">/ 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line"><strong id="ammo">3</strong><span>/</span><b id="ammo-max">3</b><i id="ammo-alert">▰▰▰</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
       <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>PAUSED<span class="lime">.</span></h2><p>The match is still live.</p><button id="resume" class="deploy-button">BACK TO THE YARD <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
       <div id="scoreboard" class="modal-layer hidden"><div class="score-panel"><div class="panel-heading"><span id="board-eyebrow">LIVE SCOREBOARD</span><span id="board-round">ROUND 01</span></div><h2 id="board-title">SANDYARD</h2><p id="board-subtitle">FREE FOR ALL / FIRST TO 25 KILLS</p><div id="board-table"></div><div id="board-footer">HOLD TAB TO VIEW</div></div></div>
-      <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity')??0.0022}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume')??0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><p>Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
+      <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity') ?? 0.0022}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume') ?? 0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><p>Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
     `;
-    const room=new URLSearchParams(location.search).get('room')??localStorage.getItem('arena-room')??'YARD-01';
-    $('player-name') .setAttribute('value',localStorage.getItem('arena-name')??`Guest_${Math.floor(Math.random()*900+100)}`);$('room-code').setAttribute('value',room);
-    document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b=>b.onclick=()=>this.choose(b.dataset.class as ClassId));
-    document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b=>b.onclick=()=>net.send({type:'configure',mode:b.dataset.mode as 'ffa'|'tdm'}));
-    document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b=>b.onclick=()=>{this.team=b.dataset.team as Team;localStorage.setItem('arena-team',this.team);net.send({type:'class',classId:this.selected,team:this.team});});
-    $('difficulty').onchange=()=>net.send({type:'configure',difficulty:$<HTMLSelectElement>('difficulty').value as 'easy'|'normal'|'hard'});
-    $('bot-count').onchange=()=>net.send({type:'configure',bots:Number($<HTMLSelectElement>('bot-count').value)});
-    $('deploy').onclick=()=>this.onDeploy();$('join-room').onclick=()=>this.onRoom();$('resume').onclick=()=>this.onResume();$('change-class').onclick=()=>{this.menu=true;this.paused=false;this.visibility();};
-    for(const id of ['settings-button','pause-settings'])$(id).onclick=()=>$('settings').classList.remove('hidden');$('close-settings').onclick=()=>$('settings').classList.add('hidden');
-    for(const key of ['sensitivity','volume','quality'])$(key).oninput=()=>this.onSettings(key,$<HTMLInputElement>(key).value);
-    this.choose(this.selected,false);this.visibility();
-  }
-  get joinConfig(){const name=$<HTMLInputElement>('player-name').value,room=$<HTMLInputElement>('room-code').value.toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,18)||'YARD-01';localStorage.setItem('arena-name',name);localStorage.setItem('arena-room',room);return {name,room,classId:this.selected,team:this.team};}
-  choose(id:ClassId,send=true){this.selected=id;localStorage.setItem('arena-class',id);const c=CLASSES[id];$('class-num').textContent=`0${CLASS_IDS.indexOf(id)+1}`;$('class-name').textContent=c.name;$('class-role').textContent=c.role;$('weapon-name').textContent=WEAPONS[c.weapon].name;$('class-description').textContent=c.description;$('class-hp').textContent=String(c.hp);$('class-stats').innerHTML=['DAMAGE','FIRE RATE','RANGE'].map((s,i)=>`<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join('');document.querySelectorAll<HTMLElement>('[data-class]').forEach(b=>b.classList.toggle('selected',b.dataset.class===id));this.onClass(id);if(send)this.net.send({type:'class',classId:id,team:this.team});}
-  visibility(){ $('menu').classList.toggle('hidden',!this.menu);$('hud').classList.toggle('hidden',this.menu);$('pause').classList.toggle('hidden',!this.paused||this.menu); }
-  notice(text:string){$('notice').textContent=text;this.noticeUntil=performance.now()+3500;}
-  event(e:GameEvent,renderer:Renderer,now:number){
-    if(e.type==='kill'){this.feeds.unshift({event:e,until:now+6500});this.feeds=this.feeds.slice(0,5);if(e.killer===this.net.id){this.killUntil=now+1800;$('kill-notice').innerHTML=`<span>${e.headshot?'HEADSHOT':'ELIMINATION'}</span><strong>+${e.headshot?'150':'100'}</strong><small>${escapeHTML(e.victimName)}</small>`;}}
-    if(e.type==='hit'&&e.shooter===this.net.id){this.hitUntil=now+160;$('hitmarker').classList.toggle('headshot',e.zone==='head');const p=renderer.project(e.point);this.numbers.push({x:p.x+(Math.random()-0.5)*24,y:p.y,damage:e.damage,head:e.zone==='head',until:now+850});}
-    if(e.type==='hit'&&e.victim===this.net.id){this.hurtUntil=now+450;const p=this.net.predicted;if(p)this.damageAngle=Math.atan2(e.from.x-p.x,-(e.from.z-p.z))+p.yaw;}
-    if(e.type==='notice')this.notice(e.text);
-  }
-  update(now:number,renderer:Renderer,aiming:boolean){
-    const net=this.net,p=net.predicted,round=net.round,serverNow=net.serverNow;
-    $('hitmarker').style.opacity=now<this.hitUntil?'1':'0';$('damage-vignette').style.opacity=String(Math.max(0,(this.hurtUntil-now)/450)*0.65);$('damage-direction').style.opacity=now<this.hurtUntil?'1':'0';$('damage-direction').style.transform=`translate(-50%,-50%) rotate(${this.damageAngle}rad)`;
-    $('kill-notice').style.opacity=now<this.killUntil?'1':'0';$('notice').style.opacity=now<this.noticeUntil?'1':'0';
-    this.numbers=this.numbers.filter(n=>n.until>now);$('damage-numbers').innerHTML=this.numbers.map(n=>`<span class="${n.head?'head':''}" style="left:${n.x}px;top:${n.y-(850-(n.until-now))*0.055}px;opacity:${Math.min(1,(n.until-now)/250)}">${n.damage}</span>`).join('');
-    $('scope').classList.toggle('hidden',!(aiming&&p?.weapon==='sniper'&&renderer.viewmodel.aim>0.82&&!this.menu));$('crosshair').classList.toggle('hidden',aiming&&p?.weapon==='sniper');
-    if(p){const spread=WEAPONS[p.weapon].spread+p.bloom; $('crosshair').style.setProperty('--gap',`${5+spread*200+Math.min(8,Math.hypot(p.vx,p.vz)*0.45)}px`);}
-    if(now-this.lastDraw<90)return;this.lastDraw=now;
-    $('connection').textContent=net.status==='CONNECTED'?`${net.room} · CONNECTED`:net.status;
-    const warning=net.status!=='CONNECTED'&&!this.menu;$('network-warning').classList.toggle('hidden',!warning);$('network-warning').textContent=net.status;
-    const host=net.host===net.id;
-    $('deploy').classList.toggle('disabled',!net.id||(!host&&round?.phase==='lobby'));$('deploy-note').textContent=!net.id?'CONNECTING TO ARENA…':!host&&round?.phase==='lobby'?'WAITING FOR THE HOST TO START':round?.phase==='playing'?'MATCH IN PROGRESS · JUMP IN':'PICK A CLASS. JUMP RIGHT IN.';
-    $('host-label').textContent=host?'YOU ARE THE HOST':'HOST CONTROLS';
-    for(const b of document.querySelectorAll<HTMLButtonElement>('[data-mode]')){b.classList.toggle('selected',b.dataset.mode===round?.mode);b.disabled=!host||round?.phase==='playing';}
-    for(const id of ['difficulty','bot-count'])$<HTMLSelectElement>(id).disabled=!host||round?.phase==='playing';
-    $<HTMLSelectElement>('difficulty').value=net.difficulty;$<HTMLSelectElement>('bot-count').value=String(net.bots);$('team-select').classList.toggle('visible',round?.mode==='tdm');for(const b of document.querySelectorAll<HTMLElement>('[data-team]'))b.classList.toggle('selected',b.dataset.team===net.local?.team);
-    const players=[...net.players.values()].sort((a,b)=>b.score-a.score||b.kills-a.kills||a.name.localeCompare(b.name));
-    const roster=players.map(p=>`${p.id}:${p.name}:${p.classId}:${p.team}`).join('|');if(roster!==this.lastRoster){this.lastRoster=roster;$('player-count').textContent=`${players.length} / 8`;$('roster').innerHTML=players.map(p=>`<div class="roster-player"><span class="roster-dot ${p.team}"></span><span>${escapeHTML(p.name)}${p.id===net.id?' <small>YOU</small>':''}</span><small>${p.bot?'BOT':p.id===net.host?'HOST':'PLAYER'}</small></div>`).join('');}
-    if(!round)return;
-    const time=Math.max(0,Math.ceil((round.endsAt-serverNow)/1000));$('timer').textContent=`${String(Math.floor(time/60)).padStart(2,'0')}:${String(time%60).padStart(2,'0')}`;$('timer').classList.toggle('urgent',time<30);
-    $('match-mode').innerHTML=`${round.mode==='ffa'?'FREE FOR ALL':'TEAM DEATHMATCH'}<span>on ${MAP_NAME}</span>`;
-    $('score-top').innerHTML=round.mode==='tdm'?`<b class="blue">${round.blue}</b><span>FIRST TO ${round.scoreLimit}</span><b class="red">${round.red}</b>`:`<strong>${net.local?.kills??0}</strong><span>/ ${round.scoreLimit}<small>ELIMINATIONS</small></span>`;
-    $('performance').innerHTML=`<b>${renderer.fps}</b> FPS <span>·</span> <b>${net.ping}</b> MS <span>·</span> 60 HZ`;
-    $('mini-board').innerHTML=players.slice(0,5).map((p,i)=>`<div class="${p.id===net.id?'self':''}"><b>${i+1}.</b><span>${escapeHTML(p.name)}</span><strong>${p.score}</strong></div>`).join('');
-    this.feeds=this.feeds.filter(f=>f.until>now);$('killfeed').innerHTML=this.feeds.map(({event:e})=>`<div class="feed-row ${e.killer===net.id?'own':''}"><span class="${e.team}">${escapeHTML(e.killerName)}</span>${gunIcon(e.weapon)}${e.headshot?'<b class="feed-head">⌖</b>':''}<span>${escapeHTML(e.victimName)}</span></div>`).join('');
-    const results=round.phase==='results';$('scoreboard').classList.toggle('hidden',!(results||this.scoreOpen));
-    if(results){$('board-eyebrow').textContent='ROUND COMPLETE';$('board-title').textContent=round.winner==='DRAW'?'DRAW':`${round.winner} WINS`;$('board-subtitle').textContent='GOOD GAME. SAME YARD. ONE MORE ROUND.';$('board-footer').textContent=`NEXT ROUND IN ${Math.max(0,Math.ceil((round.nextAt-serverNow)/1000))}s`;}else{$('board-eyebrow').textContent='LIVE SCOREBOARD';$('board-title').textContent=MAP_NAME;$('board-subtitle').textContent=`${round.mode==='ffa'?'FREE FOR ALL':'TEAM DEATHMATCH'} / FIRST TO ${round.scoreLimit} KILLS`;$('board-footer').textContent='HOLD TAB TO VIEW';}
-    $('board-round').textContent=`ROUND ${String(round.round).padStart(2,'0')}`;
-    if(results||this.scoreOpen){const board=players.map(p=>`${p.id}:${p.score}:${p.deaths}:${p.kills}`).join('|');if(board!==this.lastBoard){this.lastBoard=board;$('board-table').innerHTML=`<table><thead><tr><th>#</th><th>PLAYER</th><th>CLASS</th><th>SCORE</th><th>K</th><th>D</th><th>K/D</th></tr></thead><tbody>${players.map((p,i)=>`<tr class="${p.id===net.id?'self':''}"><td>${String(i+1).padStart(2,'0')}</td><td><i class="roster-dot ${p.team}"></i>${escapeHTML(p.name)} ${p.bot?'<small>BOT</small>':p.id===net.id?'<small>YOU</small>':''}</td><td>${CLASSES[p.classId].name}</td><td>${p.score}</td><td>${p.kills}</td><td>${p.deaths}</td><td>${(p.kills/Math.max(1,p.deaths)).toFixed(1)}</td></tr>`).join('')}</tbody></table>`;}}
-    if(p){$('health').textContent=String(p.hp);$('health-max').textContent=`/ ${p.maxHp}`;$('health-bar').style.width=`${p.hp/p.maxHp*100}%`;$('health-bar').classList.toggle('low',p.hp<30);$('health-status').textContent=p.protectionEnd>serverNow?'SPAWN PROTECTED':p.slide>0?'SLIDING':!p.grounded?'AIRBORNE':'LOCKED & LOADED';$('speed').textContent=`${Math.round(Math.hypot(p.vx,p.vz)*3.6)} KM/H`;
-      const w=WEAPONS[p.weapon];$('ammo').textContent=p.weapon==='knife'?'∞':String(p.ammo);$('ammo-max').textContent=String(w.magazine);$('ammo-alert').classList.toggle('low',p.ammo<=Math.ceil(w.magazine*0.25));$('hud-weapon').textContent=w.name;$('weapon-slots').innerHTML=([CLASSES[p.classId].weapon,'pistol','knife'] as WeaponId[]).map((w,i)=>`<div class="${w===p.weapon?'active':''}"><kbd>${i+1}</kbd>${gunIcon(w)}</div>`).join('');
-      $('reload-prompt').innerHTML=p.reloadEnd>serverNow?`<span>RELOADING</span><i style="--progress:${100*(1-(p.reloadEnd-serverNow)/(w.reload||1))}%"></i>`:p.ammo===0&&p.weapon!=='knife'?'<kbd>R</kbd> RELOAD':'';
-      $('death-card').classList.toggle('hidden',p.alive||round.phase!=='playing');$('respawn-time').textContent=Math.max(0,(p.respawnAt-serverNow)/1000).toFixed(1);this.minimap(p,players);
-      const tags=net.remotePlayers().filter(q=>q.alive&&distance(p,q)<34).map(q=>{const from={x:p.x,y:p.y+1.62,z:p.z},to={x:q.x,y:q.y+1.8,z:q.z},dist=distance(from,to),d={x:(to.x-from.x)/dist,y:(to.y-from.y)/dist,z:(to.z-from.z)/dist};if(worldHit(from,d,dist)<dist-0.1)return '';const projected=renderer.project({...to,y:to.y+0.4});if(!projected.visible)return '';return `<div class="nameplate ${round.mode==='tdm'&&q.team===p.team?'friendly':''}" style="left:${projected.x}px;top:${projected.y}px"><span>${escapeHTML(q.name)}</span><i><b style="width:${q.hp/q.maxHp*100}%"></b></i></div>`;});$('nameplates').innerHTML=tags.join('');
+        const room = new URLSearchParams(location.search).get('room') ?? localStorage.getItem('arena-room') ?? 'YARD-01';
+        $('player-name').setAttribute('value', localStorage.getItem('arena-name') ?? `Guest_${Math.floor(Math.random() * 900 + 100)}`);
+        $('room-code').setAttribute('value', room);
+        document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => b.onclick = () => this.choose(b.dataset.class as ClassId));
+        document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => net.send({ type: 'configure', mode: b.dataset.mode as 'ffa' | 'tdm' }));
+        document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'class', classId: this.selected, team: this.team }); });
+        $('difficulty').onchange = () => net.send({ type: 'configure', difficulty: $<HTMLSelectElement>('difficulty').value as 'easy' | 'normal' | 'hard' });
+        $('bot-count').onchange = () => net.send({ type: 'configure', bots: Number($<HTMLSelectElement>('bot-count').value) });
+        $('deploy').onclick = () => this.onDeploy();
+        $('join-room').onclick = () => this.onRoom();
+        $('resume').onclick = () => this.onResume();
+        $('change-class').onclick = () => { this.menu = true; this.paused = false; this.visibility(); };
+        for (const id of ['settings-button', 'pause-settings'])
+            $(id).onclick = () => $('settings').classList.remove('hidden');
+        $('close-settings').onclick = () => $('settings').classList.add('hidden');
+        for (const key of ['sensitivity', 'volume', 'quality'])
+            $(key).oninput = () => this.onSettings(key, $<HTMLInputElement>(key).value);
+        $<HTMLSelectElement>('quality').value = localStorage.getItem('arena-quality') ?? 'balanced';
+        this.choose(this.selected, false);
+        this.visibility();
     }
-    if(round.phase!==this.lastPhase){this.lastPhase=round.phase;this.scoreLabel='';}void this.scoreLabel;
-  }
-  private minimap(p:PlayerState,players:PlayerState[]){const canvas=$<HTMLCanvasElement>('minimap'),ctx=canvas.getContext('2d')!,scale=3.7,ox=150,oy=150;ctx.clearRect(0,0,300,300);ctx.fillStyle='rgba(22,29,32,.66)';ctx.fillRect(0,0,300,300);ctx.fillStyle='#888675';for(const b of BOXES)ctx.fillRect(ox+(b.x-b.w/2)*scale,oy+(b.z-b.d/2)*scale,b.w*scale,b.d*scale);ctx.fillStyle='#aaa485';for(const r of RAMPS)ctx.fillRect(ox+(r.x-r.w/2)*scale,oy+(r.z-r.d/2)*scale,r.w*scale,r.d*scale);
-    for(const q of players){if(!q.alive||q.id===p.id)continue;const friendly=this.net.round?.mode==='tdm'&&q.team===p.team;if(!friendly&&distance(p,q)>20)continue;ctx.fillStyle=friendly?'#78c6dd':'#ef846b';ctx.beginPath();ctx.arc(ox+q.x*scale,oy+q.z*scale,4.5,0,Math.PI*2);ctx.fill();}
-    ctx.save();ctx.translate(ox+p.x*scale,oy+p.z*scale);ctx.rotate(-p.yaw);ctx.fillStyle='#c7f451';ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(6,7);ctx.lineTo(0,4);ctx.lineTo(-6,7);ctx.closePath();ctx.fill();ctx.restore();}
+    get joinConfig() { const name = $<HTMLInputElement>('player-name').value, room = $<HTMLInputElement>('room-code').value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18) || 'YARD-01'; localStorage.setItem('arena-name', name); localStorage.setItem('arena-room', room); return { name, room, classId: this.selected, team: this.team }; }
+    choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
+        this.net.send({ type: 'class', classId: id, team: this.team }); }
+    visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); }
+    notice(text: string) { $('notice').textContent = text; this.noticeUntil = performance.now() + 3500; }
+    event(e: GameEvent, renderer: Renderer, now: number) {
+        if (e.type === 'kill') {
+            this.feeds.unshift({ event: e, until: now + 6500 });
+            this.feeds = this.feeds.slice(0, 5);
+            if (e.killer === this.net.id) {
+                this.killUntil = now + 1800;
+                $('kill-notice').innerHTML = `<span>${e.headshot ? 'HEADSHOT' : 'ELIMINATION'}</span><strong>+${e.headshot ? '150' : '100'}</strong><small>${escapeHTML(e.victimName)}</small>`;
+            }
+        }
+        if (e.type === 'hit' && e.shooter === this.net.id) {
+            this.hitUntil = now + 160;
+            $('hitmarker').classList.toggle('headshot', e.zone === 'head');
+            const p = renderer.project(e.point);
+            this.numbers.push({ x: p.x + (Math.random() - 0.5) * 24, y: p.y, damage: e.damage, head: e.zone === 'head', until: now + 850 });
+        }
+        if (e.type === 'hit' && e.victim === this.net.id) {
+            this.hurtUntil = now + 450;
+            const p = this.net.predicted;
+            if (p)
+                this.damageAngle = Math.atan2(e.from.x - p.x, -(e.from.z - p.z)) + p.yaw;
+        }
+        if (e.type === 'notice')
+            this.notice(e.text);
+    }
+    update(now: number, renderer: Renderer, aiming: boolean) {
+        const net = this.net, p = net.predicted, round = net.round, serverNow = net.serverNow;
+        $('hitmarker').style.opacity = now < this.hitUntil ? '1' : '0';
+        $('damage-vignette').style.opacity = String(Math.max(0, (this.hurtUntil - now) / 450) * 0.65);
+        $('damage-direction').style.opacity = now < this.hurtUntil ? '1' : '0';
+        $('damage-direction').style.transform = `translate(-50%,-50%) rotate(${this.damageAngle}rad)`;
+        $('kill-notice').style.opacity = now < this.killUntil ? '1' : '0';
+        $('notice').style.opacity = now < this.noticeUntil ? '1' : '0';
+        this.numbers = this.numbers.filter(n => n.until > now);
+        $('damage-numbers').innerHTML = this.numbers.map(n => `<span class="${n.head ? 'head' : ''}" style="left:${n.x}px;top:${n.y - (850 - (n.until - now)) * 0.055}px;opacity:${Math.min(1, (n.until - now) / 250)}">${n.damage}</span>`).join('');
+        $('scope').classList.toggle('hidden', !(aiming && p?.weapon === 'sniper' && renderer.viewmodel.aim > 0.82 && !this.menu));
+        $('crosshair').classList.toggle('hidden', aiming && p?.weapon === 'sniper');
+        if (p) {
+            const spread = WEAPONS[p.weapon].spread + p.bloom;
+            $('crosshair').style.setProperty('--gap', `${5 + spread * 200 + Math.min(8, Math.hypot(p.vx, p.vz) * 0.45)}px`);
+        }
+        if (now - this.lastDraw < 90)
+            return;
+        this.lastDraw = now;
+        $('connection').textContent = net.status === 'CONNECTED' ? `${net.room} · CONNECTED` : net.status;
+        const warning = net.status !== 'CONNECTED' && !this.menu;
+        $('network-warning').classList.toggle('hidden', !warning);
+        $('network-warning').textContent = net.status;
+        const host = net.host === net.id;
+        $('deploy').classList.toggle('disabled', !net.id || (!host && round?.phase === 'lobby'));
+        $('deploy-note').textContent = !net.id ? 'CONNECTING TO ARENA…' : !host && round?.phase === 'lobby' ? 'WAITING FOR THE HOST TO START' : round?.phase === 'playing' ? (net.local?.classId !== this.selected ? 'NEW CLASS EQUIPS ON NEXT RESPAWN' : 'MATCH IN PROGRESS · JUMP IN') : 'PICK A CLASS. JUMP RIGHT IN.';
+        $('host-label').textContent = host ? 'YOU ARE THE HOST' : 'HOST CONTROLS';
+        for (const b of document.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
+            b.classList.toggle('selected', b.dataset.mode === round?.mode);
+            b.disabled = !host || round?.phase === 'playing';
+        }
+        for (const id of ['difficulty', 'bot-count'])
+            $<HTMLSelectElement>(id).disabled = !host || round?.phase === 'playing';
+        $<HTMLSelectElement>('difficulty').value = net.difficulty;
+        $<HTMLSelectElement>('bot-count').value = String(net.bots);
+        $('team-select').classList.toggle('visible', round?.mode === 'tdm');
+        for (const b of document.querySelectorAll<HTMLElement>('[data-team]'))
+            b.classList.toggle('selected', b.dataset.team === net.local?.team);
+        const players = [...net.players.values()].sort((a, b) => b.score - a.score || b.kills - a.kills || a.name.localeCompare(b.name));
+        const roster = players.map(p => `${p.id}:${p.name}:${p.classId}:${p.team}`).join('|');
+        if (roster !== this.lastRoster) {
+            this.lastRoster = roster;
+            $('player-count').textContent = `${players.length} / 8`;
+            $('roster').innerHTML = players.map(p => `<div class="roster-player"><span class="roster-dot ${p.team}"></span><span>${escapeHTML(p.name)}${p.id === net.id ? ' <small>YOU</small>' : ''}</span><small>${p.bot ? 'BOT' : p.id === net.host ? 'HOST' : 'PLAYER'}</small></div>`).join('');
+        }
+        if (!round)
+            return;
+        const time = Math.max(0, Math.ceil((round.endsAt - serverNow) / 1000));
+        $('timer').textContent = `${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')}`;
+        $('timer').classList.toggle('urgent', time < 30);
+        $('match-mode').innerHTML = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'}<span>on ${MAP_NAME}</span>`;
+        $('score-top').innerHTML = round.mode === 'tdm' ? `<b class="blue">${round.blue}</b><span>FIRST TO ${round.scoreLimit}</span><b class="red">${round.red}</b>` : `<strong>${net.local?.kills ?? 0}</strong><span>/ ${round.scoreLimit}<small>ELIMINATIONS</small></span>`;
+        $('performance').innerHTML = `<b>${renderer.fps}</b> FPS <span>·</span> <b>${net.ping}</b> MS <span>·</span> 60 HZ`;
+        $('mini-board').innerHTML = players.slice(0, 5).map((p, i) => `<div class="${p.id === net.id ? 'self' : ''}"><b>${i + 1}.</b><span>${escapeHTML(p.name)}</span><strong>${p.score}</strong></div>`).join('');
+        this.feeds = this.feeds.filter(f => f.until > now);
+        $('killfeed').innerHTML = this.feeds.map(({ event: e }) => `<div class="feed-row ${e.killer === net.id ? 'own' : ''}"><span class="${e.team}">${escapeHTML(e.killerName)}</span>${gunIcon(e.weapon)}${e.headshot ? '<b class="feed-head">⌖</b>' : ''}<span>${escapeHTML(e.victimName)}</span></div>`).join('');
+        const results = round.phase === 'results';
+        $('scoreboard').classList.toggle('hidden', !(results || this.scoreOpen));
+        if (results) {
+            $('board-eyebrow').textContent = 'ROUND COMPLETE';
+            $('board-title').textContent = round.winner === 'DRAW' ? 'DRAW' : `${round.winner} WINS`;
+            $('board-subtitle').textContent = 'GOOD GAME. SAME YARD. ONE MORE ROUND.';
+            $('board-footer').textContent = `NEXT ROUND IN ${Math.max(0, Math.ceil((round.nextAt - serverNow) / 1000))}s`;
+        }
+        else {
+            $('board-eyebrow').textContent = 'LIVE SCOREBOARD';
+            $('board-title').textContent = MAP_NAME;
+            $('board-subtitle').textContent = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'} / FIRST TO ${round.scoreLimit} KILLS`;
+            $('board-footer').textContent = 'HOLD TAB TO VIEW';
+        }
+        $('board-round').textContent = `ROUND ${String(round.round).padStart(2, '0')}`;
+        if (results || this.scoreOpen) {
+            const board = players.map(p => `${p.id}:${p.score}:${p.deaths}:${p.kills}`).join('|');
+            if (board !== this.lastBoard) {
+                this.lastBoard = board;
+                $('board-table').innerHTML = `<table><thead><tr><th>#</th><th>PLAYER</th><th>CLASS</th><th>SCORE</th><th>K</th><th>D</th><th>K/D</th></tr></thead><tbody>${players.map((p, i) => `<tr class="${p.id === net.id ? 'self' : ''}"><td>${String(i + 1).padStart(2, '0')}</td><td><i class="roster-dot ${p.team}"></i>${escapeHTML(p.name)} ${p.bot ? '<small>BOT</small>' : p.id === net.id ? '<small>YOU</small>' : ''}</td><td>${CLASSES[p.classId].name}</td><td>${p.score}</td><td>${p.kills}</td><td>${p.deaths}</td><td>${(p.kills / Math.max(1, p.deaths)).toFixed(1)}</td></tr>`).join('')}</tbody></table>`;
+            }
+        }
+        if (p) {
+            $('health').textContent = String(p.hp);
+            $('health-max').textContent = `/ ${p.maxHp}`;
+            $('health-bar').style.width = `${p.hp / p.maxHp * 100}%`;
+            $('health-bar').classList.toggle('low', p.hp < 30);
+            $('health-status').textContent = p.protectionEnd > serverNow ? 'SPAWN PROTECTED' : p.slide > 0 ? 'SLIDING' : !p.grounded ? 'AIRBORNE' : 'LOCKED & LOADED';
+            $('speed').textContent = `${Math.round(Math.hypot(p.vx, p.vz) * 3.6)} KM/H`;
+            const w = WEAPONS[p.weapon];
+            $('ammo').textContent = p.weapon === 'knife' ? '∞' : String(p.ammo);
+            $('ammo-max').textContent = String(w.magazine);
+            $('ammo-alert').classList.toggle('low', p.ammo <= Math.ceil(w.magazine * 0.25));
+            $('hud-weapon').textContent = w.name;
+            $('weapon-slots').innerHTML = ([CLASSES[p.classId].weapon, 'pistol', 'knife'] as WeaponId[]).map((w, i) => `<div class="${w === p.weapon ? 'active' : ''}"><kbd>${i + 1}</kbd>${gunIcon(w)}</div>`).join('');
+            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? '<kbd>R</kbd> RELOAD' : '';
+            $('death-card').classList.toggle('hidden', p.alive || round.phase !== 'playing');
+            $('respawn-time').textContent = Math.max(0, (p.respawnAt - serverNow) / 1000).toFixed(1);
+            this.minimap(p, players);
+            const tags = net.remotePlayers().filter(q => q.alive && distance(p, q) < 34).map(q => { const from = { x: p.x, y: p.y + 1.62, z: p.z }, to = { x: q.x, y: q.y + 1.8, z: q.z }, dist = distance(from, to), d = { x: (to.x - from.x) / dist, y: (to.y - from.y) / dist, z: (to.z - from.z) / dist }; if (worldHit(from, d, dist) < dist - 0.1)
+                return ''; const projected = renderer.project({ ...to, y: to.y + 0.4 }); if (!projected.visible)
+                return ''; return `<div class="nameplate ${round.mode === 'tdm' && q.team === p.team ? 'friendly' : ''}" style="left:${projected.x}px;top:${projected.y}px"><span>${escapeHTML(q.name)}</span><i><b style="width:${q.hp / q.maxHp * 100}%"></b></i></div>`; });
+            $('nameplates').innerHTML = tags.join('');
+        }
+        if (round.phase !== this.lastPhase) {
+            this.lastPhase = round.phase;
+            this.scoreLabel = '';
+        }
+        void this.scoreLabel;
+    }
+    private minimap(p: PlayerState, players: PlayerState[]) {
+        const canvas = $<HTMLCanvasElement>('minimap'), ctx = canvas.getContext('2d')!, scale = 3.7, ox = 150, oy = 150;
+        ctx.clearRect(0, 0, 300, 300);
+        ctx.fillStyle = 'rgba(22,29,32,.66)';
+        ctx.fillRect(0, 0, 300, 300);
+        ctx.fillStyle = '#888675';
+        for (const b of BOXES)
+            ctx.fillRect(ox + (b.x - b.w / 2) * scale, oy + (b.z - b.d / 2) * scale, b.w * scale, b.d * scale);
+        ctx.fillStyle = '#aaa485';
+        for (const r of RAMPS)
+            ctx.fillRect(ox + (r.x - r.w / 2) * scale, oy + (r.z - r.d / 2) * scale, r.w * scale, r.d * scale);
+        for (const q of players) {
+            if (!q.alive || q.id === p.id)
+                continue;
+            const friendly = this.net.round?.mode === 'tdm' && q.team === p.team;
+            if (!friendly && distance(p, q) > 20)
+                continue;
+            ctx.fillStyle = friendly ? '#78c6dd' : '#ef846b';
+            ctx.beginPath();
+            ctx.arc(ox + q.x * scale, oy + q.z * scale, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.save();
+        ctx.translate(ox + p.x * scale, oy + p.z * scale);
+        ctx.rotate(-p.yaw);
+        ctx.fillStyle = '#c7f451';
+        ctx.beginPath();
+        ctx.moveTo(0, -9);
+        ctx.lineTo(6, 7);
+        ctx.lineTo(0, 4);
+        ctx.lineTo(-6, 7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
 }

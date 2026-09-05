@@ -13,7 +13,8 @@
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "tsx tests/integration.ts",
     "test:soak": "tsx tests/soak.ts",
-    "test:lifecycle": "tsx tests/lifecycle.ts"
+    "test:lifecycle": "tsx tests/lifecycle.ts",
+    "test:production": "node tests/production.mjs"
   },
   "dependencies": {
     "three": "0.185.1",

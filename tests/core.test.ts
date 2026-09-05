@@ -9,90 +9,248 @@ import { History, rewindTime } from '../src/server/history';
 import { checkRound, newRound, startRound } from '../src/server/round';
 import { Room } from '../src/server/simulation';
 import { findPath } from '../src/server/bots';
-const almost=(actual:number,expected:number,e=1e-5)=>assert.ok(Math.abs(actual-expected)<e,`${actual} ≠ ${expected}`);
-function room(){const r=new Room('TEST');r.botCount=0;return r;}
-function player():PlayerState{return room().add('Test','triggerman','blue').state;}
-test('ray box handles forward hits, behind-origin misses, parallel axes and inside origin',()=>{
-  const min={x:-1,y:0,z:-10},max={x:1,y:2,z:-8};
-  assert.equal(rayBox({x:0,y:1,z:0},{x:0,y:0,z:-1},min,max),8);
-  assert.equal(rayBox({x:2,y:1,z:0},{x:0,y:0,z:-1},min,max),null);
-  assert.equal(rayBox({x:0,y:1,z:0},{x:0,y:0,z:1},min,max),null);
-  assert.equal(rayBox({x:0,y:1,z:-9},{x:0,y:0,z:-1},min,max),0);
+const almost = (actual: number, expected: number, e = 1e-5) => assert.ok(Math.abs(actual - expected) < e, `${actual} ≠ ${expected}`);
+function room() { const r = new Room('TEST'); r.botCount = 0; return r; }
+function player(): PlayerState { return room().add('Test', 'triggerman', 'blue').state; }
+test('ray box handles forward hits, behind-origin misses, parallel axes and inside origin', () => {
+    const min = { x: -1, y: 0, z: -10 }, max = { x: 1, y: 2, z: -8 };
+    assert.equal(rayBox({ x: 0, y: 1, z: 0 }, { x: 0, y: 0, z: -1 }, min, max), 8);
+    assert.equal(rayBox({ x: 2, y: 1, z: 0 }, { x: 0, y: 0, z: -1 }, min, max), null);
+    assert.equal(rayBox({ x: 0, y: 1, z: 0 }, { x: 0, y: 0, z: 1 }, min, max), null);
+    assert.equal(rayBox({ x: 0, y: 1, z: -9 }, { x: 0, y: 0, z: -1 }, min, max), 0);
 });
-test('head, torso, legs and sliding hitboxes match their vertical bounds',()=>{
-  const p={x:0,y:0,z:-10,slide:0},d={x:0,y:0,z:-1};
-  assert.equal(hitPlayer({x:0,y:1.6,z:0},d,p)?.zone,'head');assert.equal(hitPlayer({x:0,y:1,z:0},d,p)?.zone,'body');assert.equal(hitPlayer({x:0,y:.3,z:0},d,p)?.zone,'legs');assert.equal(hitPlayer({x:0,y:2,z:0},d,p),null);
-  assert.equal(hitPlayer({x:0,y:1.6,z:0},d,{...p,slide:0.5}),null);assert.equal(hitPlayer({x:0,y:1.1,z:0},d,{...p,slide:0.5})?.zone,'head');
+test('head, torso, legs and sliding hitboxes match their vertical bounds', () => {
+    const p = { x: 0, y: 0, z: -10, slide: 0 }, d = { x: 0, y: 0, z: -1 };
+    assert.equal(hitPlayer({ x: 0, y: 1.6, z: 0 }, d, p)?.zone, 'head');
+    assert.equal(hitPlayer({ x: 0, y: 1, z: 0 }, d, p)?.zone, 'body');
+    assert.equal(hitPlayer({ x: 0, y: .3, z: 0 }, d, p)?.zone, 'legs');
+    assert.equal(hitPlayer({ x: 0, y: 2, z: 0 }, d, p), null);
+    assert.equal(hitPlayer({ x: 0, y: 1.6, z: 0 }, d, { ...p, slide: 0.5 }), null);
+    assert.equal(hitPlayer({ x: 0, y: 1.1, z: 0 }, d, { ...p, slide: 0.5 })?.zone, 'head');
 });
-test('ramps block bullets through their solid volume without blocking above the slope',()=>{
-  const r=RAMPS[0];const down={x:0,y:-1,z:0};almost(rayRamp({x:-10,y:10,z:0},down,r)!,8);
-  assert.equal(rayRamp({x:-10,y:5,z:-8},{x:0,y:0,z:1},r),null);
-  assert.ok(rayRamp({x:-10,y:1,z:-8},{x:0,y:0,z:1},r)!<8);
+test('ramps block bullets through their solid volume without blocking above the slope', () => {
+    const r = RAMPS[0];
+    const down = { x: 0, y: -1, z: 0 };
+    almost(rayRamp({ x: -10, y: 10, z: 0 }, down, r)!, 8);
+    assert.equal(rayRamp({ x: -10, y: 5, z: -8 }, { x: 0, y: 0, z: 1 }, r), null);
+    assert.ok(rayRamp({ x: -10, y: 1, z: -8 }, { x: 0, y: 0, z: 1 }, r)! < 8);
 });
-test('world collision blocks the sightline through a building',()=>{assert.ok(worldHit({x:-19,y:1.5,z:0},{x:0,y:0,z:-1},40)<7);});
-test('sniper upper-body is lethal, legs are survivable, head multipliers are explicit',()=>{
-  assert.equal(damageFor('sniper','body',30),110);assert.equal(damageFor('sniper','head',30),165);assert.equal(damageFor('sniper','legs',30),61);
-  assert.equal(damageFor('rifle','head',10),38);assert.equal(damageFor('rifle','body',10),25);assert.equal(damageFor('smg','head',10),27);
+test('world collision blocks the sightline through a building', () => { assert.ok(worldHit({ x: -19, y: 1.5, z: 0 }, { x: 0, y: 0, z: -1 }, 40) < 7); });
+test('sniper upper-body is lethal, legs are survivable, head multipliers are explicit', () => {
+    assert.equal(damageFor('sniper', 'body', 30), 110);
+    assert.equal(damageFor('sniper', 'head', 30), 165);
+    assert.equal(damageFor('sniper', 'legs', 30), 61);
+    assert.equal(damageFor('rifle', 'head', 10), 38);
+    assert.equal(damageFor('rifle', 'body', 10), 25);
+    assert.equal(damageFor('smg', 'head', 10), 27);
 });
-test('shotgun close-range pellets are lethal and fall off sharply',()=>{
-  assert.equal(damageFor('shotgun','body',4)*8,192);assert.ok(damageFor('shotgun','body',26)*8<25);assert.equal(damageFor('shotgun','body',40),0);
+test('shotgun close-range pellets are lethal and fall off sharply', () => {
+    assert.equal(damageFor('shotgun', 'body', 4) * 8, 192);
+    assert.ok(damageFor('shotgun', 'body', 26) * 8 < 25);
+    assert.equal(damageFor('shotgun', 'body', 40), 0);
 });
-test('spread increases with speed and firing, decreases with ADS, and is deterministic by seed',()=>{
-  assert.ok(spreadFor('rifle',10,0,0)>spreadFor('rifle',0,0,0));assert.ok(spreadFor('rifle',0,.02,0)>spreadFor('rifle',0,0,0));assert.ok(spreadFor('sniper',12,0,1)<.001);
-  const a=shotDirections('shotgun',.5,.2,.07,123),b=shotDirections('shotgun',.5,.2,.07,123);assert.deepEqual(a,b);assert.equal(a.length,8);for(const d of a)almost(Math.hypot(d.x,d.y,d.z),1);assert.notDeepEqual(a,shotDirections('shotgun',.5,.2,.07,124));
+test('spread increases with speed and firing, decreases with ADS, and is deterministic by seed', () => {
+    assert.ok(spreadFor('rifle', 10, 0, 0) > spreadFor('rifle', 0, 0, 0));
+    assert.ok(spreadFor('rifle', 0, .02, 0) > spreadFor('rifle', 0, 0, 0));
+    assert.ok(spreadFor('sniper', 12, 0, 1) < .001);
+    const a = shotDirections('shotgun', .5, .2, .07, 123), b = shotDirections('shotgun', .5, .2, .07, 123);
+    assert.deepEqual(a, b);
+    assert.equal(a.length, 8);
+    for (const d of a)
+        almost(Math.hypot(d.x, d.y, d.z), 1);
+    assert.notDeepEqual(a, shotDirections('shotgun', .5, .2, .07, 124));
 });
-test('recoil pattern cycles, differs by weapon and stays bounded',()=>{assert.deepEqual(recoilFor('rifle',0),recoilFor('rifle',WEAPONS.rifle.recoil.length));assert.notDeepEqual(recoilFor('smg',0),recoilFor('sniper',0));for(let i=0;i<100;i++){const r=recoilFor('smg',i);assert.ok(Math.abs(r[0])<.05&&Math.abs(r[1])<.05);}});
-test('input validation rejects NaN, impossible speed, wrong buttons and invalid sequences',()=>{
-  const i=neutralInput(1);assert.equal(validInput(i),true);for(const bad of [{forward:2},{strafe:-4},{yaw:Infinity},{pitch:NaN},{pitch:2},{seq:-1},{seq:.5},{slot:4},{fire:1},{shotTime:NaN}])assert.equal(validInput({...i,...bad}),false,JSON.stringify(bad));assert.equal(validInput(null),false);
+test('recoil pattern cycles, differs by weapon and stays bounded', () => { assert.deepEqual(recoilFor('rifle', 0), recoilFor('rifle', WEAPONS.rifle.recoil.length)); assert.notDeepEqual(recoilFor('smg', 0), recoilFor('sniper', 0)); for (let i = 0; i < 100; i++) {
+    const r = recoilFor('smg', i);
+    assert.ok(Math.abs(r[0]) < .05 && Math.abs(r[1]) < .05);
+} });
+test('input validation rejects NaN, impossible speed, wrong buttons and invalid sequences', () => {
+    const i = neutralInput(1);
+    assert.equal(validInput(i), true);
+    for (const bad of [{ forward: 2 }, { strafe: -4 }, { yaw: Infinity }, { pitch: NaN }, { pitch: 2 }, { seq: -1 }, { seq: .5 }, { slot: 4 }, { fire: 1 }, { shotTime: NaN }])
+        assert.equal(validInput({ ...i, ...bad }), false, JSON.stringify(bad));
+    assert.equal(validInput(null), false);
 });
-test('movement is deterministic for prediction replay and achieves arcade running speed',()=>{
-  const p=moveState(32,0,30),q={...p},i={...neutralInput(1),forward:1};for(let n=0;n<60;n++){move(p,i);move(q,i);}assert.deepEqual(p,q);assert.ok(Math.hypot(p.vx,p.vz)>10.5);assert.ok(p.z<21);
+test('movement is deterministic for prediction replay and achieves arcade running speed', () => {
+    const p = moveState(32, 0, 30), q = { ...p }, i = { ...neutralInput(1), forward: 1 };
+    for (let n = 0; n < 60; n++) {
+        move(p, i);
+        move(q, i);
+    }
+    assert.deepEqual(p, q);
+    assert.ok(Math.hypot(p.vx, p.vz) > 10.5);
+    assert.ok(p.z < 21);
 });
-test('jump launches promptly, has no midair second jump, and lands without fall damage state',()=>{
-  const p=moveState(32,0,20),i={...neutralInput(1),jump:true};move(p,i);assert.ok(p.y>0&&p.vy>8);for(let n=0;n<5;n++)move(p,i);const vy=p.vy;move(p,{...i,jump:false});move(p,i);assert.ok(p.vy<vy);for(let n=0;n<100;n++)move(p,{...i,jump:false});almost(p.y,0);assert.equal(p.grounded,true);
+test('jump launches promptly, has no midair second jump, and lands without fall damage state', () => {
+    const p = moveState(32, 0, 20), i = { ...neutralInput(1), jump: true };
+    move(p, i);
+    assert.ok(p.y > 0 && p.vy > 8);
+    for (let n = 0; n < 5; n++)
+        move(p, i);
+    const vy = p.vy;
+    move(p, { ...i, jump: false });
+    move(p, i);
+    assert.ok(p.vy < vy);
+    for (let n = 0; n < 100; n++)
+        move(p, { ...i, jump: false });
+    almost(p.y, 0);
+    assert.equal(p.grounded, true);
 });
-test('timed landing slide and bunny hop preserve and increase speed',()=>{
-  const p=moveState(32,0,25);Object.assign(p,{vx:0,vz:-14,groundTime:0,slideAge:1});const i={...neutralInput(1),forward:1,slide:true};move(p,i);assert.ok(p.slide>0);const sliding=Math.hypot(p.vx,p.vz);assert.ok(sliding>15.5);move(p,{...i,slide:false,jump:true});assert.ok(Math.hypot(p.vx,p.vz)>sliding);assert.ok(p.vy>8);
+test('timed landing slide and bunny hop preserve and increase speed', () => {
+    const p = moveState(32, 0, 25);
+    Object.assign(p, { vx: 0, vz: -14, groundTime: 0, slideAge: 1 });
+    const i = { ...neutralInput(1), forward: 1, slide: true };
+    move(p, i);
+    assert.ok(p.slide > 0);
+    const sliding = Math.hypot(p.vx, p.vz);
+    assert.ok(sliding > 15.5);
+    move(p, { ...i, slide: false, jump: true });
+    assert.ok(Math.hypot(p.vx, p.vz) > sliding);
+    assert.ok(p.vy > 8);
 });
-test('late jump is slower than precisely timed hop and holding jump does not auto-jump',()=>{
-  const late=moveState(32,0,25),timed=moveState(32,0,25);Object.assign(late,{vz:-15,groundTime:.5});Object.assign(timed,{vz:-15,groundTime:0});const i={...neutralInput(),forward:1,jump:true};move(late,i);move(timed,i);assert.ok(Math.hypot(timed.vx,timed.vz)>Math.hypot(late.vx,late.vz));for(let n=0;n<100;n++)move(late,i);assert.equal(late.grounded,true);
+test('late jump is slower than precisely timed hop and holding jump does not auto-jump', () => {
+    const late = moveState(32, 0, 25), timed = moveState(32, 0, 25);
+    Object.assign(late, { vz: -15, groundTime: .5 });
+    Object.assign(timed, { vz: -15, groundTime: 0 });
+    const i = { ...neutralInput(), forward: 1, jump: true };
+    move(late, i);
+    move(timed, i);
+    assert.ok(Math.hypot(timed.vx, timed.vz) > Math.hypot(late.vx, late.vz));
+    for (let n = 0; n < 100; n++)
+        move(late, i);
+    assert.equal(late.grounded, true);
 });
-test('movement clamps velocity and prevents walking through walls',()=>{
-  const p=moveState(32,0,20);Object.assign(p,{vx:10000,vz:10000});move(p,neutralInput());assert.ok(Math.hypot(p.vx,p.vz)<=MAX_SPEED+0.01);const q=moveState(-19,0,0);for(let n=0;n<120;n++)move(q,{...neutralInput(),forward:1});assert.ok(q.z>-6);assert.ok(q.z<-5.5);
+test('movement clamps velocity and prevents walking through walls', () => {
+    const p = moveState(32, 0, 20);
+    Object.assign(p, { vx: 10000, vz: 10000 });
+    move(p, neutralInput());
+    assert.ok(Math.hypot(p.vx, p.vz) <= MAX_SPEED + 0.01);
+    const q = moveState(-19, 0, 0);
+    for (let n = 0; n < 120; n++)
+        move(q, { ...neutralInput(), forward: 1 });
+    assert.ok(q.z > -6);
+    assert.ok(q.z < -5.5);
 });
-test('ramps are walkable to the elevated central platform',()=>{
-  const p=moveState(-17,0,2.5),i={...neutralInput(),forward:1,yaw:-Math.PI/2};let maxY=0;for(let n=0;n<100;n++){move(p,i);maxY=Math.max(maxY,p.y);}assert.ok(maxY>=3.9,`ramp height reached ${maxY}`);
+test('ramps are walkable to the elevated central platform', () => {
+    const p = moveState(-17, 0, 2.5), i = { ...neutralInput(), forward: 1, yaw: -Math.PI / 2 };
+    let maxY = 0;
+    for (let n = 0; n < 100; n++) {
+        move(p, i);
+        maxY = Math.max(maxY, p.y);
+    }
+    assert.ok(maxY >= 3.9, `ramp height reached ${maxY}`);
 });
-test('spawns never overlap a solid obstacle',()=>{for(const p of SPAWNS)for(const b of BOXES)assert.ok(!(Math.abs(p.x-b.x)<b.w/2+.38&&Math.abs(p.z-b.z)<b.d/2+.38&&p.y<b.y+b.h/2),`spawn ${p.x},${p.z}`);});
-test('rewind interpolates between history frames and clamps outside history',()=>{
-  const h=new History(),p=player();p.x=0;h.record(1000,[p]);p.x=10;h.record(1100,[p]);almost(h.rewind(p.id,1050)!.x,5);almost(h.rewind(p.id,800)!.x,0);almost(h.rewind(p.id,1200)!.x,10);assert.equal(h.rewind('missing',1000),null);
+test('spawns never overlap a solid obstacle', () => { for (const p of SPAWNS)
+    for (const b of BOXES)
+        assert.ok(!(Math.abs(p.x - b.x) < b.w / 2 + .38 && Math.abs(p.z - b.z) < b.d / 2 + .38 && p.y < b.y + b.h / 2), `spawn ${p.x},${p.z}`); });
+test('rewind interpolates between history frames and clamps outside history', () => {
+    const h = new History(), p = player();
+    p.x = 0;
+    h.record(1000, [p]);
+    p.x = 10;
+    h.record(1100, [p]);
+    almost(h.rewind(p.id, 1050)!.x, 5);
+    almost(h.rewind(p.id, 800)!.x, 0);
+    almost(h.rewind(p.id, 1200)!.x, 10);
+    assert.equal(h.rewind('missing', 1000), null);
 });
-test('rewind cannot blend a dead player into a new life',()=>{const h=new History(),p=player();p.x=0;h.record(1000,[p]);p.life++;p.x=30;h.record(1100,[p]);const q=h.rewind(p.id,1050)!;assert.equal(q.x,0);assert.notEqual(q.life,p.life);});
-test('client timestamps cannot force future or unbounded rewinds',()=>{assert.equal(rewindTime(5000,1000,0),1000);assert.equal(rewindTime(0,1000,0),850);assert.equal(rewindTime(0,1000,1000),750);assert.equal(rewindTime(900,1000,50),900);});
-test('round transitions from lobby through time/score limits into results',()=>{
-  const r=newRound();assert.equal(r.phase,'lobby');startRound(r,1000);assert.equal(r.phase,'playing');const p=player();assert.equal(checkRound(r,[p],2000),false);p.kills=25;p.name='Winner';assert.equal(checkRound(r,[p],2100),true);assert.equal(r.winner,'Winner');assert.equal(r.nextAt,14100);assert.equal(checkRound(r,[p],2200),false);startRound(r,15000);assert.equal(r.round,2);assert.equal(checkRound(r,[],r.endsAt),true);
+test('rewind cannot blend a dead player into a new life', () => { const h = new History(), p = player(); p.x = 0; h.record(1000, [p]); p.life++; p.x = 30; h.record(1100, [p]); const q = h.rewind(p.id, 1050)!; assert.equal(q.x, 0); assert.notEqual(q.life, p.life); });
+test('client timestamps cannot force future or unbounded rewinds', () => { assert.equal(rewindTime(5000, 1000, 0), 1000); assert.equal(rewindTime(0, 1000, 0), 850); assert.equal(rewindTime(0, 1000, 1000), 750); assert.equal(rewindTime(900, 1000, 50), 900); });
+test('round transitions from lobby through time/score limits into results', () => {
+    const r = newRound();
+    assert.equal(r.phase, 'lobby');
+    startRound(r, 1000);
+    assert.equal(r.phase, 'playing');
+    const p = player();
+    assert.equal(checkRound(r, [p], 2000), false);
+    p.kills = 25;
+    p.name = 'Winner';
+    assert.equal(checkRound(r, [p], 2100), true);
+    assert.equal(r.winner, 'Winner');
+    assert.equal(r.nextAt, 14100);
+    assert.equal(checkRound(r, [p], 2200), false);
+    startRound(r, 15000);
+    assert.equal(r.round, 2);
+    assert.equal(checkRound(r, [], r.endsAt), true);
 });
-test('team round winner uses team kills and handles a tie',()=>{const r=newRound('tdm');startRound(r,0);r.blue=25;assert.ok(checkRound(r,[],100));assert.equal(r.winner,'BLUE TEAM');startRound(r,200);r.blue=3;r.red=3;checkRound(r,[],r.endsAt);assert.equal(r.winner,'DRAW');});
-test('server ignores movement results and rejects invalid or replayed input sequences',()=>{
-  const r=room(),a=r.add('A','triggerman','blue');r.start(1000);assert.equal(r.enqueue(a,[{...neutralInput(1),x:99999}],1000),true);r.tick(1017);assert.notEqual(a.state.x,99999);assert.equal(r.enqueue(a,[neutralInput(1)],1018),false);assert.equal(r.enqueue(a,[{...neutralInput(2),forward:20}],1019),false);
+test('team round winner uses team kills and handles a tie', () => { const r = newRound('tdm'); startRound(r, 0); r.blue = 25; assert.ok(checkRound(r, [], 100)); assert.equal(r.winner, 'BLUE TEAM'); startRound(r, 200); r.blue = 3; r.red = 3; checkRound(r, [], r.endsAt); assert.equal(r.winner, 'DRAW'); });
+test('server ignores movement results and rejects invalid or replayed input sequences', () => {
+    const r = room(), a = r.add('A', 'triggerman', 'blue');
+    r.start(1000);
+    assert.equal(r.enqueue(a, [{ ...neutralInput(1), x: 99999 }], 1000), true);
+    r.tick(1017);
+    assert.notEqual(a.state.x, 99999);
+    assert.equal(r.enqueue(a, [neutralInput(1)], 1018), false);
+    assert.equal(r.enqueue(a, [{ ...neutralInput(2), forward: 20 }], 1019), false);
 });
-test('input flooding cannot simulate more than the tick budget',()=>{const r=room(),a=r.add('A','triggerman','blue');r.start(1000);Object.assign(a.state,moveState(32,0,30));for(let batch=0;batch<6;batch++)r.enqueue(a,Array.from({length:10},(_,i)=>({...neutralInput(batch*10+i+1),forward:1})),1000);r.tick(1017);assert.ok(a.state.ack<=3);assert.ok(30-a.state.z<.15);});
-test('server fire cadence and reload duration are authoritative',()=>{
-  const r=room(),a=r.add('A','triggerman','blue');r.start(1000);a.state.protectionEnd=0;let seq=0;for(let n=0;n<60;n++){r.enqueue(a,[{...neutralInput(++seq),fire:true}],1300+n*STEP*1000);r.tick(1300+n*STEP*1000);}const shots=30-a.state.ammo;assert.ok(shots>=7&&shots<=9,`${shots} shots in 1 second`);const remaining=a.state.ammo;r.enqueue(a,[{...neutralInput(++seq),reload:true}],2400);r.tick(2400);assert.equal(a.state.reloadEnd,4100);r.tick(4000);assert.equal(a.state.ammo,remaining);r.tick(4101);assert.equal(a.state.ammo,30);
+test('input flooding cannot simulate more than the tick budget', () => { const r = room(), a = r.add('A', 'triggerman', 'blue'); r.start(1000); Object.assign(a.state, moveState(32, 0, 30)); for (let batch = 0; batch < 6; batch++)
+    r.enqueue(a, Array.from({ length: 10 }, (_, i) => ({ ...neutralInput(batch * 10 + i + 1), forward: 1 })), 1000); r.tick(1017); assert.ok(a.state.ack <= 3); assert.ok(30 - a.state.z < .15); });
+test('server fire cadence and reload duration are authoritative', () => {
+    const r = room(), a = r.add('A', 'triggerman', 'blue');
+    r.start(1000);
+    a.state.protectionEnd = 0;
+    let seq = 0;
+    for (let n = 0; n < 60; n++) {
+        r.enqueue(a, [{ ...neutralInput(++seq), fire: true }], 1300 + n * STEP * 1000);
+        r.tick(1300 + n * STEP * 1000);
+    }
+    const shots = 30 - a.state.ammo;
+    assert.ok(shots >= 7 && shots <= 9, `${shots} shots in 1 second`);
+    const remaining = a.state.ammo;
+    r.enqueue(a, [{ ...neutralInput(++seq), reload: true }], 2400);
+    r.tick(2400);
+    assert.equal(a.state.reloadEnd, 4100);
+    r.tick(4000);
+    assert.equal(a.state.ammo, remaining);
+    r.tick(4101);
+    assert.equal(a.state.ammo, 30);
 });
-test('server validates headshots, spawn protection, friendly fire and wall occlusion',()=>{
-  for(const condition of ['head','protection','team','wall']){const r=room(),a=r.add('Shooter','hunter','blue'),b=r.add('Target','triggerman',condition==='team'?'blue':'red');r.start(1000);r.round.mode=condition==='team'?'tdm':'ffa';Object.assign(a.state,moveState(32,0,15),{yaw:0,pitch:0,protectionEnd:0});Object.assign(b.state,moveState(32,0,0),{protectionEnd:condition==='protection'?5000:0});if(condition==='wall'){a.state.x=-19;a.state.z=0;b.state.x=-19;b.state.z=-25;}a.aimTime=1;a.nextShot=0;r.history.record(2000,[a.state,b.state]);r.fire(a,{...neutralInput(1),shotTime:2000},2000);assert.equal(b.state.alive,condition!=='head',condition);if(condition==='head'){assert.equal(a.state.kills,1);assert.ok(r.events.some(e=>e.type==='hit'&&e.zone==='head'));}}
+test('server validates headshots, spawn protection, friendly fire and wall occlusion', () => {
+    for (const condition of ['head', 'protection', 'team', 'wall']) {
+        const r = room(), a = r.add('Shooter', 'hunter', 'blue'), b = r.add('Target', 'triggerman', condition === 'team' ? 'blue' : 'red');
+        r.start(1000);
+        r.round.mode = condition === 'team' ? 'tdm' : 'ffa';
+        Object.assign(a.state, moveState(32, 0, 15), { yaw: 0, pitch: 0, protectionEnd: 0 });
+        Object.assign(b.state, moveState(32, 0, 0), { protectionEnd: condition === 'protection' ? 5000 : 0 });
+        if (condition === 'wall') {
+            a.state.x = -19;
+            a.state.z = 0;
+            b.state.x = -19;
+            b.state.z = -25;
+        }
+        a.aimTime = 1;
+        a.nextShot = 0;
+        r.history.record(2000, [a.state, b.state]);
+        r.fire(a, { ...neutralInput(1), shotTime: 2000 }, 2000);
+        assert.equal(b.state.alive, condition !== 'head', condition);
+        if (condition === 'head') {
+            assert.equal(a.state.kills, 1);
+            assert.ok(r.events.some(e => e.type === 'hit' && e.zone === 'head'));
+        }
+    }
 });
-test('respawn resets health, ammo and momentum and adds temporary protection',()=>{const r=room(),a=r.add('A','hunter','blue');r.start(1000);Object.assign(a.state,{alive:false,hp:0,respawnAt:2000,vx:20,ammo:0});r.tick(2001);assert.equal(a.state.hp,60);assert.equal(a.state.ammo,3);assert.equal(a.state.vx,0);assert.equal(a.state.protectionEnd,3501);});
-test('bots fill requested slots and paths route around buildings',()=>{const r=room();r.add('Human','hunter','blue');r.botCount=5;r.fillBots(0);assert.equal(r.players.size,6);r.botCount=2;r.fillBots(0);assert.equal(r.players.size,3);const path=findPath({x:-30,y:0,z:-30},{x:-10,y:0,z:5});assert.ok(path.length>4);for(const p of path)for(const b of BOXES)assert.ok(!(Math.abs(p.x-b.x)<b.w/2&&Math.abs(p.z-b.z)<b.d/2&&b.y-b.h/2<2));});
-
-test('prediction reconciles from an older acknowledgement and replays only pending inputs',async()=>{
-  const {predictInput,reconcile}=await import('../src/client/prediction');
-  const start=player();Object.assign(start,moveState(32,0,30));const predicted={...start},authoritative={...start};
-  const inputs=Array.from({length:60},(_,i)=>({...neutralInput(i+1),forward:1,jump:i===15,slide:i>47&&i<51}));
-  for(const input of inputs)predictInput(predicted,input,true);
-  for(const input of inputs.slice(0,30))predictInput(authoritative,input,true);authoritative.ack=30;
-  const result=reconcile(authoritative,inputs,true);assert.equal(result.remaining.length,30);almost(result.predicted.x,predicted.x);almost(result.predicted.y,predicted.y);almost(result.predicted.z,predicted.z);almost(result.predicted.vz,predicted.vz);
+test('respawn resets health, ammo and momentum and adds temporary protection', () => { const r = room(), a = r.add('A', 'hunter', 'blue'); r.start(1000); Object.assign(a.state, { alive: false, hp: 0, respawnAt: 2000, vx: 20, ammo: 0 }); r.tick(2001); assert.equal(a.state.hp, 60); assert.equal(a.state.ammo, 3); assert.equal(a.state.vx, 0); assert.equal(a.state.protectionEnd, 3501); });
+test('bots fill requested slots and paths route around buildings', () => { const r = room(); r.add('Human', 'hunter', 'blue'); r.botCount = 5; r.fillBots(0); assert.equal(r.players.size, 6); r.botCount = 2; r.fillBots(0); assert.equal(r.players.size, 3); const path = findPath({ x: -30, y: 0, z: -30 }, { x: -10, y: 0, z: 5 }); assert.ok(path.length > 4); for (const p of path)
+    for (const b of BOXES)
+        assert.ok(!(Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2 && b.y - b.h / 2 < 2)); });
+test('prediction reconciles from an older acknowledgement and replays only pending inputs', async () => {
+    const { predictInput, reconcile } = await import('../src/client/prediction');
+    const start = player();
+    Object.assign(start, moveState(32, 0, 30));
+    const predicted = { ...start }, authoritative = { ...start };
+    const inputs = Array.from({ length: 60 }, (_, i) => ({ ...neutralInput(i + 1), forward: 1, jump: i === 15, slide: i > 47 && i < 51 }));
+    for (const input of inputs)
+        predictInput(predicted, input, true);
+    for (const input of inputs.slice(0, 30))
+        predictInput(authoritative, input, true);
+    authoritative.ack = 30;
+    const result = reconcile(authoritative, inputs, true);
+    assert.equal(result.remaining.length, 30);
+    almost(result.predicted.x, predicted.x);
+    almost(result.predicted.y, predicted.y);
+    almost(result.predicted.z, predicted.z);
+    almost(result.predicted.vz, predicted.vz);
 });
-test('a class change waits for the next spawn and does not inherit the previous health pool',()=>{const r=room(),a=r.add('A','triggerman','blue');r.start(0);a.pendingClass='hunter';assert.equal(a.state.classId,'triggerman');r.spawn(a,1000);assert.equal(a.state.classId,'hunter');assert.equal(a.state.hp,60);assert.equal(a.state.weapon,'sniper');});
-test('the bridge underpass connects the side lanes without a dead end',()=>{const p=moveState(-9,0,-9),i={...neutralInput(),forward:1,yaw:-Math.PI/2};for(let n=0;n<100;n++)move(p,i);assert.ok(p.x>7,`underpass exit x=${p.x}`);assert.equal(p.y,0);});
+test('a class change waits for the next spawn and does not inherit the previous health pool', () => { const r = room(), a = r.add('A', 'triggerman', 'blue'); r.start(0); a.pendingClass = 'hunter'; assert.equal(a.state.classId, 'triggerman'); r.spawn(a, 1000); assert.equal(a.state.classId, 'hunter'); assert.equal(a.state.hp, 60); assert.equal(a.state.weapon, 'sniper'); });
+test('the bridge underpass connects the side lanes without a dead end', () => { const p = moveState(-9, 0, -9), i = { ...neutralInput(), forward: 1, yaw: -Math.PI / 2 }; for (let n = 0; n < 100; n++)
+    move(p, i); assert.ok(p.x > 7, `underpass exit x=${p.x}`); assert.equal(p.y, 0); });
