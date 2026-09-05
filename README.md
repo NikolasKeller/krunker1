@@ -1,6 +1,6 @@
 # Krunker / Local Arena
 
-A browser multiplayer FPS with a Three.js client and an authoritative Node/WebSocket server. The first screen is class selection and a live room roster; deploy directly into a match. All map geometry, movement, protocol types, and weapon statistics are shared TypeScript.
+A browser multiplayer FPS with a Three.js client and an authoritative Node/WebSocket server. Create a private lobby, copy its five-character invite URL, choose a class/team, and ready up with up to ten friends plus seven bots. All map geometry, movement, protocol types, and weapon statistics are shared TypeScript.
 
 ## Run locally
 
@@ -11,9 +11,9 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**. Vite proxies `/ws` and `/api` to the game server on port 3000. Open another browser/tab with the same room code to play together. On a LAN, use `http://<host-ip>:5173` on both machines. The host starts the first round. Bots fill five slots by default; the host can set 0–7 bots and Easy, Normal, or Hard before the match.
+Open **http://localhost:5173**. Vite proxies `/ws` and `/api` to the game server on port 3000. Click Create Lobby and share the generated `/?room=AB7K4` URL. Opening an invite joins that lobby directly. On a LAN, use `http://<host-ip>:5173` on both machines. The last ready player triggers a shared three-second countdown. The host can start early; match settings (mode, score/time limit, bots) reset readiness. Bots fill five slots by default; the host can set 0–7 bots and Easy, Normal, or Hard before the match.
 
-Share a room with `http://localhost:5173/?room=YOUR-ROOM`. Change the callsign or room code and press the arrow to reconnect. Each tab has its own reconnect token. Disconnected identities are retained for 20 seconds; empty rooms are removed after 30 seconds.
+Share a room with `http://localhost:5173/?room=YOUR-ROOM`. Edit your callsign in the lobby; duplicates receive a numbered suffix. Join another room by code or create a new lobby in the room panel. Each tab has its own reconnect token. Disconnected identities are retained for 20 seconds; empty rooms are removed after 30 seconds. Disconnected players disappear from the roster immediately; host ownership passes to the next connected player. At capacity, a new friend can take a disconnected slot.
 
 ## Production / Railway
 
@@ -22,7 +22,7 @@ npm run build
 PORT=8080 npm start
 ```
 
-Open **http://localhost:8080**. This one HTTP server serves the compiled client, `/ws`, `/api/rooms`, and `/api/health`. `PORT` is read at startup; the server binds `0.0.0.0`. A multi-stage `Dockerfile` and `railway.json` are included. Railway can deploy the repository directly with its assigned `PORT`; no second service or port is needed. Rooms live in memory, so run one replica (multiple replicas would need room routing).
+Open **http://localhost:8080**. This one HTTP server serves the compiled client, `/ws`, `/api/rooms`, and `/api/health`. `PORT` is read at startup; the server binds `0.0.0.0`. A multi-stage `Dockerfile` and `railway.json` are included. Railway can deploy the repository directly with its assigned `PORT`; no second service or port is needed. The lobby displays LAN URLs from `/api/connection` and the public invite URL. Railway supplies `RAILWAY_PUBLIC_DOMAIN`; set `PUBLIC_URL=https://your-domain.example` for a custom public origin. Rooms live in memory, so run one replica (multiple replicas would need room routing).
 
 ## Controls
 
@@ -37,7 +37,7 @@ Open **http://localhost:8080**. This one HTTP server serves the compiled client,
 | Tab | Live scoreboard |
 | Esc | Release pointer lock and open pause menu |
 
-Audio unlocks on Deploy. Mouse sensitivity, master volume, and graphics quality are saved locally. Changing class during a live round applies on the next respawn. Reloads have unlimited reserve ammunition. The server has no fall damage. Spawn protection lasts 1.5 seconds and ends when firing. Death lasts 2.2 seconds.
+Audio unlocks on Ready or Click to Play. When the countdown ends (or an invite joins a running match), everyone enters the match together. Click to Play captures the mouse; browsers require this user gesture. Mouse sensitivity, master volume, and graphics quality are saved locally. Changing class during a live round applies on the next respawn. Reloads have unlimited reserve ammunition. The server has no fall damage. Spawn protection lasts 1.5 seconds and ends when firing. Death lasts 2.2 seconds.
 
 ## Game
 
@@ -45,7 +45,7 @@ Audio unlocks on Deploy. Mouse sensitivity, master volume, and graphics quality 
 - **Triggerman**: 100 HP, 30-round assault rifle, predictable recoil and moderate spread.
 - **Vince**: 100 HP, two-shell shotgun with eight server-traced pellets and steep range falloff.
 - **Run N Gun**: 100 HP, faster movement, 34-round SMG with a 72 ms shot interval.
-- Free-for-all and team deathmatch. First to 25 eliminations or four minutes; results last 12 seconds, then a fresh round starts automatically.
+- Free-for-all and team deathmatch. Default: first to 25 eliminations or four minutes, configurable by the host. Results return everyone to the same lobby; after six seconds players can ready up for a new round. Results remain visible until that round starts.
 - Sandyard: three connected lanes, a raised central platform, three ramps, an underpass, long perimeter sightlines, containers, crates, and short-range corners.
 - Block characters, animated first-person weapons, scope, muzzle flashes, tracers, impact marks, blood particles, synthesized weapon audio, hit sounds, headshot feedback, directional damage, health/ammo HUD, minimap, killfeed, scoreboards, and results.
 
@@ -66,6 +66,7 @@ Audio unlocks on Deploy. Mouse sensitivity, master volume, and graphics quality 
 ```sh
 npm test
 npm run test:integration
+npm run test:lobby
 npm run test:soak
 npm run test:lifecycle
 npm run typecheck
