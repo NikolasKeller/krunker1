@@ -175,10 +175,10 @@ export type ServerMessage = {
     full: boolean;
     players: PlayerPatch[];
     removed: string[];
-    round: RoundState;
-    host: string;
-    difficulty: Difficulty;
-    bots: number;
+    round?: RoundState;
+    host?: string;
+    difficulty?: Difficulty;
+    bots?: number;
 } | {
     type: 'events';
     events: GameEvent[];

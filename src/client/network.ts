@@ -128,10 +128,10 @@ export class Network {
             this.receivedAt = Date.now();
             this.status = 'CONNECTED';
             this.lastSnapshot = m.n;
-            this.host = m.host;
-            this.round = m.round;
-            this.difficulty = m.difficulty;
-            this.bots = m.bots;
+            if (m.host !== undefined) this.host = m.host;
+            if (m.round) this.round = m.round;
+            if (m.difficulty) this.difficulty = m.difficulty;
+            if (m.bots !== undefined) this.bots = m.bots;
             if (m.full)
                 this.players.clear();
             for (const patch of m.players) {
@@ -145,7 +145,7 @@ export class Network {
                 this.frames.shift();
             const local = this.local;
             if (local) {
-                const old = this.predicted, replayed = reconcile(local, this.pending, this.round.phase === 'playing');
+                const old = this.predicted, replayed = reconcile(local, this.pending, this.round?.phase === 'playing');
                 this.pending = replayed.remaining;
                 this.seq = Math.max(this.seq, local.ack);
                 this.predicted = replayed.predicted;

@@ -27,7 +27,7 @@ class Client {
                 if (m.full) this.players.clear();
                 for (const p of m.players) this.players.set(p.id, { ...this.players.get(p.id), ...p } as PlayerState);
                 for (const id of m.removed) this.players.delete(id);
-                this.round = m.round; this.host = m.host;
+                if (m.round) this.round = m.round; if (m.host !== undefined) this.host = m.host;
             }
         });
     }

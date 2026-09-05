@@ -46,7 +46,7 @@ class Client {
             this.players.set(p.id, { ...this.players.get(p.id), ...p } as PlayerState);
         for (const id of m.removed)
             this.players.delete(id);
-        this.phase = m.round.phase;
+        if (m.round) this.phase = m.round.phase;
         this.snapshots++;
         this.seq = Math.max(this.seq, this.players.get(this.id)?.ack ?? 0);
     } if (m.type === 'events')

@@ -34,7 +34,7 @@ class Client {
             this.players.set(p.id, { ...this.players.get(p.id), ...p });
         for (const id of m.removed)
             this.players.delete(id);
-        this.phase = m.round.phase;
+        if (m.round) this.phase = m.round.phase;
     } if (m.type === 'events')
         this.events.push(...m.events); }); }
     send(m) { if (this.ws.readyState === 1)

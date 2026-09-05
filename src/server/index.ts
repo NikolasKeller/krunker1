@@ -7,14 +7,17 @@ import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Room, type Actor } from './simulation';
+import { wirePlayer, playerDelta } from '../shared/snapshot';
 import { CLASS_IDS } from '../shared/weapons';
-import { MAX_HUMANS, MAX_BOTS, TICK_RATE, type ClientMessage, type PlayerPatch, type PlayerState, type ServerMessage } from '../shared/types';
+import { MAX_HUMANS, MAX_BOTS, TICK_RATE, type ClientMessage, type PlayerPatch, type ServerMessage } from '../shared/types';
 interface Connection {
     ws: WebSocket;
     room?: Room;
     actor?: Actor;
     token?: string;
-    baseline: Map<string, PlayerState>;
+    baseline: Map<string, PlayerPatch>;
+    metadata: string;
+    keyframeSlot: number;
     snapshot: number;
     messages: number;
     strikes: number;
@@ -30,13 +33,13 @@ export function createGameServer() {
         connection?: Connection;
     }>();
     const connections = new Set<Connection>();
-    const stats = { tickRate: 0, tickMs: 0, peakTickMs: 0, ticks: 0, bytesOut: 0, players: 0, rooms: 0 };
+    const stats = { tickRate: 0, tickMs: 0, peakTickMs: 0, tickP95Ms: 0, tickP99Ms: 0, totalTickMs: 0, overBudgetTicks: 0, ticks: 0, bytesOut: 0, players: 0, rooms: 0 };
     const root = path.resolve('dist/client');
     const server = http.createServer(async (req, res) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         if (url.pathname === '/api/health') {
             res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-            res.end(JSON.stringify({ ok: true, ...stats, configuredTickRate: TICK_RATE, rooms: rooms.size, players: [...connections].filter(c => c.actor).length }));
+            res.end(JSON.stringify({ ok: true, ...stats, configuredTickRate: TICK_RATE, rooms: rooms.size, players: [...connections].filter(c => c.actor).length, queuedBytes: [...connections].reduce((n, c) => n + c.ws.bufferedAmount, 0) }));
             return;
         }
         if (url.pathname === '/api/connection') {
@@ -95,7 +98,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { ws, baseline: new Map(), snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now() };
+        const c: Connection = { ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now() };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -258,23 +261,12 @@ export function createGameServer() {
             c.baseline.clear();
             return;
         }
-        const full = force || !c.baseline.size || snapshotId % 60 === 0, patches: PlayerPatch[] = [], removed: string[] = [];
+        const full = force || !c.baseline.size || snapshotId % 100 === c.keyframeSlot, patches: PlayerPatch[] = [], removed: string[] = [];
         for (const a of c.room.players.values()) {
             if (!a.connected) continue;
-            const p = { ...a.state };
-            for (const key of ['x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'pitch', 'bloom'] as const)
-                p[key] = Math.round(p[key] * 10000) / 10000;
-            const before = c.baseline.get(p.id);
-            if (full || !before)
-                patches.push(p);
-            else {
-                const patch: PlayerPatch = { id: p.id };
-                for (const key of Object.keys(p) as (keyof PlayerState)[])
-                    if (p[key] !== before[key])
-                        (patch as Record<string, unknown>)[key] = p[key];
-                if (Object.keys(patch).length > 1)
-                    patches.push(patch);
-            }
+            const p = wirePlayer(a.state, a === c.actor);
+            const patch = playerDelta(p, full ? undefined : c.baseline.get(p.id));
+            if (patch) patches.push(patch);
             c.baseline.set(p.id, p);
         }
         for (const id of c.baseline.keys())
@@ -282,10 +274,14 @@ export function createGameServer() {
                 removed.push(id);
                 c.baseline.delete(id);
             }
-        send(c, { type: 'snapshot', n: snapshotId, base: full ? 0 : c.snapshot, time: Date.now(), full, players: patches, removed, round: c.room.round, host: c.room.host, difficulty: c.room.difficulty, bots: c.room.botCount });
+        const metadata = { round: c.room.round, host: c.room.host, difficulty: c.room.difficulty, bots: c.room.botCount };
+        const encoded = JSON.stringify(metadata);
+        send(c, { type: 'snapshot', n: snapshotId, base: full ? 0 : c.snapshot, time: Date.now(), full, players: patches, removed, ...(full || encoded !== c.metadata ? metadata : {}) });
+        c.metadata = encoded;
         c.snapshot = snapshotId;
     }
     let tick = 0, lastStats = performance.now(), count = 0, total = 0, peak = 0, next = performance.now(), timer: ReturnType<typeof setTimeout>;
+    let durations: number[] = [];
     function loop() {
         const begin = performance.now(), now = Date.now();
         for (const r of rooms.values())
@@ -309,10 +305,17 @@ export function createGameServer() {
         total += elapsed;
         peak = Math.max(peak, elapsed);
         stats.ticks++;
+        stats.totalTickMs += elapsed;
+        if (elapsed > 1000 / TICK_RATE) stats.overBudgetTicks++;
+        durations.push(elapsed);
         if (begin - lastStats >= 1000) {
             stats.tickRate = +(count * 1000 / (begin - lastStats)).toFixed(1);
             stats.tickMs = +(total / count).toFixed(3);
             stats.peakTickMs = +peak.toFixed(3);
+            durations.sort((a, b) => a - b);
+            stats.tickP95Ms = +durations[Math.floor((durations.length - 1) * .95)].toFixed(3);
+            stats.tickP99Ms = +durations[Math.floor((durations.length - 1) * .99)].toFixed(3);
+            durations = [];
             count = 0;
             total = 0;
             peak = 0;

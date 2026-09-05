@@ -15,7 +15,8 @@
     "test:soak": "tsx tests/soak.ts",
     "test:lifecycle": "tsx tests/lifecycle.ts",
     "test:production": "node tests/production.mjs",
-    "test:lobby": "tsx tests/lobby.ts"
+    "test:lobby": "tsx tests/lobby.ts",
+    "test:load": "tsx tests/load.ts"
   },
   "dependencies": {
     "three": "0.185.1",
