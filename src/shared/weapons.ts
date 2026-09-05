@@ -10,7 +10,7 @@ export const WEAPONS: Record<WeaponId,WeaponStats> = {
   knife: {name:'COMBAT KNIFE',damage:65,head:1,legs:1,interval:450,reload:0,magazine:1,range:2.8,falloff:3,pellets:1,spread:0,moving:0,bloom:0,maxBloom:0,recovery:1,aimSpread:1,scopeTime:0,recoil:[[0,0]]},
 };
 export const CLASSES: Record<ClassId,{ name:string; role:string; weapon:WeaponId; hp:number; speed:number; color:string; description:string; stats:number[] }> = {
-  hunter: {name:'HUNTER',role:'PRECISION',weapon:'sniper',hp:70,speed:1,color:'#ecad56',description:'One shot. Make it count. A lethal upper-body hit, a clean scope, and a quick escape.',stats:[100,22,94]},
+  hunter: {name:'HUNTER',role:'PRECISION',weapon:'sniper',hp:60,speed:1,color:'#ecad56',description:'One shot. Make it count. A lethal upper-body hit, a clean scope, and a quick escape.',stats:[100,22,94]},
   triggerman: {name:'TRIGGERMAN',role:'ALL-ROUNDER',weapon:'rifle',hp:100,speed:1,color:'#bedf57',description:'The original all-rounder. Reliable damage, a steady rhythm, and thirty reasons to keep moving.',stats:[64,65,70]},
   vince: {name:'VINCE',role:'CLOSE QUARTERS',weapon:'shotgun',hp:100,speed:1.04,color:'#ee8d72',description:'Get close. Clear the room. Two barrels of devastating damage and a fast reload.',stats:[97,30,22]},
   runngun: {name:'RUN N GUN',role:'MOBILITY',weapon:'smg',hp:100,speed:1.12,color:'#80c6ce',description:'Never stand still. A blistering fire rate and the fastest feet in the yard.',stats:[43,100,43]},

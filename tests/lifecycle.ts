@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { setTimeout as delay } from 'node:timers/promises';
+import { WebSocket } from 'ws';
+import { createGameServer } from '../src/server/index';
+const app=createGameServer();await new Promise<void>(resolve=>app.server.listen(0,'127.0.0.1',resolve));const addr=app.server.address();assert.ok(addr&&typeof addr!=='string');
+const ws=new WebSocket(`ws://127.0.0.1:${addr.port}/ws`);await new Promise<void>(resolve=>ws.once('open',resolve));
+ws.send(JSON.stringify({type:'join',name:'Lifecycle',room:'EMPTY',classId:'hunter',team:'blue'}));
+await delay(100);assert.equal(app.rooms.get('EMPTY')?.players.size,6);ws.close();
+await delay(21000);const room=app.rooms.get('EMPTY');assert.ok(room);assert.equal([...room.players.values()].filter(p=>!p.state.bot).length,0);console.log('PASS: disconnected identity removed after the grace period');
+await delay(31000);assert.equal(app.rooms.size,0);console.log('PASS: empty room and its bots removed');await app.close();

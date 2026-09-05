@@ -1,14 +1,27 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { ClassId, WeaponId } from '../shared/types';
 import { CLASSES } from '../shared/weapons';
 const boxGeometry=new THREE.BoxGeometry(1,1,1);
 const materials=new Map<number,THREE.MeshLambertMaterial>();
 export function material(color:number){if(!materials.has(color))materials.set(color,new THREE.MeshLambertMaterial({color,flatShading:true}));return materials.get(color)!;}
 export function box(parent:THREE.Object3D,x:number,y:number,z:number,w:number,h:number,d:number,color:number){const mesh=new THREE.Mesh(boxGeometry,material(color));mesh.position.set(x,y,z);mesh.scale.set(w,h,d);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
+const gunTemplates=new Map<WeaponId,THREE.Group>();
+export function batchMeshes(group:THREE.Group){
+  const batches=new Map<THREE.Material,THREE.BufferGeometry[]>();
+  for(const child of [...group.children])if(child instanceof THREE.Mesh){
+    child.updateMatrix();const geo=child.geometry.clone().applyMatrix4(child.matrix),mat=child.material as THREE.Material;
+    if(!batches.has(mat))batches.set(mat,[]);batches.get(mat)!.push(geo);group.remove(child);
+  }
+  for(const [mat,geometries]of batches){const merged=mergeGeometries(geometries);geometries.forEach(g=>g.dispose());if(merged){const mesh=new THREE.Mesh(merged,mat);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);}}
+  return group;
+}
+function finishGun(g:THREE.Group,id:WeaponId){batchMeshes(g);gunTemplates.set(id,g);return g.clone();}
 export function makeGun(id:WeaponId):THREE.Group {
+  if(gunTemplates.has(id))return gunTemplates.get(id)!.clone();
   const g=new THREE.Group(),dark=0x272a2b,black=0x15191a,metal=0x555b5a,wood=0x8e633d,stock=id==='sniper'?0x536248:wood;
-  if(id==='knife'){box(g,0,0,0.14,0.09,0.1,0.28,black);box(g,0,0,-0.22,0.04,0.12,0.48,0xa8b2b1);box(g,0,0,-0.005,0.08,0.24,0.035,metal);return g;}
-  if(id==='pistol'){box(g,0,0,-0.09,0.13,0.16,0.5,metal);box(g,0,-0.16,0.07,0.12,0.27,0.17,black).rotation.x=-0.2;box(g,0,0.1,-0.28,0.025,0.045,0.04,black);box(g,0,0,-0.355,0.065,0.07,0.04,black);return g;}
+  if(id==='knife'){box(g,0,0,0.14,0.09,0.1,0.28,black);box(g,0,0,-0.22,0.04,0.12,0.48,0xa8b2b1);box(g,0,0,-0.005,0.08,0.24,0.035,metal);return finishGun(g,id);}
+  if(id==='pistol'){box(g,0,0,-0.09,0.13,0.16,0.5,metal);box(g,0,-0.16,0.07,0.12,0.27,0.17,black).rotation.x=-0.2;box(g,0,0.1,-0.28,0.025,0.045,0.04,black);box(g,0,0,-0.355,0.065,0.07,0.04,black);return finishGun(g,id);}
   const sniper=id==='sniper',shotgun=id==='shotgun',smg=id==='smg';
   box(g,0,0,0.43,sniper?0.19:0.16,0.22,0.49,stock);box(g,0,-0.035,0.67,0.23,0.3,0.075,black);
   box(g,0,0.015,0,sniper?0.22:0.19,0.22,0.52,dark);
@@ -25,7 +38,7 @@ export function makeGun(id:WeaponId):THREE.Group {
     box(g,0,0.29,-0.485,0.16,0.16,0.008,0x52747a);box(g,0,0.41,-0.12,0.09,0.09,0.1,metal);box(g,0.16,0.1,0.11,0.18,0.07,0.075,metal);
   }else{box(g,0,0.165,-0.12,0.11,0.08,0.11,black);box(g,0,0.17,smg?-0.62:-0.85,0.04,0.15,0.045,black);box(g,0,0.245,smg?-0.62:-0.85,0.028,0.022,0.028,0xc1d276);}
   box(g,0.112,0.07,0.04,0.02,0.07,0.17,metal);
-  return g;
+  return finishGun(g,id);
 }
 export interface Character {group:THREE.Group;leftLeg:THREE.Group;rightLeg:THREE.Group;arms:THREE.Group;head:THREE.Group;gun:THREE.Group;weapon:WeaponId;}
 export function makeCharacter(classId:ClassId,color:number):Character {
@@ -43,6 +56,10 @@ export function makeCharacter(classId:ClassId,color:number):Character {
   box(arms,-0.35,-0.28,-0.37,0.23,0.23,0.35,skin);const right=box(arms,0.43,-0.06,-0.17,0.25,0.49,0.27,color);right.rotation.x=-1.03;
   box(arms,0.33,-0.14,-0.39,0.24,0.22,0.30,skin);
   const weapon=CLASSES[classId].weapon,gun=makeGun(weapon);gun.scale.setScalar(0.62);gun.position.set(0.18,-0.14,-0.46);arms.add(gun);
+  for(const group of [g,leftLeg,rightLeg,arms,head])batchMeshes(group);
   return {group:g,leftLeg,rightLeg,arms,head,gun,weapon};
 }
 export function animateCharacter(c:Character,speed:number,time:number,pitch:number,slide:number){const walk=Math.sin(time*13)*Math.min(0.75,speed*0.08);c.leftLeg.rotation.x=walk;c.rightLeg.rotation.x=-walk;c.arms.rotation.x=pitch*0.65;c.head.rotation.x=pitch*0.5;c.group.scale.y=slide>0?0.68:1;}
+export function releaseCharacter(c:Character){
+  for(const group of [c.group,c.head,c.arms,c.leftLeg,c.rightLeg])for(const child of group.children)if(child instanceof THREE.Mesh)child.geometry.dispose();
+}

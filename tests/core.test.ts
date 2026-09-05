@@ -83,5 +83,15 @@ test('server fire cadence and reload duration are authoritative',()=>{
 test('server validates headshots, spawn protection, friendly fire and wall occlusion',()=>{
   for(const condition of ['head','protection','team','wall']){const r=room(),a=r.add('Shooter','hunter','blue'),b=r.add('Target','triggerman',condition==='team'?'blue':'red');r.start(1000);r.round.mode=condition==='team'?'tdm':'ffa';Object.assign(a.state,moveState(32,0,15),{yaw:0,pitch:0,protectionEnd:0});Object.assign(b.state,moveState(32,0,0),{protectionEnd:condition==='protection'?5000:0});if(condition==='wall'){a.state.x=-19;a.state.z=0;b.state.x=-19;b.state.z=-25;}a.aimTime=1;a.nextShot=0;r.history.record(2000,[a.state,b.state]);r.fire(a,{...neutralInput(1),shotTime:2000},2000);assert.equal(b.state.alive,condition!=='head',condition);if(condition==='head'){assert.equal(a.state.kills,1);assert.ok(r.events.some(e=>e.type==='hit'&&e.zone==='head'));}}
 });
-test('respawn resets health, ammo and momentum and adds temporary protection',()=>{const r=room(),a=r.add('A','hunter','blue');r.start(1000);Object.assign(a.state,{alive:false,hp:0,respawnAt:2000,vx:20,ammo:0});r.tick(2001);assert.equal(a.state.hp,70);assert.equal(a.state.ammo,3);assert.equal(a.state.vx,0);assert.equal(a.state.protectionEnd,3501);});
+test('respawn resets health, ammo and momentum and adds temporary protection',()=>{const r=room(),a=r.add('A','hunter','blue');r.start(1000);Object.assign(a.state,{alive:false,hp:0,respawnAt:2000,vx:20,ammo:0});r.tick(2001);assert.equal(a.state.hp,60);assert.equal(a.state.ammo,3);assert.equal(a.state.vx,0);assert.equal(a.state.protectionEnd,3501);});
 test('bots fill requested slots and paths route around buildings',()=>{const r=room();r.add('Human','hunter','blue');r.botCount=5;r.fillBots(0);assert.equal(r.players.size,6);r.botCount=2;r.fillBots(0);assert.equal(r.players.size,3);const path=findPath({x:-30,y:0,z:-30},{x:-10,y:0,z:5});assert.ok(path.length>4);for(const p of path)for(const b of BOXES)assert.ok(!(Math.abs(p.x-b.x)<b.w/2&&Math.abs(p.z-b.z)<b.d/2&&b.y-b.h/2<2));});
+
+test('prediction reconciles from an older acknowledgement and replays only pending inputs',async()=>{
+  const {predictInput,reconcile}=await import('../src/client/prediction');
+  const start=player();Object.assign(start,moveState(32,0,30));const predicted={...start},authoritative={...start};
+  const inputs=Array.from({length:60},(_,i)=>({...neutralInput(i+1),forward:1,jump:i===15,slide:i>47&&i<51}));
+  for(const input of inputs)predictInput(predicted,input,true);
+  for(const input of inputs.slice(0,30))predictInput(authoritative,input,true);authoritative.ack=30;
+  const result=reconcile(authoritative,inputs,true);assert.equal(result.remaining.length,30);almost(result.predicted.x,predicted.x);almost(result.predicted.y,predicted.y);almost(result.predicted.z,predicted.z);almost(result.predicted.vz,predicted.vz);
+});
+test('a class change waits for the next spawn and does not inherit the previous health pool',()=>{const r=room(),a=r.add('A','triggerman','blue');r.start(0);a.pendingClass='hunter';assert.equal(a.state.classId,'triggerman');r.spawn(a,1000);assert.equal(a.state.classId,'hunter');assert.equal(a.state.hp,60);assert.equal(a.state.weapon,'sniper');});

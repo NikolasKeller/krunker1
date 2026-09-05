@@ -1,6 +1,5 @@
 import { INTERPOLATION_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
-import { move } from '../shared/movement';
-import { CLASSES } from '../shared/weapons';
+import { predictInput, reconcile } from './prediction';
 import { angleLerp, clamp, lerp } from '../shared/math';
 export class Network {
   ws?:WebSocket;id='';room='';host='';status='CONNECTING';ping=0;offset=0;seq=0;
@@ -22,9 +21,8 @@ export class Network {
   send(message:ClientMessage){if(this.ws?.readyState===WebSocket.OPEN)this.ws.send(JSON.stringify(message));}
   get serverNow(){return Date.now()+this.offset;}
   get local(){return this.players.get(this.id);}
-  input(i:Input){if(!this.predicted)return;this.pending.push(i);this.outgoing.push(i);if(this.pending.length>240){this.pending=[];this.predicted={...this.local!};this.send({type:'sync'});return;}this.predict(this.predicted,i);if(this.outgoing.length>=2)this.flush();}
+  input(i:Input){if(!this.predicted)return;this.pending.push(i);this.outgoing.push(i);if(this.pending.length>240){this.pending=[];this.predicted={...this.local!};this.send({type:'sync'});return;}predictInput(this.predicted,i,this.round?.phase==='playing');if(this.outgoing.length>=2)this.flush();}
   flush(){if(this.outgoing.length){this.send({type:'input',inputs:this.outgoing.splice(0,12)});}}
-  private predict(p:PlayerState,i:Input){if(!p.alive||this.round?.phase!=='playing')return;const scale=CLASSES[p.classId].speed*(i.slot===3?1.16:1);move(p,i,scale);p.yaw=i.yaw;p.pitch=i.pitch;}
   private receive(m:ServerMessage){
     if(m.type==='welcome'){this.id=m.id;this.room=m.room;this.host=m.host;this.offset=m.serverTime-Date.now();sessionStorage.setItem(`arena-token-${this.config!.room}`,m.token);this.onWelcome();}
     if(m.type==='pong'){const rtt=Date.now()-m.time;this.ping=Math.round(rtt);const offset=m.serverTime-(m.time+rtt/2);this.offset=lerp(this.offset,offset,0.2);}
@@ -36,8 +34,8 @@ export class Network {
       if(m.full)this.players.clear();for(const patch of m.players){const prev=this.players.get(patch.id);this.players.set(patch.id,{...prev,...patch} as PlayerState);}for(const id of m.removed)this.players.delete(id);
       this.frames.push({time:m.time,players:new Map([...this.players].map(([id,p])=>[id,{...p}]))});while(this.frames.length>32)this.frames.shift();
       const local=this.local;if(local){
-        const old=this.predicted;this.pending=this.pending.filter(i=>i.seq>local.ack);this.seq=Math.max(this.seq,local.ack);
-        this.predicted={...local};for(const i of this.pending)this.predict(this.predicted,i);
+        const old=this.predicted,replayed=reconcile(local,this.pending,this.round.phase==='playing');this.pending=replayed.remaining;this.seq=Math.max(this.seq,local.ack);
+        this.predicted=replayed.predicted;
         if(old&&old.life===local.life){const dx=old.x-this.predicted.x,dy=old.y-this.predicted.y,dz=old.z-this.predicted.z;const error=Math.hypot(dx,dy,dz);this.maxCorrection=Math.max(this.maxCorrection,error);if(error>0.01)this.reconciliations++;if(error<3){this.correction.x+=dx;this.correction.y+=dy;this.correction.z+=dz;}else this.correction={x:0,y:0,z:0};}
         else{this.pending=[];this.outgoing=[];this.correction={x:0,y:0,z:0};}
       }
