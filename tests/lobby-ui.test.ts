@@ -5,6 +5,8 @@ import { LOBBY_UPDATE_MS } from '../src/client/lobby';
 import type { Network } from '../src/client/network';
 import { Room } from '../src/server/simulation';
 import { installDOM } from './dom';
+import { Controls } from '../src/client/input';
+import type { ClientMessage } from '../src/shared/types';
 
 function setup() {
     const env = installDOM(), room = new Room('ABCDE');
@@ -59,9 +61,28 @@ test('callsign focus, draft and caret survive ready, roster, team and countdown 
         assert.equal(row.querySelector('different'), null, 'names remain text');
         assert.ok(button instanceof dom.window.HTMLButtonElement);
         assert.equal(button.tabIndex, 0); assert.equal(button.disabled, false);
-        let clicks = 0; ui.onDeploy = () => clicks++;
+        const sent: ClientMessage[] = []; net.send = message => { sent.push(message); };
+        ui.onDeploy = () => { throw new Error('Gameplay setup must not block ready messages'); };
         label.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-        assert.equal(clicks, 1, 'retained text target still reaches the button handler');
+        assert.deepEqual(sent.at(-1), { type: 'ready', ready: false }, 'retained target sends unready through the button handler');
+    } finally { restore(); }
+});
+
+test('create and ready buttons work without gameplay initialization, and Space remains available to buttons', () => {
+    const { dom, restore, ui, net } = setup();
+    try {
+        const sent: ClientMessage[] = []; net.send = message => { sent.push(message); };
+        ui.onDeploy = () => { throw new Error('Audio/renderer unavailable'); };
+        const button = document.getElementById('deploy') as HTMLButtonElement;
+        button.click(); assert.deepEqual(sent.at(-1), { type: 'ready', ready: true });
+        net.ws = undefined; net.players.clear();
+        let creates = 0; ui.onRoom = () => creates++;
+        ui.updateLobby(); button.click(); assert.equal(creates, 1);
+        new Controls(document.createElement('canvas'));
+        button.focus();
+        const event = new dom.window.KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true, cancelable: true });
+        button.dispatchEvent(event);
+        assert.equal(event.defaultPrevented, false, 'game controls must not cancel native button activation');
     } finally { restore(); }
 });
 

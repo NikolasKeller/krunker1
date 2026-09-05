@@ -25,14 +25,6 @@ ui.onClass = id => { renderer.setClass(id); };
 ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); document.exitPointerLock(); net.connect(ui.joinConfig); };
 const deploy = () => {
     audio.unlock();
-    if (!net.ws) { ui.onRoom(); return; }
-    if (!net.id || !net.local) return;
-    ui.saveProfile();
-    if (net.round?.phase === 'lobby' || net.round?.phase === 'countdown') {
-        net.send({ type: 'ready', ready: !net.local.ready });
-        return;
-    }
-    if (net.round?.phase !== 'playing') return;
     ui.menu = false;
     ui.paused = false;
     playing = true;

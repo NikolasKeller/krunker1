@@ -18,7 +18,7 @@ export class Controls {
         document.addEventListener('pointerlockerror', () => this.onLock(false));
         addEventListener('mousemove', e => { if (!this.locked)
             return; this.yaw -= e.movementX * this.sensitivity * (this.aim ? 0.62 : 1); this.pitch = clamp(this.pitch - e.movementY * this.sensitivity * (this.aim ? 0.62 : 1), -1.54, 1.54); });
-        addEventListener('keydown', e => { if ((e.target as HTMLElement).matches('input,select,textarea'))
+        addEventListener('keydown', e => { if ((e.target as HTMLElement).closest('input,select,textarea,button,a,[contenteditable]'))
             return; if (['Tab', 'Space', 'ShiftLeft', 'ShiftRight'].includes(e.code))
             e.preventDefault(); if (e.code === 'Tab')
             this.onScore(true); if (e.code === 'Escape')

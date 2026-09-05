@@ -91,7 +91,7 @@ export class UI {
         $('create-room').onclick = () => { $<HTMLInputElement>('room-code').value = ''; this.onRoom(); };
         $('force-start').onclick = () => { this.saveProfile(); net.send({ type: 'start' }); };
         $('copy-link').onclick = () => void this.copyLink();
-        $('deploy').onclick = () => this.onDeploy();
+        $('deploy').onclick = () => this.deploy();
         $('join-room').onclick = () => this.onRoom();
         $('resume').onclick = () => this.onResume();
         $('change-class').onclick = () => { this.menu = true; this.paused = false; this.visibility(); };
@@ -110,6 +110,16 @@ export class UI {
         const name = $<HTMLInputElement>('player-name').value;
         localStorage.setItem('arena-name', name);
         if (this.net.id && this.net.local?.name !== name) this.net.send({ type: 'profile', name });
+    }
+    private deploy() {
+        const net = this.net;
+        if (!net.ws) { this.onRoom(); return; }
+        if (!net.local || net.status !== 'CONNECTED') return;
+        this.saveProfile();
+        if (net.round?.phase === 'lobby' || net.round?.phase === 'countdown') {
+            // Lobby actions must not depend on audio, WebGL, or pointer-lock setup.
+            net.send({ type: 'ready', ready: !net.local.ready });
+        } else if (net.round?.phase === 'playing') this.onDeploy();
     }
     async copyLink() {
         const field = $<HTMLInputElement>('share-url');
