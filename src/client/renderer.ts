@@ -16,14 +16,14 @@ export class Renderer {
     this.scene.background=new THREE.Color(0xa9d2dd);this.scene.fog=new THREE.Fog(0xa9d2dd,75,160);this.scene.add(new THREE.HemisphereLight(0xf4f9ff,0xaaa18d,2.1));
     const sun=new THREE.DirectionalLight(0xfff0d4,2.6);sun.position.set(-30,55,20);sun.castShadow=true;sun.shadow.mapSize.set(1536,1536);Object.assign(sun.shadow.camera,{left:-47,right:47,top:47,bottom:-47,near:1,far:125});sun.shadow.bias=-0.0005;sun.shadow.normalBias=0.025;this.scene.add(sun);
     buildMap(this.scene);this.effects=new Effects(this.scene);
-    this.previewScene.add(new THREE.HemisphereLight(0xffffff,0x738b91,2.7));const pl=new THREE.DirectionalLight(0xffe3b5,3.2);pl.position.set(-3,6,5);this.previewScene.add(pl);this.preview=makeCharacter('hunter',0xb9bda2);this.previewScene.add(this.preview.group);this.preview.group.rotation.y=-0.6;
+    this.previewScene.add(new THREE.HemisphereLight(0xffffff,0x738b91,2.7));const pl=new THREE.DirectionalLight(0xffe3b5,3.2);pl.position.set(-3,6,5);this.previewScene.add(pl);this.preview=makeCharacter('hunter',0xb9bda2);this.previewScene.add(this.preview.group);this.preview.group.rotation.y=-2.15;
     const pad=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.18,0.12,8),new THREE.MeshLambertMaterial({color:0x536267}));pad.position.y=-0.06;this.previewScene.add(pad);
     this.previewCamera.position.set(3.5,2.25,5);this.previewCamera.lookAt(0,0.95,0);this.camera.rotation.order='YXZ';
     addEventListener('resize',()=>this.resize());this.resize();
   }
   setQuality(quality:string){this.gl.setPixelRatio(Math.min(devicePixelRatio,quality==='low'?1:quality==='high'?1.6:1.35));this.gl.shadowMap.enabled=quality!=='low';this.resize();localStorage.setItem('arena-quality',quality);}
   private resize(){this.width=innerWidth;this.height=innerHeight;this.gl.setSize(this.width,this.height);this.camera.aspect=this.width/this.height;this.camera.updateProjectionMatrix();this.viewmodel.resize(this.width,this.height);}
-  setClass(id:ClassId){if(id===this.selected)return;this.selected=id;this.previewScene.remove(this.preview.group);this.preview=makeCharacter(id,id==='hunter'?0xb9bda2:id==='triggerman'?0x768c68:id==='vince'?0xaa6f54:0x619398);this.preview.group.rotation.y=-0.6;this.previewScene.add(this.preview.group);}
+  setClass(id:ClassId){if(id===this.selected)return;this.selected=id;this.previewScene.remove(this.preview.group);this.preview=makeCharacter(id,id==='hunter'?0xb9bda2:id==='triggerman'?0x768c68:id==='vince'?0xaa6f54:0x619398);this.preview.group.rotation.y=-2.15;this.previewScene.add(this.preview.group);}
   damage(){this.damageKick=0.2;}
   project(p:Vec3){const v=new THREE.Vector3(p.x,p.y,p.z).project(this.camera);return {x:(v.x*0.5+0.5)*this.width,y:(-v.y*0.5+0.5)*this.height,visible:v.z<1&&v.z>0};}
   render(dt:number,time:number,local:PlayerState|undefined,remotes:PlayerState[],look:{yaw:number;pitch:number},correction:Vec3,menu:boolean,aiming:boolean,serverNow:number,mode:string){
@@ -46,7 +46,7 @@ export class Renderer {
       this.viewmodel.update(dt,time,speed,aiming,local.reloadEnd,serverNow,local.slide);
     }
     this.camera.updateProjectionMatrix();this.gl.setViewport(0,0,this.width,this.height);this.gl.clear();this.gl.render(this.scene,this.camera);this.drawCalls=this.gl.info.render.calls;this.triangles=this.gl.info.render.triangles;
-    if(menu){this.gl.clearDepth();const w=this.width*(this.width<900?0.43:0.42),h=this.height*0.78;this.gl.setViewport(this.width*0.31,this.height*0.16,w,h);this.previewCamera.aspect=w/h;this.previewCamera.updateProjectionMatrix();this.preview.group.rotation.y=-0.68+Math.sin(time*0.5)*0.06;animateCharacter(this.preview,0,time,-0.08,0);this.gl.render(this.previewScene,this.previewCamera);this.gl.setViewport(0,0,this.width,this.height);}
+    if(menu){this.gl.clearDepth();const w=this.width*(this.width<900?0.43:0.42),h=this.height*0.78;this.gl.setViewport(this.width*0.31,this.height*0.16,w,h);this.previewCamera.aspect=w/h;this.previewCamera.updateProjectionMatrix();this.preview.group.rotation.y=-2.158+Math.sin(time*0.5)*0.06;animateCharacter(this.preview,0,time,-0.08,0);this.gl.render(this.previewScene,this.previewCamera);this.gl.setViewport(0,0,this.width,this.height);}
     else if(local?.alive&&!(aiming&&local.weapon==='sniper'&&this.viewmodel.aim>0.82)){this.gl.clearDepth();this.gl.render(this.viewmodel.scene,this.viewmodel.camera);this.drawCalls+=this.gl.info.render.calls;this.triangles+=this.gl.info.render.triangles;}
   }
 }

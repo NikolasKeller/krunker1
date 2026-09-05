@@ -30,7 +30,7 @@ export function move(p:MoveState,i:Input,speedScale=1,dt=STEP):void {
   const wish=BASE_SPEED*speedScale*(len>1?1.12:1)*(i.aim?0.83:1);
   if(p.grounded&&p.slide<=0) {const friction=Math.max(0,1-8.5*dt);p.vx*=friction;p.vz*=friction;}
   if(p.slide>0&&len>0) {speed=Math.hypot(p.vx,p.vz);const steer=Math.min(1,7.5*dt);p.vx=p.vx*(1-steer)+wx*speed*steer;p.vz=p.vz*(1-steer)+wz*speed*steer;const after=Math.hypot(p.vx,p.vz);if(after>0){p.vx*=speed/after;p.vz*=speed/after;}p.vx*=1-0.5*dt;p.vz*=1-0.5*dt;}
-  else if(len>0) {const current=p.vx*wx+p.vz*wz,add=Math.max(0,wish-current),accel=(p.grounded?70:18)*dt;const a=Math.min(add,accel);p.vx+=wx*a;p.vz+=wz*a;}
+  else if(len>0) {const current=p.vx*wx+p.vz*wz,add=Math.max(0,wish-current),accel=(p.grounded?110:18)*dt;const a=Math.min(add,accel);p.vx+=wx*a;p.vz+=wz*a;}
   speed=Math.hypot(p.vx,p.vz);if(speed>MAX_SPEED){p.vx*=MAX_SPEED/speed;p.vz*=MAX_SPEED/speed;}
   p.vy-=GRAVITY*dt;
   const oldY=p.y,bodyH=p.slide>0?1.26:HEIGHT;

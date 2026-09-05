@@ -10,7 +10,7 @@ import { brain, botInput, type BotBrain } from './bots';
 export interface Actor {
   state:PlayerState; queue:Input[]; lastSeq:number; lastInputAt:number; credit:number;
   nextShot:number; recoilIndex:number; lastShot:number; aimTime:number;
-  ammo:Record<WeaponId,number>; botBrain?:BotBrain; rtt:number; connected:boolean;
+  ammo:Record<WeaponId,number>; botBrain?:BotBrain; rtt:number; connected:boolean; pendingClass?:ClassId;
 }
 const ammo=()=>Object.fromEntries(Object.entries(WEAPONS).map(([id,w])=>[id,w.magazine])) as Record<WeaponId,number>;
 export class Room {
@@ -25,6 +25,7 @@ export class Room {
   }
   remove(id:string){this.players.delete(id);if(this.host===id)this.host=[...this.players.values()].find(p=>!p.state.bot&&p.connected)?.state.id??'';}
   spawn(a:Actor,now:number){
+    if(a.pendingClass){a.state.classId=a.pendingClass;a.pendingClass=undefined;}
     const p=a.state,c=CLASSES[p.classId];
     const enemies=[...this.players.values()].filter(a=>a.state.id!==p.id&&a.state.alive&&(this.round.mode==='ffa'||a.state.team!==p.team)).map(a=>a.state);
     const candidates=SPAWNS.filter((_,i)=>this.round.mode==='ffa'||(p.team==='blue'?i%2===0:i%2===1));

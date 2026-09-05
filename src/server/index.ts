@@ -24,7 +24,7 @@ export function createGameServer() {
       let file=path.resolve(root,'.'+requestPath);if(file!==root&&!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}
       if(!path.extname(file))file=path.join(root,'index.html');
       const info=await stat(file);if(!info.isFile())throw new Error('Not a file');
-      const body=await readFile(file),mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.woff2':'font/woff2','.png':'image/png','.json':'application/json'};
+      const body=await readFile(file),mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf','.png':'image/png','.json':'application/json'};
       res.writeHead(200,{'content-type':mime[path.extname(file)]??'application/octet-stream','cache-control':file.includes('/assets/')?'public, max-age=31536000, immutable':'no-cache','x-content-type-options':'nosniff'});res.end(body);
     }catch{res.writeHead(404,{'content-type':'text/plain'});res.end('Client not built. Development: http://localhost:5173 · Production: npm run build && npm start');}
   });
@@ -61,7 +61,7 @@ export function createGameServer() {
       if(m.type==='input'){if(!r.enqueue(a,m.inputs,now)&&++c.strikes>10)ws.close(1008,'Invalid input');}
       if(m.type==='sync')snapshot(c,true);
       if(m.type==='class'&&CLASS_IDS.includes(m.classId)&&['blue','red'].includes(m.team)){
-        if(r.round.phase!=='playing'){a.state.classId=m.classId;a.state.team=m.team;r.spawn(a,now);}else{a.state.classId=m.classId; /* Class changes take effect at the next spawn. */}
+        if(r.round.phase!=='playing'){a.state.classId=m.classId;a.state.team=m.team;r.spawn(a,now);}else{a.pendingClass=m.classId;}
       }
       if(m.type==='configure'&&r.host===a.state.id&&r.round.phase!=='playing'){
         if(m.mode==='ffa'||m.mode==='tdm')r.round.mode=m.mode;
