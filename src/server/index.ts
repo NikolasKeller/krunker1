@@ -44,7 +44,7 @@ export function createGameServer() {
         if(!CLASS_IDS.includes(m.classId)||!['blue','red'].includes(m.team))return;
         const id=String(m.room??'YARD-01').toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,18)||'YARD-01';
         if(m.token&&sessions.has(m.token)){
-          const s=sessions.get(m.token)!;if(s.room.id===id&&s.expires>now){if(s.connection&&s.connection!==c){s.connection.actor=undefined;s.connection.ws.close(4000,'Session resumed');}c.room=s.room;c.actor=s.actor;c.token=m.token;s.actor.connected=true;s.actor.queue=[];s.actor.lastSeq=s.actor.state.ack;s.expires=Infinity;s.connection=c;}
+          const s=sessions.get(m.token)!;if(s.room.id===id&&s.expires>now){if(s.connection&&s.connection!==c){s.connection.actor=undefined;s.connection.ws.close(4000,'Session resumed');}c.room=s.room;c.actor=s.actor;c.token=m.token;s.actor.connected=true;s.actor.queue=[];s.actor.lastSeq=s.actor.state.ack;s.expires=Infinity;s.connection=c;if(!s.room.host)s.room.host=s.actor.state.id;if(s.room.round.phase==='playing')s.room.spawn(s.actor,now);}
         }
         if(!c.actor){
           if(!rooms.has(id)){if(rooms.size>=32){send(c,{type:'error',message:'All rooms are busy. Try again shortly.'});return;}rooms.set(id,new Room(id));}
