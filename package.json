@@ -16,7 +16,7 @@
     "test:lifecycle": "tsx tests/lifecycle.ts"
   },
   "dependencies": {
-    "three": "^0.180.0",
+    "three": "0.185.1",
     "ws": "^8.18.3"
   },
   "devDependencies": {

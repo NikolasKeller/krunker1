@@ -64,7 +64,7 @@ export class Room {
         p.aiming=i.aim;if(i.aim)a.aimTime=Math.min(1,a.aimTime+STEP*1000/(WEAPONS[weapon].scopeTime||1));else a.aimTime=0;
         move(p,i,CLASSES[p.classId].speed*(weapon==='knife'?1.16:1));
         if(i.reload&&weapon!=='knife'&&!p.reloadEnd&&p.ammo<WEAPONS[weapon].magazine)p.reloadEnd=now+WEAPONS[weapon].reload;
-        if(i.fire&&!p.reloadEnd&&now>=a.nextShot){if(p.ammo>0||weapon==='knife')this.fire(a,i,now);else if(weapon!=='knife')p.reloadEnd=now+WEAPONS[weapon].reload;}
+        if(i.fire&&!p.reloadEnd&&now>=a.nextShot){if(p.ammo>0||weapon==='knife')this.fire(a,i,now);else p.reloadEnd=now+WEAPONS[weapon].reload;}
       }
       if(!processed&&now-a.lastInputAt>250&&p.alive&&this.round.phase==='playing'){const i=neutralInput(p.ack);i.yaw=p.yaw;move(p,i,CLASSES[p.classId].speed);}
     }
