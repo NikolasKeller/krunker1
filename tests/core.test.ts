@@ -336,3 +336,31 @@ test('delayed inputs from a previous life are acknowledged without moving or fir
     assert.ok(r.enqueue(a, [{ ...delayed, seq: 2, life: a.state.life }], 2517)); r.tick(2517);
     assert.ok(r.events.some(e => e.type === 'shot'));
 });
+
+test('jittered 20 Hz input packets recover without accumulating a server backlog', () => {
+    const r = room(), a = r.add('Jitter', 'triggerman', 'blue'); r.start(1000);
+    let seq = 0, lastDelivery = 0, nextDelivery = 3, worstQueue = 0;
+    for (let tick = 1; tick <= 600; tick++) {
+        if (tick === nextDelivery) {
+            const inputs = Array.from({ length: tick - lastDelivery }, () => neutralInput(++seq));
+            assert.ok(r.enqueue(a, inputs, 1000 + tick * STEP * 1000));
+            lastDelivery = tick; nextDelivery += tick % 12 === 3 ? 9 : 3;
+        }
+        r.tick(1000 + tick * STEP * 1000);
+        worstQueue = Math.max(worstQueue, a.queue.length);
+    }
+    assert.ok(worstQueue <= 6, `burst is drained, maximum queued steps: ${worstQueue}`);
+    assert.ok(seq - a.state.ack <= 6);
+});
+
+test('dropped input sequence gaps recover while movement remains limited by server time', () => {
+    const r = room(), a = r.add('Reconnect', 'triggerman', 'blue'); r.start(1000);
+    Object.assign(a.state, moveState(32, 0, 30));
+    assert.ok(r.enqueue(a, [{ ...neutralInput(10000), forward: 1 }], 1017));
+    r.tick(1017);
+    assert.equal(a.state.ack, 10000);
+    assert.ok(30 - a.state.z < .15, 'sequence gaps cannot fast-forward simulation');
+    assert.equal(r.enqueue(a, [neutralInput(10001), { ...neutralInput(10002), forward: 99 }], 1034), false);
+    assert.equal(a.lastSeq, 10000, 'invalid batch is rejected atomically');
+    assert.equal(a.queue.length, 0);
+});

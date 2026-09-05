@@ -7,6 +7,7 @@ import { distance, hitPlayer, worldHit } from '../shared/math';
 import { History, rewindTime } from './history';
 import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
+import { MAX_INPUT_BATCH } from '../shared/protocol';
 export interface Actor {
     state: PlayerState;
     queue: Input[];
@@ -126,14 +127,17 @@ export class Room {
         if (a.connected) this.spawn(a, now);
     } this.events.push({ type: 'notice', text: 'ROUND LIVE · GOOD LUCK, HAVE FUN' }); }
     enqueue(a: Actor, inputs: unknown, now: number): boolean {
-        if (!Array.isArray(inputs) || inputs.length > 12)
+        if (!Array.isArray(inputs) || inputs.length > MAX_INPUT_BATCH)
             return false;
+        let lastSeq = a.lastSeq;
         for (const input of inputs) {
-            if (!validInput(input) || input.seq <= a.lastSeq || input.seq > a.lastSeq + 240)
-                return false;
-            a.lastSeq = input.seq;
-            a.queue.push(input);
+            // Dropping unsent controls creates legitimate sequence gaps. Simulation
+            // credit, not sequence distance, limits how far a client can move.
+            if (!validInput(input) || input.seq <= lastSeq) return false;
+            lastSeq = input.seq;
         }
+        a.lastSeq = lastSeq;
+        a.queue.push(...inputs);
         if (a.queue.length > 120) {
             a.queue.length = 0;
             return false;
@@ -151,7 +155,10 @@ export class Room {
         for (const a of this.players.values()) {
             const p = a.state;
             if (!a.connected) continue;
-            a.credit = Math.min(3, a.credit + 1);
+            // Save up to one input window of simulation time across network jitter.
+            // With only three credits, each delayed 20 Hz packet permanently lost
+            // processing capacity even though inputs still arrived at 60 steps/s.
+            a.credit = Math.min(MAX_INPUT_BATCH, a.credit + 1);
             if (!p.alive && this.round.phase === 'playing' && now >= p.respawnAt)
                 this.spawn(a, now);
             if (p.reloadEnd && now >= p.reloadEnd) {
