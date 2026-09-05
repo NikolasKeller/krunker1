@@ -147,8 +147,12 @@ export class Network {
     get local() { return this.players.get(this.id); }
     input(input: Input) {
         if (!this.predicted) return;
+        const dropped = this.inputs.dropped;
         const i = this.inputs.enqueue({ ...input, life: this.predicted.life });
-        predictInput(this.predicted, i, this.round?.phase === 'playing');
+        const playing = this.round?.phase === 'playing';
+        if (this.inputs.dropped !== dropped && this.local)
+            this.predicted = reconcile(this.local, this.pending, playing).predicted;
+        else predictInput(this.predicted, i, playing);
     }
     flush() { if (this.ws) this.inputs.flush(this.ws); }
     private receive(m: ServerMessage) {
@@ -201,6 +205,7 @@ export class Network {
                 this.frames.shift();
             const local = this.local;
             if (local) {
+                this.inputs.acknowledge(local.ack);
                 this.clearHandshake();
                 this.status = 'CONNECTED';
                 this.retry = 0;
@@ -225,6 +230,7 @@ export class Network {
                 else {
                     this.pending = [];
                     this.outgoing = [];
+                    if (old?.life !== local.life) this.inputs.clear();
                     this.correction = { x: 0, y: 0, z: 0 };
                 }
             }

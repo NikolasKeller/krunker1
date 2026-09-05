@@ -104,6 +104,7 @@ class Client {
         const local = this.players.get(this.id);
         if (!local) { this.desyncs++; return; }
         for (const p of this.players.values()) if (![p.x, p.y, p.z, p.yaw, p.pitch, p.hp].every(Number.isFinite) || Math.abs(p.x) > 38 || Math.abs(p.z) > 38 || p.y < -.1) this.desyncs++;
+        this.inputs.acknowledge(local.ack);
         const old = this.predicted;
         const replay = reconcile(local, this.pending, this.round?.phase === 'playing');
         this.predicted = replay.predicted; this.pending = replay.remaining;
@@ -118,7 +119,7 @@ class Client {
                 }
                 this.ackLag.push(this.seq - local.ack);
             }
-        } else { this.pending = []; this.outgoing = []; }
+        } else { this.inputs.clear(); }
         if (this.measured) compareReplicas(m.n, this);
     }
     start() {
@@ -144,12 +145,14 @@ class Client {
         const tick = () => {
             if (!this.running) return;
             if (this.predicted && this.round?.phase === 'playing') {
-                const p = this.predicted;
+                let p = this.predicted;
                 let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
                 i.seq = ++this.seq; i.shotTime = Date.now() + this.offset - 100;
+                const dropped = this.inputs.dropped, prev = { x: p.x, z: p.z };
                 i = this.inputs.enqueue(i);
-                const prev = { x: p.x, z: p.z };
-                predictInput(p, i, true);
+                if (this.inputs.dropped !== dropped)
+                    p = this.predicted = reconcile(this.players.get(this.id)!, this.pending, true).predicted;
+                else predictInput(p, i, true);
                 if (this.measured) this.moved += Math.hypot(p.x - prev.x, p.z - prev.z);
 
                 if (this.pending.length > 240) { this.desyncs++; this.pending = []; this.send({ type: 'sync' }); }
@@ -193,7 +196,7 @@ for (const count of counts) {
             overBudgetTicks: end.overBudgetTicks - begin.overBudgetTicks,
             maxQueueBytes: Math.max(...samples.map(s => s.queuedBytes)),
             transport: end.transport,
-            inputQueues: clients.map(c => ({ maxPending: c.inputs.maxPending, maxOutgoing: c.inputs.maxOutgoing, dropped: c.inputs.dropped, maxBufferedBytes: c.inputs.maxBufferedBytes })),
+            inputQueues: clients.map(c => ({ maxPending: c.inputs.maxPending, maxInFlight: c.inputs.maxInFlight, maxOutgoing: c.inputs.maxOutgoing, dropped: c.inputs.dropped, maxBufferedBytes: c.inputs.maxBufferedBytes })),
             timing: clients.map(c => ({ maxServerSnapshotGapMs: Math.max(...c.serverGaps), maxDeliveryJitterMs: Math.max(...c.deliveryJitter) })),
             replicaErrors,
             clients: clients.map(c => ({ name: `Load ${c.index + 1}`, downKBps: +(c.bytesIn / duration / 1000).toFixed(2), upKBps: +(c.bytesOut / duration / 1000).toFixed(2), shots: c.shots, hits: c.hits, kills: c.kills, movedMetres: +c.moved.toFixed(1), desyncs: c.desyncs, errors: c.errors, deathCorrectionMaxMetres: +Math.max(0, ...c.deathCorrections).toFixed(4), correctionSpikes: c.correctionSpikes, predictionP95Metres: +percentile(c.corrections, .95).toFixed(4), predictionP99Metres: +percentile(c.corrections, .99).toFixed(4), maxAckLag: Math.max(...c.ackLag), snapshotGapP99Ms: percentile(c.gaps, .99), maxSnapshotGapMs: Math.max(...c.gaps) }))

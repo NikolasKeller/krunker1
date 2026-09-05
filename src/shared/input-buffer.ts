@@ -1,4 +1,4 @@
-import { encodeClientMessage, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS, wireInput } from './protocol';
+import { encodeClientMessage, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS, MAX_IN_FLIGHT_INPUTS, wireInput } from './protocol';
 import type { Input } from './types';
 
 // One unsent window, never an accumulating list of serialized socket messages.
@@ -6,6 +6,8 @@ import type { Input } from './types';
 export class InputBuffer {
     pending: Input[] = [];
     outgoing: Input[] = [];
+    inFlight: number[] = [];
+    maxInFlight = 0;
     dropped = 0;
     maxPending = 0;
     maxOutgoing = 0;
@@ -28,6 +30,7 @@ export class InputBuffer {
         this.maxOutgoing = Math.max(this.maxOutgoing, this.outgoing.length);
         return i;
     }
+    acknowledge(seq: number) { this.inFlight = this.inFlight.filter(sent => sent > seq); }
     flush(socket: { readyState: number; bufferedAmount: number; send(data: Uint8Array): void }, now = performance.now()): number {
         this.maxBufferedBytes = Math.max(this.maxBufferedBytes, socket.bufferedAmount);
         if (now < this.nextSend) return 0;
@@ -35,10 +38,16 @@ export class InputBuffer {
         // At most one input packet may be in the WebSocket's local write queue.
         // Don't create delayed send callbacks that capture obsolete packets.
         if (socket.readyState !== 1 || socket.bufferedAmount > 0 || !this.outgoing.length) return 0;
+        // bufferedAmount only covers the local socket queue, not bytes accepted
+        // by a kernel or proxy. ACKs bound that hidden queue to 500 ms of input.
+        if (this.inFlight.length + this.outgoing.length > MAX_IN_FLIGHT_INPUTS) return 0;
         const data = encodeClientMessage({ type: 'input', inputs: this.outgoing }) as Uint8Array;
-        socket.send(data); this.outgoing = [];
+        socket.send(data);
+        this.inFlight.push(...this.outgoing.map(i => i.seq));
+        this.maxInFlight = Math.max(this.maxInFlight, this.inFlight.length);
+        this.outgoing = [];
         this.maxBufferedBytes = Math.max(this.maxBufferedBytes, socket.bufferedAmount);
         return data.byteLength;
     }
-    clear() { this.pending = []; this.outgoing = []; this.nextSend = 0; }
+    clear() { this.pending = []; this.outgoing = []; this.inFlight = []; this.nextSend = 0; }
 }

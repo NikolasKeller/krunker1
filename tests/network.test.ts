@@ -6,8 +6,8 @@ import { WebSocket as RealWebSocket, WebSocketServer } from 'ws';
 import { Network, CONNECT_TIMEOUT_MS, JOIN_RETRY_MS } from '../src/client/network';
 import { createGameServer } from '../src/server/index';
 import { Room } from '../src/server/simulation';
-import { decodeClientMessage, WIRE_PROTOCOL, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../src/shared/protocol';
-import { neutralInput } from '../src/shared/movement';
+import { decodeClientMessage, WIRE_PROTOCOL, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS, MAX_IN_FLIGHT_INPUTS } from '../src/shared/protocol';
+import { neutralInput, moveState } from '../src/shared/movement';
 import type { ClientMessage, ServerMessage } from '../src/shared/types';
 
 const config = { name: 'Alpha', room: '', classId: 'hunter', team: 'blue', create: true } as const;
@@ -241,4 +241,36 @@ test('cached arena-v1 clients retain JSON snapshots while current clients negoti
             } finally { ws.terminate(); }
         }
     } finally { await app.close(); }
+});
+
+
+test('acknowledgements bound inputs hidden in a kernel or proxy even when bufferedAmount is zero', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    for (let seq = 1; seq <= 1000; seq++) {
+        net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS);
+    }
+    const sent = ws.sent.filter(m => m.type === 'input');
+    assert.equal(sent.reduce((n, m) => n + m.inputs.length, 0), MAX_IN_FLIGHT_INPUTS);
+    assert.equal(net.inputs.inFlight.length, MAX_IN_FLIGHT_INPUTS);
+    assert.ok(net.pending.length <= MAX_IN_FLIGHT_INPUTS + MAX_INPUT_BATCH);
+    assert.equal(ws.bufferedAmount, 0, 'a locally drained socket is not proof of delivery');
+    net.inputs.acknowledge(MAX_IN_FLIGHT_INPUTS);
+    net.inputs.flush(ws, 100000);
+    const latest = ws.sent.at(-1); assert.ok(latest?.type === 'input');
+    assert.equal(latest.inputs.at(-1)?.seq, 1000, 'recovery sends recent controls, not the skipped backlog');
+    assert.equal(net.inputs.inFlight.length, MAX_INPUT_BATCH);
+});
+
+
+test('prediction does not keep advancing through inputs discarded during a blocked upload', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    Object.assign(net.local!, moveState(32, 0, 30));
+    net.predicted = { ...net.local! }; net.round!.phase = 'playing';
+    ws.bufferedAmount = 100;
+    for (let seq = 1; seq <= 600; seq++) {
+        net.input({ ...neutralInput(seq), forward: 1 });
+        net.inputs.flush(ws, seq * INPUT_SEND_MS);
+    }
+    assert.equal(net.pending.length, MAX_INPUT_BATCH);
+    assert.ok(Math.abs(net.predicted!.z - 30) < 3, 'prediction stays within the retained input window of authority');
 });
