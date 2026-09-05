@@ -170,7 +170,7 @@ export class Room {
                 a.credit--;
                 processed++;
                 p.ack = i.seq;
-                if (this.round.phase !== 'playing' || !p.alive)
+                if (this.round.phase !== 'playing' || !p.alive || (i.life !== undefined && i.life !== p.life))
                     continue;
                 p.yaw = i.yaw;
                 p.pitch = i.pitch;

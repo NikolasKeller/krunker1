@@ -2,7 +2,7 @@ import { move } from '../shared/movement';
 import { CLASSES } from '../shared/weapons';
 import type { Input, PlayerState } from '../shared/types';
 export function predictInput(p: PlayerState, i: Input, playing: boolean) {
-    if (!p.alive || !playing)
+    if (!p.alive || !playing || (i.life !== undefined && i.life !== p.life))
         return;
     move(p, i, CLASSES[p.classId].speed * (i.slot === 3 ? 1.16 : 1));
     p.yaw = i.yaw;

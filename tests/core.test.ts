@@ -324,3 +324,15 @@ test('bot ramp waypoints can actually be followed by shared movement', () => {
     assert.equal(waypoint, path.length, 'ramp navigation remains compatible with collision');
     assert.ok(p.y > 3.9);
 });
+
+test('delayed inputs from a previous life are acknowledged without moving or firing after respawn', () => {
+    const r = room(), a = r.add('Delayed', 'triggerman', 'blue'); r.start(1000);
+    const oldLife = a.state.life; r.spawn(a, 2000);
+    const origin = { x: a.state.x, z: a.state.z };
+    const delayed = { ...neutralInput(1), life: oldLife, forward: 1, fire: true };
+    assert.ok(r.enqueue(a, [delayed], 2500)); r.tick(2500);
+    assert.equal(a.state.ack, 1); assert.equal(a.state.x, origin.x); assert.equal(a.state.z, origin.z);
+    assert.equal(r.events.some(e => e.type === 'shot'), false);
+    assert.ok(r.enqueue(a, [{ ...delayed, seq: 2, life: a.state.life }], 2517)); r.tick(2517);
+    assert.ok(r.events.some(e => e.type === 'shot'));
+});

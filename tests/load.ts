@@ -163,7 +163,7 @@ for (const count of counts) {
             clients: clients.map(c => ({ name: `Load ${c.index + 1}`, downKBps: +(c.bytesIn / duration / 1000).toFixed(2), upKBps: +(c.bytesOut / duration / 1000).toFixed(2), shots: c.shots, hits: c.hits, kills: c.kills, movedMetres: +c.moved.toFixed(1), desyncs: c.desyncs, errors: c.errors, deathCorrectionMaxMetres: +Math.max(0, ...c.deathCorrections).toFixed(4), correctionSpikes: c.correctionSpikes, predictionP95Metres: +percentile(c.corrections, .95).toFixed(4), predictionP99Metres: +percentile(c.corrections, .99).toFixed(4), maxAckLag: Math.max(...c.ackLag), snapshotGapP99Ms: percentile(c.gaps, .99), maxSnapshotGapMs: Math.max(...c.gaps) }))
         };
         report.push(row); console.log(JSON.stringify(row, null, 2));
-        if (process.env.LOAD_REPORT) await writeFile(process.env.LOAD_REPORT, JSON.stringify({ date: new Date().toISOString(), origin, report }, null, 2) + '\n');
+        if (process.env.LOAD_REPORT) await writeFile(process.env.LOAD_REPORT, JSON.stringify({ date: new Date().toISOString(), origin, passed: false, report }, null, 2) + '\n');
         assert.ok(row.tickHz >= 57, 'sustain near-60Hz');
         assert.ok(row.maxWindowP95Ms < 16.67, 'tick processing within budget');
         assert.equal(replicaErrors, 0, 'all clients reconstruct the same world');
@@ -177,5 +177,5 @@ for (const count of counts) {
         }
     } finally { for (const c of clients) c.close(); await delay(300); }
 }
-if (process.env.LOAD_REPORT) await writeFile(process.env.LOAD_REPORT, JSON.stringify({ date: new Date().toISOString(), origin, report }, null, 2) + '\n');
+if (process.env.LOAD_REPORT) await writeFile(process.env.LOAD_REPORT, JSON.stringify({ date: new Date().toISOString(), origin, passed: true, report }, null, 2) + '\n');
 console.log('PASS: production multi-client load, bandwidth, tick budget, replica consistency and prediction checks');

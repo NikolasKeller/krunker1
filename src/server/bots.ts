@@ -132,5 +132,6 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
     input.jump = b.stuck > 1 && Math.floor(now / 650) % 2 === 0;
     input.reload = p.ammo === 0 || (!enemy && p.ammo < WEAPONS[p.weapon].magazine * 0.5);
     input.shotTime = now;
+    input.life = p.life;
     return input;
 }

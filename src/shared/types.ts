@@ -35,6 +35,7 @@ export interface MoveState {
 }
 export interface Input {
     seq: number;
+    life?: number;
     forward: number;
     strafe: number;
     yaw: number;

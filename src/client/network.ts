@@ -87,7 +87,7 @@ export class Network {
     get serverNow() { return Date.now() + this.offset; }
     get local() { return this.players.get(this.id); }
     input(i: Input) { if (!this.predicted)
-        return; this.pending.push(i); this.outgoing.push(i); if (this.pending.length > 240) {
+        return; i.life = this.predicted.life; this.pending.push(i); this.outgoing.push(i); if (this.pending.length > 240) {
         this.pending = [];
         this.predicted = { ...this.local! };
         this.send({ type: 'sync' });
@@ -149,7 +149,7 @@ export class Network {
                 this.pending = replayed.remaining;
                 this.seq = Math.max(this.seq, local.ack);
                 this.predicted = replayed.predicted;
-                if (old && old.life === local.life) {
+                if (old && old.life === local.life && old.alive === local.alive) {
                     const dx = old.x - this.predicted.x, dy = old.y - this.predicted.y, dz = old.z - this.predicted.z;
                     const error = Math.hypot(dx, dy, dz);
                     this.maxCorrection = Math.max(this.maxCorrection, error);
