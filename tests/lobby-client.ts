@@ -12,6 +12,7 @@ const net = new Network(), ui = new UI(net), sent: ClientMessage[] = [];
 const send = net.send.bind(net);
 net.send = message => { sent.push(message); send(message); };
 ui.onRoom = () => net.connect(ui.joinConfig);
+net.onWelcome = () => { void ui.welcomed(); };
 ui.onDeploy = () => { throw new Error('Lobby flow unexpectedly required gameplay initialization'); };
 const button = document.getElementById('deploy')!, label = document.getElementById('deploy-label')!, input = document.getElementById('player-name')!;
 setInterval(() => ui.updateLobby(), LOBBY_UPDATE_MS);
@@ -29,7 +30,7 @@ process.on('message', (message: { command: string; room?: string; name?: string 
     if (message.command === 'stop') process.exit(0);
 });
 setInterval(() => {
-    process.send?.({ id: net.id, room: net.room, host: net.host, status: net.status, round: net.round,
+    process.send?.({ id: net.id, room: net.room, url: location.href, host: net.host, status: net.status, round: net.round,
         players: [...net.players.values()], readySent: sent.filter(m => m.type === 'ready'), startSent: sent.filter(m => m.type === 'start').length,
         label: label.textContent, statusText: document.getElementById('lobby-status')!.textContent,
         stable: document.getElementById('deploy') === button && document.getElementById('deploy-label') === label && document.getElementById('player-name') === input,

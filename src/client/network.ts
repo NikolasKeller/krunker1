@@ -1,6 +1,8 @@
 import { INTERPOLATION_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { predictInput, reconcile } from './prediction';
 import { angleLerp, clamp, lerp } from '../shared/math';
+export const JOIN_RETRY_MS = 1500;
+export const CONNECT_TIMEOUT_MS = 10000;
 export class Network {
     ws?: WebSocket;
     id = '';
@@ -33,6 +35,10 @@ export class Network {
     private retry = 0;
     private generation = 0;
     private reconnectTimer?: ReturnType<typeof setTimeout>;
+    private handshakeTimer?: ReturnType<typeof setTimeout>;
+    private joinTimer?: ReturnType<typeof setInterval>;
+    private heartbeatTimer: ReturnType<typeof setInterval>;
+    private tokens = new Map<string, string>();
     private config?: {
         name: string;
         room: string;
@@ -40,8 +46,24 @@ export class Network {
         team: Team;
         create?: boolean;
     };
-    constructor() { setInterval(() => { this.send({ type: 'ping', time: Date.now() }); if (this.ws?.readyState === WebSocket.OPEN && Date.now() - this.receivedAt > 6000 && this.receivedAt > 0)
-        this.status = 'CONNECTION STALLED'; }, 1500); }
+    constructor() { this.heartbeatTimer = setInterval(() => {
+        this.send({ type: 'ping', time: Date.now() });
+        if (this.ws?.readyState === WebSocket.OPEN && this.receivedAt > 0 && Date.now() - this.receivedAt > 6000)
+            this.connect(this.config!);
+    }, 1500); }
+    private clearHandshake() {
+        clearTimeout(this.handshakeTimer);
+        clearInterval(this.joinTimer);
+    }
+    disconnect() {
+        ++this.generation;
+        this.clearHandshake();
+        clearTimeout(this.reconnectTimer);
+        clearInterval(this.heartbeatTimer);
+        this.ws?.close();
+        this.ws = undefined;
+        this.status = 'DISCONNECTED';
+    }
     connect(config: {
         name: string;
         room: string;
@@ -49,8 +71,9 @@ export class Network {
         team: Team;
         create?: boolean;
     }) {
-        this.config = config;
+        this.config = config = { ...config };
         const generation = ++this.generation;
+        this.clearHandshake();
         clearTimeout(this.reconnectTimer);
         this.ws?.close();
         this.status = 'CONNECTING';
@@ -67,8 +90,32 @@ export class Network {
         this.lastSnapshot = 0;
         const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
         this.ws = ws;
-        ws.onopen = () => { if (generation !== this.generation)
-            return; this.status = 'CONNECTED'; this.retry = 0; this.send({ type: 'join', ...config, token: sessionStorage.getItem(`arena-token-${config.room}`) ?? undefined }); this.send({ type: 'ping', time: Date.now() }); };
+        const reconnect = () => {
+            if (generation !== this.generation) return;
+            ++this.generation;
+            this.clearHandshake();
+            this.status = 'RECONNECTING';
+            ws.close();
+            this.reconnectTimer = setTimeout(() => this.connect(config), Math.min(5000, 600 * 2 ** this.retry++));
+        };
+        this.handshakeTimer = setTimeout(reconnect, CONNECT_TIMEOUT_MS);
+        ws.onopen = () => {
+            if (generation !== this.generation) return;
+            this.status = 'JOINING LOBBY';
+            let token = this.tokens.get(config.room);
+            // Storage is optional: a privacy policy must not prevent the join from being sent.
+            try { token ??= sessionStorage.getItem(`arena-token-${config.room}`) ?? undefined; } catch { /* Use the in-memory token. */ }
+            const join: ClientMessage = { type: 'join', ...config, token };
+            const requestLobby = () => {
+                if (generation !== this.generation) return;
+                this.send(this.id ? { type: 'sync' } : join);
+            };
+            requestLobby();
+            this.send({ type: 'ping', time: Date.now() });
+            this.joinTimer = setInterval(requestLobby, JOIN_RETRY_MS);
+            clearTimeout(this.handshakeTimer);
+            this.handshakeTimer = setTimeout(reconnect, CONNECT_TIMEOUT_MS);
+        };
         ws.onmessage = e => { if (generation !== this.generation)
             return; try {
             this.bytes += e.data.length;
@@ -77,10 +124,13 @@ export class Network {
         catch (error) {
             console.error('Invalid server message', error);
         } };
-        ws.onclose = e => { if (generation !== this.generation)
-            return; this.status = e.code === 4000 ? 'SESSION MOVED' : 'RECONNECTING'; if (e.code !== 4000)
-            this.reconnectTimer = setTimeout(() => this.connect(config), Math.min(5000, 600 * 2 ** this.retry++)); };
-        ws.onerror = () => { this.status = 'SERVER UNREACHABLE'; };
+        ws.onclose = e => {
+            if (generation !== this.generation) return;
+            this.clearHandshake();
+            if (e.code === 4000) this.status = 'SESSION MOVED';
+            else reconnect();
+        };
+        ws.onerror = () => { if (generation === this.generation) this.status = 'SERVER UNREACHABLE'; };
     }
     send(message: ClientMessage) { if (this.ws?.readyState === WebSocket.OPEN)
         this.ws.send(JSON.stringify(message)); }
@@ -99,14 +149,16 @@ export class Network {
     } }
     private receive(m: ServerMessage) {
         if (m.type === 'welcome') {
+            const firstWelcome = this.id !== m.id || this.room !== m.room;
             this.id = m.id;
             this.room = m.room;
             this.host = m.host;
             this.offset = m.serverTime - Date.now();
             this.config!.room = m.room;
             this.config!.create = false;
-            sessionStorage.setItem(`arena-token-${m.room}`, m.token);
-            this.onWelcome();
+            this.tokens.set(m.room, m.token);
+            try { sessionStorage.setItem(`arena-token-${m.room}`, m.token); } catch { /* The session can still resume in memory. */ }
+            if (firstWelcome) this.onWelcome();
         }
         if (m.type === 'pong') {
             const rtt = Date.now() - m.time;
@@ -115,6 +167,7 @@ export class Network {
             this.offset = lerp(this.offset, offset, 0.2);
         }
         if (m.type === 'error') {
+            this.clearHandshake();
             this.status = m.message;
             this.onNotice(m.message);
         }
@@ -126,7 +179,6 @@ export class Network {
                 return;
             }
             this.receivedAt = Date.now();
-            this.status = 'CONNECTED';
             this.lastSnapshot = m.n;
             if (m.host !== undefined) this.host = m.host;
             if (m.round) this.round = m.round;
@@ -145,6 +197,9 @@ export class Network {
                 this.frames.shift();
             const local = this.local;
             if (local) {
+                this.clearHandshake();
+                this.status = 'CONNECTED';
+                this.retry = 0;
                 const old = this.predicted, replayed = reconcile(local, this.pending, this.round?.phase === 'playing');
                 this.pending = replayed.remaining;
                 this.seq = Math.max(this.seq, local.ack);

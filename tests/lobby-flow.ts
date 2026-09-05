@@ -10,7 +10,7 @@ if (app) await new Promise<void>(resolve => app.server.listen(0, '127.0.0.1', re
 const address = app?.server.address();
 const origin = process.env.GAME_URL ?? `http://127.0.0.1:${address && typeof address !== 'string' ? address.port : 0}`;
 interface State {
-    id: string; room: string; host: string; status: string; round?: RoundState; players: PlayerState[];
+    id: string; room: string; url: string; host: string; status: string; round?: RoundState; players: PlayerState[];
     readySent: { type: 'ready'; ready: boolean }[]; startSent: number; label: string; statusText: string; stable: boolean;
     metrics: { polls: number; updates: number; writes: number };
 }
@@ -30,7 +30,7 @@ class Client {
     get ready() { return this.humans.filter(p => p.ready).length; }
     get local() { return this.humans.find(p => p.id === this.state?.id); }
 }
-async function wait(fn: () => unknown, label: string, timeout = 7000) {
+async function wait(fn: () => unknown, label: string, timeout = process.env.GAME_URL ? 30000 : 7000) {
     const until = Date.now() + timeout;
     while (!fn()) {
         for (const c of clients) assert.equal(c.error, '', c.error);
@@ -43,9 +43,13 @@ try {
     await wait(() => a.state && b.state, 'clients boot');
     a.command('create'); await wait(() => a.local && a.state?.label === 'READY UP', 'CREATE LOBBY click');
     const room = a.state!.room; assert.match(room, /^[A-HJ-NP-Z2-9]{5}$/);
+    assert.equal(new URL(a.state!.url).searchParams.get('room'), room);
     a.command('no-bots');
     b.command('join', room);
     await wait(() => a.humans.length === 2 && b.humans.length === 2 && b.state?.label === 'READY UP', 'second client joins');
+    assert.equal(new URL(b.state!.url).searchParams.get('room'), room);
+    const health = await (await fetch(origin + '/api/health')).json() as { players: number; rooms: number; connections: number };
+    assert.ok(health.players >= 2 && health.rooms >= 1 && health.connections >= 2, 'health counts the live joined clients');
     assert.equal(a.local!.name, 'Friend'); assert.equal(b.local!.name, 'Friend (2)');
     b.command('red'); await wait(() => a.humans.find(p => p.id === b.state!.id)?.team === 'red', 'team switch broadcast');
     await wait(() => a.state?.players.length === 2 && b.state?.players.length === 2, 'bot settings broadcast');
@@ -70,7 +74,7 @@ try {
     assert.equal(a.state!.round!.endsAt, b.state!.round!.endsAt);
     assert.ok(a.local!.alive && b.local!.alive); assert.ok(Date.now() >= nextAt);
     assert.ok(a.state!.stable && b.state!.stable);
-    console.log(`PASS ${origin}: two isolated Node clients click CREATE/JOIN/READY; server records and broadcasts 1/2 then 2/2; both enter playing after the same countdown`);
+    console.log(`PASS ${origin}: room ${room}, invite URLs updated, ${health.players} connected players; two isolated Node clients click CREATE/JOIN/READY; server records and broadcasts 1/2 then 2/2; both enter playing after the same countdown (${nextAt})`);
 
     // A new room exercises force-start without reusing any ready state from the first match.
     a.command('create');

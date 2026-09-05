@@ -11,6 +11,7 @@ import { wirePlayer, playerDelta } from '../shared/snapshot';
 import { CLASS_IDS } from '../shared/weapons';
 import { MAX_HUMANS, MAX_BOTS, TICK_RATE, type ClientMessage, type PlayerPatch, type ServerMessage } from '../shared/types';
 interface Connection {
+    id: string;
     ws: WebSocket;
     room?: Room;
     actor?: Actor;
@@ -106,7 +107,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now() };
+        const c: Connection = { id: connectionId, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now() };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -133,9 +134,16 @@ export function createGameServer() {
                     send(c, { type: 'pong', time: m.time, serverTime: now });
                 return;
             }
+            // A retry acknowledges the existing assignment, including when the first welcome was lost.
+            if (m.type === 'join' && c.actor) {
+                send(c, { type: 'welcome', id: c.actor.state.id, token: c.token!, room: c.room!.id, host: c.room!.host, serverTime: now });
+                snapshot(c, true);
+                return;
+            }
             if (m.type === 'join' && !c.actor) {
                 if (!CLASS_IDS.includes(m.classId) || !['blue', 'red'].includes(m.team)) {
                     log('join-rejected', { reason: 'Invalid class or team' });
+                    send(c, { type: 'error', message: 'Invalid class or team. Choose a loadout and try again.' });
                     return;
                 }
                 let id = String(m.room ?? '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18);
@@ -334,8 +342,10 @@ export function createGameServer() {
             lastStats = begin;
             for (const c of connections) {
                 c.messages = 0;
-                if (now - c.pongAt > 15000)
+                if (now - c.pongAt > 15000) {
+                    socketLog('heartbeat-timeout', { connectionId: c.id, silenceMs: now - c.pongAt });
                     c.ws.terminate();
+                }
                 else if (now - c.pingAt > 2000) {
                     c.pingAt = now;
                     c.ws.ping();
