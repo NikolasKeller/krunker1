@@ -149,6 +149,28 @@ test('other players hitting and killing do not show personal combat feedback', (
     } finally { restore(); }
 });
 
+test('TDM never shows a personal elimination target, including after kill feedback expires and mode changes', () => {
+    const { restore, a, net, renderer, ui, kill } = setup();
+    try {
+        a.kills = 7;
+        ui.update(100, renderer, false);
+        assert.notEqual(styleOf(node('score-top')).display, 'none');
+        assert.equal(node('score-top').textContent, '7/ 25ELIMINATIONS');
+        net.round!.mode = 'tdm';
+        ui.update(200, renderer, false);
+        assert.equal(styleOf(node('score-top')).display, 'none');
+        ui.event(kill, renderer, 300);
+        ui.update(3000, renderer, false);
+        assert.equal(styleOf(node('kill-notice')).opacity, '0');
+        assert.equal(styleOf(node('score-top')).display, 'none');
+        assert.equal(styleOf(node('team-scores')).display, 'flex');
+        net.round!.mode = 'ffa';
+        ui.update(3100, renderer, false);
+        assert.notEqual(styleOf(node('score-top')).display, 'none');
+        assert.equal(styleOf(node('team-scores')).display, 'none');
+    } finally { restore(); }
+});
+
 test('the minimap defaults off, skips canvas work, and can be enabled persistently in settings', () => {
     const { restore, dom, renderer, ui, net } = setup();
     let draws = 0;

@@ -15,7 +15,7 @@ for (const match of css.matchAll(/url\('(?<path>\/fonts\/[^']+)'\)/g)) {
     css = css.replace(match[0], `url('data:font/ttf;base64,${bytes.toString('base64')}')`);
 }
 const geometry = (await readFile(new URL('../artifacts/geometry-preview.png', import.meta.url))).toString('base64');
-for (const state of ['lobby', 'ffa', 'tdm', 'headshot', 'multikill'] as const) {
+for (const state of ['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill'] as const) {
     const { dom, restore } = installDOM('https://krunker1-production.up.railway.app');
     try {
         Object.defineProperty(dom.window, 'innerWidth', { value: 1024 });
@@ -41,6 +41,9 @@ for (const state of ['lobby', 'ffa', 'tdm', 'headshot', 'multikill'] as const) {
         } finally { globalThis.fetch = originalFetch; }
         ui.updateLobby();
         const kill: GameEvent = { type: 'kill', killer: a.id, victim: b.id, killerName: a.name, victimName: b.name, team: a.team, headshot: true, weapon: 'sniper' };
+        if (state === 'body-hit') {
+            ui.event({ type: 'hit', shooter: a.id, victim: b.id, damage: 35, zone: 'body', point: { x: 0, y: 1, z: 0 }, from: { x: 0, y: 1, z: 2 }, lethal: false }, renderer, 100);
+        }
         if (state === 'headshot' || state === 'multikill') {
             a.ammo = 0;
             if (state === 'multikill') ui.event(kill, renderer, 0);
@@ -58,5 +61,5 @@ body { background:#cdbfbe url(data:image/png;base64,${geometry}) center/cover no
         await writeFile(new URL(`${state}.html`, out), html);
     } finally { restore(); }
 }
-console.log('Exported artifacts/hud-preview/{lobby,ffa,tdm,headshot,multikill}.html');
+console.log('Exported artifacts/hud-preview/{lobby,ffa,tdm,body-hit,headshot,multikill}.html');
 console.log('Real UI markup, CSS and embedded font; frozen feedback over a software geometry preview. No browser screenshots taken.');
