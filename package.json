@@ -16,7 +16,8 @@
     "test:lifecycle": "tsx tests/lifecycle.ts",
     "test:production": "node tests/production.mjs",
     "test:lobby": "tsx tests/lobby.ts",
-    "test:load": "tsx tests/load.ts"
+    "test:load": "tsx tests/load.ts",
+    "preview:geometry": "tsx tests/geometry-preview.ts"
   },
   "dependencies": {
     "three": "0.185.1",

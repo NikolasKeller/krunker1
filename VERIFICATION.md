@@ -1,23 +1,47 @@
 # Verification record
 
-Checks run locally on 2026-09-05. Browser launch and browser debugging connections are prohibited in this workspace; no browser screenshots or client frame-rate measurements were produced.
+Verified on 2026-09-05 using Node 25.9.0 on the local macOS host. No browser, Chromium, or CDP connection was launched. GPU FPS and browser appearance are not inferred from these results.
 
-## Completed
+## Production acceptance
 
-- 31 simulation/prediction tests: ray intersections, head/body/leg hitboxes, ramp occlusion, weapon damage/falloff, deterministic spread, recoil bounds, invalid input rejection, server movement budget, shared movement/reconciliation, jumping, timed slide hops, wall collisions, ramp traversal, bridge underpass, rewind interpolation/life boundaries/time bounds, fire cadence, reloads, friendly fire, spawn protection, respawn, round transitions, bot fill and pathing, room-switch sequence reset and missing-delta resync.
-- 2 scene-construction tests: all class/weapon geometry builds; no non-finite vertex data; visible ramp height matches collision. Static map: **37 meshes / 4,024 triangles**. These are geometry tests, not GPU rendering tests.
-- Real WebSocket integration: two clients see each other move, all four primary weapons damage the other client, headshot/kill events reach both clients, reloads complete, respawn protects the victim, historical hitboxes register a shot, impossible input is rejected, rounds end/restart, reconnect preserves identity.
-- Integration measurement: **59.9–60.0 Hz**, around **0.10–0.24 ms average server tick processing**, **0.83–1.05 ms peak** with two clients. Example deltas: **468 bytes** versus **1,611 bytes** per full snapshot (this is a two-client test, not a full-room bandwidth estimate).
-- Two-minute simulated seven-bot match: all bots moved, **354 hits / 101 eliminations**, **0.197 ms average / 2.893 ms peak simulation tick**. This fast-forward test measures simulation cost, not real-time tick frequency.
-- Lifecycle test: disconnected identity expires after 20 seconds; empty room and bot state are subsequently removed.
-- A clean `npm ci` succeeded in an isolated directory. `npm test` passed all 33 tests. TypeScript check and production client build passed. Client bundle: approximately **574 kB JS / 151 kB gzip**, plus **24 kB CSS / 6 kB gzip** and local fonts.
-- Actual built production server started with **PORT=8080**. HTML, bundled assets, fonts, and WebSockets served on that single port.
-- Two independent clients joined that built server, navigated around the map using only input packets, met in a firing lane, registered a headshot kill, and respawned. No server-side test fixture was used for this production smoke test. Measured **60 Hz**, **0.203 ms average tick / 0.869 ms peak**.
+- `package-lock.json` is tracked on `origin/main`. A fresh `npm ci` in an isolated checkout succeeded with zero reported vulnerabilities. The original missing-lockfile blocker is resolved in the repository.
+- `npm run build` passed TypeScript, Vite client compilation and esbuild server bundling. `PORT=8080 npm start` ran the actual built entry point, bound to **0.0.0.0:8080**; its default is port 3000 when `PORT` is absent.
+- `npm run test:production` verified HTTP 200 for the page, compiled JS/CSS, self-hosted fonts and favicon. It reads the healthcheck path directly from `railway.json` and verifies HTTP 200 and `ok: true` at `/api/health`.
+- Two independent WebSocket clients connected to **that same port**, navigated using input packets, met in a firing lane, registered a headshot elimination and respawned. No test/teleport endpoint was used. `/api/connection` supplies LAN origins and the configured public origin.
+- The Dockerfile uses Node 22 and includes the lockfile in both `npm ci` stages. Docker is not installed here, so the container build and Railway-hosted runtime are not claimed as tested. Run one Railway replica because rooms are in memory.
 
-## External browser check still needed
+## Real-time load measurements
 
-Open `http://localhost:5173` (development) or `http://localhost:8080` (production). Check class selection, pointer lock, map visibility, weapon framing, audio, readable HUD/scoreboard, reload animation, two visible browser players, and resizing. Test at 1440×900 on the target integrated GPU.
+Each row used real independent WebSocket connections to the built production server, with **seven additional server bots**. After a warmup, each case ran 30 seconds with client prediction, navigation and continuous combat. The benchmark rejects other human connections on the server during measurement. Tick duration includes simulation, snapshot serialization and outbound event dispatch.
 
-The HUD reports real elapsed-time FPS and ping. `window.__arena.metrics` exposes FPS, draw calls, triangles, pending input count and reconciliation counters. `window.__arena.state` exposes current client state. Client FPS has **not** been measured here.
+| Humans + bots | Tick Hz | Mean tick ms | Highest window p95 ms | Peak tick ms | Receive KB/s per client |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2 + 7 | 60.02 | 0.979 | 2.633 | 11.735 | 18.80–18.97 |
+| 5 + 7 | 60.00 | 1.196 | 3.254 | 4.456 | 23.53–23.66 |
+| 10 + 7 | 59.98 | 1.614 | 4.771 | 5.876 | 33.15–33.39 |
 
-The implementation was informed by directly inspected Krunker reference images. The map layout, procedural models, and synthesized audio are original. Exact pixel matching and identical original-game movement/audio timing are **not verified**. Bots currently prefer the ground routes.
+All three cases passed: **zero replica mismatches, zero desyncs, zero disconnects, zero queued outbound bytes, and zero ticks above the 16.67 ms processing budget**. Every simulated human moved and fired. At ten humans, the test observed 597 human shots, a maximum snapshot gap of 55 ms, and a worst-client ongoing-movement prediction p99 of 0.0286 m. Send traffic was 13.80–14.35 KB/s per client. Bandwidth includes WebSocket frame headers, excluding TCP/IP/TLS overhead.
+
+The additional **ten humans + seven bots with 40 ms application delay each way (80 ms simulated round trip)** passed at 60.00 Hz, 1.941 ms mean / 6.389 ms peak tick, and 32.89–33.17 KB/s received per client. Worst-client ongoing-movement prediction p99 was 0.0001 m; no desyncs or replica mismatches occurred. This tests injected application delay, not a real WAN with packet loss or jitter.
+
+The latency test exposed buffered inputs crossing respawns. Inputs now carry a life generation and stale inputs are acknowledged without moving or firing the new character. Death-position corrections are reported separately: clients cannot predict the authoritative time of death. The metric for ongoing movement includes corrections after respawning.
+
+Raw results, including individual clients and thresholds: [local load](artifacts/load-local.json), [latency load](artifacts/load-latency.json). These measure server and protocol performance, not client GPU frame rate.
+
+## Gameplay and lifecycle
+
+- **39 unit/geometry tests passed**, including all weapon damage/spread/recoil, movement and collision, slide hops, ramps, lag rewind, prediction replay, stale-life input rejection, spawn safety, rounds, and bot navigation.
+- Real WebSocket lobby test passed invite generation, duplicate-name suffixes, live name/team/readiness, host-only settings, all-ready countdown, unready/new-arrival cancellation, unready disconnect, host migration, late spawn, reconnect identity, results/lobby/rematch, ten-human capacity plus seven bots, and replacement of a disconnected slot.
+- Real combat integration passed all four primaries, authoritative movement, kills/headshots, reloads, respawn, spawn protection, historical hitscan, malformed input rejection, round/lobby reset and reconnect.
+- Disconnect lifecycle passed immediate roster removal, 20-second identity expiry and eventual empty-room cleanup.
+- Two simulated minutes with seven bots produced **338 hits / 101 eliminations**; all seven bots moved. Approximately **0.118 ms average / 2.191 ms peak** per simulated tick in that run. This is a simulation throughput check, separate from the real-time benchmark above.
+
+## Rendering and external handoff
+
+Camera pitch now agrees with authoritative hitscan. A regression test projects shots to the centre of the camera across multiple pitch/yaw combinations. Team and class changes rebuild the correct remote appearance. The map has **42 meshes / 6,726 triangles**; sixteen remote characters use **96 meshes total** (six each, including weapons), with vertex colours retaining the palette. Renderer diagnostics now count all render passes.
+
+The map, models, HUD and viewmodel framing were compared with the [Krunker sniper reference](https://krunker.cc/wp-content/uploads/2024/10/Krunker-Gameplay-1024x614.jpg). Added facade detail, paving fragments and cargo signage; corrected floating side doors and reduced the oversized scope framing. [Geometry preview](artifacts/geometry-preview.png) is generated by `npm run preview:geometry`, a software rasterizer. It is **not a browser screenshot** and omits HUD layout, WebGL lighting/shadows and canvas sign text.
+
+External browser check: open `http://localhost:8080`, create a lobby, copy the invite into other browsers, choose teams and ready up. Check the roster and countdown, click to capture the mouse when the round goes live, test aiming/fire/reload/scope/audio and player visibility, then verify results/rematch, resizing, and ten actual human clients. Browser user activation is required to capture the mouse; the server still starts everyone on the same simulation tick.
+
+`window.__arena.metrics` exposes FPS, draw calls, triangles, ping, pending inputs and reconciliation counters. `window.__arena.state` exposes the current room/player state. Browser frame rate, exact visual matching and real-world WAN smoothness remain for that external check.

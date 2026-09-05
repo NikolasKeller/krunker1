@@ -54,12 +54,12 @@ Audio unlocks on Ready or Click to Play. When the countdown ends (or an invite j
 `src/shared` holds protocol types, weapon/class stats, map data, collision, movement, and hitscan math. `src/server` holds the fixed-step simulation, rooms and transport, lag history, round logic, and bot navigation. `src/client` separates networking/prediction, controls, scene/map rendering, models, viewmodels, effects, audio, and UI.
 
 - **60 Hz authoritative simulation**, **20 Hz snapshots**, inputs batched in pairs at 60 Hz.
-- The client predicts with the same fixed-step movement function. Snapshots acknowledge an input sequence; pending inputs are replayed from authoritative state. Small corrections decay visually without altering collision state.
+- The client predicts with the same fixed-step movement function. Snapshots acknowledge an input sequence; pending inputs are replayed from authoritative state. Small corrections decay visually without altering collision state. Inputs carry the current life generation so delayed pre-death input cannot move or fire after a respawn.
 - Remote players interpolate 100 ms behind server time. Clock offset is estimated with ping/pong.
 - The server rewinds hitboxes to the shot timestamp, constrained by its own measured connection RTT and a 250 ms maximum. History interpolation never crosses respawn generations. Static geometry still blocks shots.
-- Delta snapshots contain only changed player fields and removed IDs, with periodic full keyframes. A broken baseline requests a full resync. Slow sockets cannot build an unbounded send queue.
+- Delta snapshots contain only changed player fields and removed IDs, with periodic full keyframes. Remote positions use centimetres and angles use milliradians; local movement retains higher precision for prediction. Remote snapshots omit private prediction/ammo fields. Room metadata is sent only on changes. A broken baseline requests a full resync. Slow sockets cannot build an unbounded send queue.
 - Server-side limits validate finite inputs, sequence monotonicity, movement time budgets, fire rate, magazine state, reload timing, team damage, line of sight, and spawn protection. Clients never submit positions, damage, health, or score.
-- Bots use a walkable grid, visibility tests, reaction delays, aim error, strafing, cover selection while vulnerable, reloads, and stuck recovery. Their navigation currently favors the ground lanes.
+- Bots use a precomputed graph of ground and elevated surfaces, visibility tests, reaction delays, aim error, strafing, cover selection while vulnerable, reloads, and stuck recovery. Their navigation connects the ground lanes, all three ramps and the upper deck while preserving the bridge underpass.
 
 ## Verification
 
@@ -79,7 +79,18 @@ The integration test runs a real ephemeral HTTP/WebSocket server and two clients
 
 `npm run test:production` targets an already running production server at `http://127.0.0.1:8080` (override with `GAME_URL`) and verifies asset serving and two independent clients navigating and killing through input packets only. See [VERIFICATION.md](VERIFICATION.md) for measured results and the remaining external browser checks.
 
-The soak test advances a two-minute match with seven bots and validates finite states, bounds, movement, and combat activity.
+The soak test advances two minutes with seven bots and validates finite states, movement, and combat activity. `test:lobby` covers live readiness, countdowns and cancellation, settings ownership, host handover, duplicate names, late join, reconnects, results/rematches, room capacity, and replacement of a disconnected slot.
+
+With a built production server running on port 8080, run the real-time acceptance load:
+
+```sh
+LOAD_REPORT=artifacts/load-local.json npm run test:load
+LOAD_COUNTS=10 LOAD_LATENCY_MS=40 LOAD_REPORT=artifacts/load-latency.json npm run test:load
+```
+
+The default run measures 2, 5, and 10 independent simulated clients, each alongside **seven server bots**, for 30 seconds per case. Override `GAME_URL`, `LOAD_SECONDS`, `LOAD_COUNTS`, and `LOAD_BOTS` as needed. Use an isolated server with no other human connections during measurements. The clients predict movement, navigate and shoot through real packets; the test checks replica agreement, snapshot continuity, input backlog, prediction error, movement, combat, server tick cost, and inbound/outbound bandwidth (including WebSocket framing). `LOAD_LATENCY_MS` adds application-level one-way delay in both directions. Death corrections are reported separately from continuous movement prediction.
+
+`npm run preview:geometry` generates `artifacts/geometry-preview.png` with a small software rasterizer. It helps inspect geometry and weapon framing without a browser, but does **not** verify WebGL lighting, shadows, HUD layout, pointer lock, audio, or GPU FPS.
 
 Browser verification must be performed externally: this build environment cannot launch a browser. For live FPS and renderer counters, inspect `window.__arena.metrics`; `window.__arena.state` exposes client state for inspection. The HUD also shows FPS and ping. `/api/health` reports measured server tick rate and simulation costs. No client FPS or visual fidelity claim should be inferred from headless tests.
 
