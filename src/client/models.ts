@@ -16,6 +16,8 @@ export function batchMeshes(group: THREE.Group) {
         if (!(child instanceof THREE.Mesh)) continue;
         child.updateMatrix();
         const geo = (child.geometry.index ? child.geometry.toNonIndexed() : child.geometry.clone()).applyMatrix4(child.matrix);
+        // Batched solid-colour meshes never sample textures; ramps need no UV attribute.
+        geo.deleteAttribute('uv');
         const color = (child.material as THREE.MeshLambertMaterial).color;
         const values = new Float32Array(geo.getAttribute('position').count * 3);
         for (let i = 0; i < values.length; i += 3) { values[i] = color.r; values[i + 1] = color.g; values[i + 2] = color.b; }
@@ -39,7 +41,7 @@ function finishGun(g: THREE.Group, id: WeaponId) { batchMeshes(g); gunTemplates.
 export function makeGun(id: WeaponId): THREE.Group {
     if (gunTemplates.has(id))
         return gunTemplates.get(id)!.clone();
-    const g = new THREE.Group(), dark = 0x272a2b, black = 0x15191a, metal = 0x555b5a, wood = 0x8e633d, stock = id === 'sniper' ? 0x536248 : wood;
+    const g = new THREE.Group(), dark = id === 'sniper' ? 0x404449 : 0x272a2b, black = id === 'sniper' ? 0x292c30 : 0x15191a, metal = 0x69716e, wood = 0x8e633d, stock = id === 'sniper' ? 0x737858 : wood;
     if (id === 'knife') {
         box(g, 0, 0, 0.14, 0.09, 0.1, 0.28, black);
         box(g, 0, 0, -0.22, 0.04, 0.12, 0.48, 0xa8b2b1);
@@ -54,17 +56,17 @@ export function makeGun(id: WeaponId): THREE.Group {
         return finishGun(g, id);
     }
     const sniper = id === 'sniper', shotgun = id === 'shotgun', smg = id === 'smg';
-    box(g, 0, 0, 0.43, sniper ? 0.19 : 0.16, 0.22, 0.49, stock);
-    box(g, 0, -0.035, 0.67, 0.23, 0.3, 0.075, black);
-    box(g, 0, 0.015, 0, sniper ? 0.22 : 0.19, 0.22, 0.52, dark);
+    box(g, 0, 0, 0.43, sniper ? 0.15 : 0.16, sniper ? 0.18 : 0.22, 0.49, stock);
+    box(g, 0, -0.035, 0.67, sniper ? 0.18 : 0.23, sniper ? 0.25 : 0.3, 0.075, black);
+    box(g, 0, 0.015, 0, sniper ? 0.17 : 0.19, sniper ? 0.17 : 0.22, 0.52, dark);
     box(g, 0, -0.20, 0.15, 0.13, 0.27, 0.16, black).rotation.x = -0.28;
-    if (!shotgun) {
+    if (!shotgun && !sniper) {
         box(g, 0, -0.235, -0.11, 0.14, smg ? 0.36 : 0.29, 0.19, dark).rotation.x = smg ? 0 : -0.25;
         box(g, 0, -0.35, -0.14, 0.145, 0.05, 0.20, metal);
     }
     box(g, 0, -0.15, 0.02, 0.15, 0.035, 0.19, black);
     box(g, 0, -0.10, -0.075, 0.15, 0.12, 0.035, black);
-    box(g, 0, 0.015, -0.39, shotgun ? 0.23 : 0.17, 0.18, 0.40, shotgun ? wood : sniper ? stock : wood);
+    box(g, 0, 0.015, -0.39, shotgun ? 0.23 : sniper ? 0.14 : 0.17, sniper ? 0.13 : 0.18, 0.40, shotgun ? wood : sniper ? stock : wood);
     const length = sniper ? 0.65 : smg ? 0.19 : 0.43;
     if (shotgun) {
         for (const x of [-0.072, 0.072]) {
@@ -77,17 +79,21 @@ export function makeGun(id: WeaponId): THREE.Group {
         box(g, 0, 0.045, -0.59 - length, 0.11, 0.11, 0.08, black);
     }
     if (sniper) {
-        box(g, 0, 0.17, -0.12, 0.11, 0.12, 0.3, black);
-        box(g, 0, 0.29, -0.09, 0.18, 0.18, 0.61, black);
+        // Separated scope rings leave daylight between the optic and the slim receiver.
+        for (const z of [-0.25, 0.08]) box(g, 0, 0.16, z, 0.08, 0.15, 0.065, metal);
+        box(g, 0, 0.29, -0.09, 0.125, 0.125, 0.61, dark);
         for (const z of [-0.41, 0.23]) {
-            const m = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.13, 8), material(black));
+            const m = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.13, 10), material(dark));
             m.rotation.x = Math.PI / 2;
             m.position.set(0, 0.29, z);
             g.add(m);
         }
-        box(g, 0, 0.29, -0.485, 0.16, 0.16, 0.008, 0x52747a);
-        box(g, 0, 0.41, -0.12, 0.09, 0.09, 0.1, metal);
-        box(g, 0.16, 0.1, 0.11, 0.18, 0.07, 0.075, metal);
+        for (const z of [-0.48, 0.3]) {
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(.088, .088, .008, 10), material(z > 0 ? 0x263b43 : 0x68848a));
+            lens.rotation.x = Math.PI / 2; lens.position.set(0, .29, z); g.add(lens);
+        }
+        box(g, 0, 0.38, -0.12, 0.075, 0.065, 0.085, metal);
+        box(g, 0.13, 0.08, 0.11, 0.16, 0.055, 0.065, metal);
     }
     else {
         box(g, 0, 0.165, -0.12, 0.11, 0.08, 0.11, black);

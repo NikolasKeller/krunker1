@@ -37,9 +37,9 @@ export class Renderer {
         this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
         this.gl.autoClear = false;
         this.gl.info.autoReset = false;
-        this.scene.background = new THREE.Color(0xa9d2dd);
-        this.scene.fog = new THREE.Fog(0xa9d2dd, 75, 160);
-        this.scene.add(new THREE.HemisphereLight(0xf4f9ff, 0xaaa18d, 1.7));
+        this.scene.background = new THREE.Color(0xcdbfbe);
+        this.scene.fog = new THREE.Fog(0xcdbfbe, 75, 160);
+        this.scene.add(new THREE.HemisphereLight(0xf4f9ff, 0xaaa5a0, 1.7));
         const sun = new THREE.DirectionalLight(0xfff0d4, 2.2);
         sun.position.set(-30, 55, 20);
         sun.castShadow = true;

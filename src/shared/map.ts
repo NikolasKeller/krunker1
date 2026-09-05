@@ -21,7 +21,7 @@ export interface Ramp {
 }
 export const MAP_SIZE = 76;
 export const MAP_NAME = 'SANDYARD';
-const sand = 0xc9b598, light = 0xe5d5b9, white = 0xe8e2d2;
+const sand = 0x85827f, light = 0x969795, white = 0x687580;
 export const BOXES: MapBox[] = [
     { x: 0, y: 3, z: -38, w: 78, h: 6, d: 2, color: sand, kind: 'wall' },
     { x: 0, y: 3, z: 38, w: 78, h: 6, d: 2, color: sand, kind: 'wall' },
@@ -29,10 +29,10 @@ export const BOXES: MapBox[] = [
     { x: 38, y: 3, z: 0, w: 2, h: 6, d: 76, color: sand, kind: 'wall' },
     { x: -19, y: 3.5, z: -13, w: 14, h: 7, d: 14, color: light, kind: 'building' },
     { x: 19, y: 3.5, z: 13, w: 14, h: 7, d: 14, color: white, kind: 'building' },
-    { x: 20, y: 3, z: -21, w: 12, h: 6, d: 10, color: 0xcdbba0, kind: 'building' },
-    { x: -20, y: 3, z: 21, w: 12, h: 6, d: 10, color: 0xdac8a6, kind: 'building' },
-    { x: 0, y: 2, z: 0, w: 10, h: 4, d: 10, color: 0xd5c3a3, kind: 'platform' },
-    { x: 0, y: 3.77, z: -9, w: 10, h: 0.46, d: 8, color: 0xd5c3a3, kind: 'platform' },
+    { x: 20, y: 3, z: -21, w: 12, h: 6, d: 10, color: 0x9b8173, kind: 'building' },
+    { x: -20, y: 3, z: 21, w: 12, h: 6, d: 10, color: 0xb0aaa1, kind: 'building' },
+    { x: 0, y: 2, z: 0, w: 10, h: 4, d: 10, color: 0x8a8982, kind: 'platform' },
+    { x: 0, y: 3.77, z: -9, w: 10, h: 0.46, d: 8, color: 0x8a8982, kind: 'platform' },
     { x: -4.6, y: 1.77, z: -11.8, w: 0.8, h: 3.54, d: 0.8, color: light, kind: 'wall' },
     { x: 4.6, y: 1.77, z: -11.8, w: 0.8, h: 3.54, d: 0.8, color: light, kind: 'wall' },
     { x: -4.6, y: 1.77, z: -6, w: 0.8, h: 3.54, d: 0.8, color: light, kind: 'wall' },
@@ -51,9 +51,9 @@ export const BOXES: MapBox[] = [
     { x: -31, y: 1.15, z: -28, w: 3, h: 2.3, d: 3, color: 0xaf8049, kind: 'crate' },
 ];
 export const RAMPS: Ramp[] = [
-    { x: -10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: 1, color: 0xc4b18e },
-    { x: 10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: -1, color: 0xc4b18e },
-    { x: 0, z: 10, w: 8, d: 10, h: 4, axis: 'z', sign: -1, color: 0xc4b18e },
+    { x: -10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: 1, color: 0x9d9587 },
+    { x: 10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: -1, color: 0x9d9587 },
+    { x: 0, z: 10, w: 8, d: 10, h: 4, axis: 'z', sign: -1, color: 0x9d9587 },
 ];
 export const SPAWNS: (Vec3 & {
     yaw: number;

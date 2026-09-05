@@ -23,8 +23,8 @@ test('map geometry builds without WebGL, merges correctly, and has walkable visi
                 assert.ok(Number.isFinite(p.array[i]));
             triangles += (o.geometry.index?.count ?? p.count) / 3;
         } });
-        assert.ok(meshes < 65, `${meshes} static draw calls`);
-        assert.ok(triangles > 1000 && triangles < 30000, `${triangles} triangles`);
+        assert.ok(meshes <= 10, `${meshes} static draw calls: props must stay batched`);
+        assert.ok(triangles > 1000 && triangles < 18000, `${triangles} triangles`);
         const ray = new THREE.Raycaster(new THREE.Vector3(-10, 10, 0), new THREE.Vector3(0, -1, 0));
         const hit = ray.intersectObjects(scene.children, true)[0];
         assert.ok(hit);

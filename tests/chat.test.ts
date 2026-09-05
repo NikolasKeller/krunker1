@@ -8,17 +8,19 @@ import { decodeServerMessage, encodeClientMessage, WIRE_PROTOCOL } from '../src/
 import type { ServerMessage } from '../src/shared/types';
 
 test('real sockets broadcast authenticated chat only inside the room, with length and rate limits', async () => {
-    const app = createGameServer(), sockets: WebSocket[] = [];
-    await new Promise<void>(resolve => app.server.listen(0, '127.0.0.1', resolve));
-    const address = app.server.address(); assert.ok(address && typeof address !== 'string');
+    const app = process.env.GAME_URL ? undefined : createGameServer(), sockets: WebSocket[] = [];
+    if (app) await new Promise<void>(resolve => app.server.listen(0, '127.0.0.1', resolve));
+    const address = app?.server.address();
+    const origin = process.env.GAME_URL ?? `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`;
+    const suffix = Date.now().toString(36).toUpperCase();
     async function join(room: string, name: string) {
-        const ws = new WebSocket(`ws://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}/ws`, WIRE_PROTOCOL);
+        const ws = new WebSocket(origin.replace(/^http/, 'ws') + '/ws', WIRE_PROTOCOL);
         sockets.push(ws);
         const messages: ServerMessage[] = [];
         ws.on('message', (data, binary) => messages.push(decodeServerMessage(binary ? data as Buffer : data.toString())));
         await once(ws, 'open');
-        ws.send(encodeClientMessage({ type: 'join', room, name, classId: 'hunter', team: 'blue' }));
-        const end = Date.now() + 3000;
+        ws.send(encodeClientMessage({ type: 'join', room: room + suffix, name, classId: 'hunter', team: 'blue' }));
+        const end = Date.now() + 10000;
         while (!messages.some(m => m.type === 'welcome')) { assert.ok(Date.now() < end, 'join timeout'); await delay(10); }
         return { ws, messages, chats: () => messages.filter(m => m.type === 'chat') };
     }
@@ -38,5 +40,5 @@ test('real sockets broadcast authenticated chat only inside the room, with lengt
         while (b.chats().length < 2) { assert.ok(Date.now() < next, 'second chat timeout'); await delay(10); }
         assert.equal(b.chats()[1].text.length, 160);
         assert.equal(other.chats().length, 0);
-    } finally { sockets.forEach(ws => ws.terminate()); await app.close(); }
+    } finally { sockets.forEach(ws => ws.terminate()); await app?.close(); }
 });

@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BOXES, RAMPS } from '../shared/map';
-import { box, material } from './models';
+import { batchMeshes, box, material } from './models';
 function sign(scene: THREE.Object3D, text: string, x: number, y: number, z: number, width: number, height: number, rotation = 0, bg = '#263c3c', fg = '#eae3ce') {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -23,39 +22,87 @@ function sign(scene: THREE.Object3D, text: string, x: number, y: number, z: numb
 }
 export function buildMap(scene: THREE.Scene) {
     const staticGroup = new THREE.Group();
-    box(staticGroup, 0, -0.25, 0, 180, 0.5, 180, 0xc2b39a);
+    box(staticGroup, 0, -0.25, 0, 180, 0.5, 180, 0xb98065);
     for (const b of BOXES) {
+        // These vans occupy the two existing low cover volumes, keeping movement/hitscan intact.
+        if (b.kind === 'cover' && b.w === 7 && b.h === 1.7) {
+            const body = 0xd4cfc0, glass = 0x30383c, tyre = 0x303233;
+            box(staticGroup, b.x, .66, b.z, 7, .65, 2, body);
+            box(staticGroup, b.x + .35, 1.3, b.z, 5.5, .8, 1.86, body);
+            box(staticGroup, b.x - 2.9, .95, b.z, 1.2, .15, 1.94, body);
+            for (const side of [-1, 1]) {
+                for (const x of [-1.75, -.25, 1.25, 2.65]) {
+                    box(staticGroup, b.x + x, 1.31, b.z + side * .94, 1.25, .56, .035, glass);
+                    box(staticGroup, b.x + x + .4, .9, b.z + side * 1.01, .2, .045, .025, 0x656563);
+                }
+                for (const x of [-2.3, 2.3]) {
+                    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.45, .45, .16, 10), material(tyre));
+                    wheel.rotation.x = Math.PI / 2; wheel.position.set(b.x + x, .45, b.z + side * .92); staticGroup.add(wheel);
+                    const hub = new THREE.Mesh(new THREE.CylinderGeometry(.25, .25, .17, 10), material(0x969795));
+                    hub.rotation.x = Math.PI / 2; hub.position.copy(wheel.position); staticGroup.add(hub);
+                }
+            }
+            box(staticGroup, b.x - 2.43, 1.31, b.z, .035, .56, 1.68, glass);
+            box(staticGroup, b.x - 3.51, .67, b.z, .035, .26, 1.25, 0x656563);
+            for (const z of [-.77, .77]) box(staticGroup, b.x - 3.53, .81, b.z + z, .04, .22, .25, 0xf0dfaf);
+            continue;
+        }
         box(staticGroup, b.x, b.y, b.z, b.w, b.h, b.d, b.color);
+        if (b.kind === 'wall' && b.h === 6) {
+            const alongX = b.w > b.d, length = alongX ? b.w : b.d;
+            const inner = alongX ? b.z - Math.sign(b.z) * (b.d / 2 + .02) : b.x - Math.sign(b.x) * (b.w / 2 + .02);
+            box(staticGroup, alongX ? b.x : inner, .25, alongX ? inner : b.z, alongX ? length : .04, .5, alongX ? .04 : length, 0x656563);
+            for (let n = 0; n < 60; n++) {
+                const offset = -length / 2 + 1.5 + (n * 7.13 % (length - 3));
+                const y = .9 + (n * 1.31 % 4.5), width = .8 + n % 4 * .4;
+                box(staticGroup, alongX ? offset : inner, y, alongX ? inner : offset, alongX ? width : .025, .28 + n % 3 * .12, alongX ? .025 : width, n % 3 ? 0x969795 : 0x777875);
+            }
+        }
         if (b.kind === 'building') {
-            box(staticGroup, b.x, b.y + b.h / 2 + 0.12, b.z, b.w + 0.35, 0.24, b.d + 0.35, 0xf0e6d0);
-            box(staticGroup, b.x, b.y - b.h / 2 + 0.3, b.z, b.w + 0.05, 0.6, b.d + 0.05, 0xae9d82);
+            box(staticGroup, b.x, b.y + b.h / 2 + 0.12, b.z, b.w + 0.35, 0.24, b.d + 0.35, 0xb4b1a9);
+            box(staticGroup, b.x, b.y - b.h / 2 + 0.3, b.z, b.w + 0.05, 0.6, b.d + 0.05, 0x656563);
             if (b.w > 5) {
                 // Exposed blockwork breaks up broad plaster faces without image assets.
                 for (const side of [-1, 1]) for (let row = 0; row < 3; row++) {
                     for (let column = 0; column < 4; column++) {
                         const x = b.x - b.w * .39 + column * 1.35 + (row % 2) * .55;
-                        box(staticGroup, x, .85 + row * .38, b.z + side * (b.d / 2 + .045), 1.05, .27, .06, row % 2 ? 0xbcac92 : 0xd1c1a6);
+                        box(staticGroup, x, .85 + row * .38, b.z + side * (b.d / 2 + .045), 1.05, .27, .06, row % 2 ? 0x777875 : 0xa8a7a0);
                     }
                 }
                 for (const x of [-0.28, 0.28])
                     for (const s of [-1, 1]) {
                         box(staticGroup, b.x + b.w * x, b.y + 0.7, b.z + s * (b.d / 2 + 0.025), 1.75, 1.85, 0.08, 0x526669);
                         box(staticGroup, b.x + b.w * x, b.y + 0.68, b.z + s * (b.d / 2 + 0.075), 1.38, 1.48, 0.04, 0x364b50);
-                        box(staticGroup, b.x + b.w * x, b.y - 0.28, b.z + s * (b.d / 2 + 0.18), 2.05, 0.18, 0.4, 0xe7d9bc);
+                        box(staticGroup, b.x + b.w * x, b.y - 0.28, b.z + s * (b.d / 2 + 0.18), 2.05, 0.18, 0.4, 0xb4b1a9);
                         box(staticGroup, b.x + b.w * x, b.y + 0.68, b.z + s * (b.d / 2 + 0.11), 0.075, 1.55, 0.04, 0x9baca4);
                     }
                 for (const side of [-1, 1]) {
                     const face = b.x + side * (b.w / 2 + .06);
-                    box(staticGroup, face, 1.325, b.z, .1, 2.65, 1.75, 0x597d7b);
+                    box(staticGroup, face, 1.325, b.z, .1, 2.65, 1.75, 0x465663);
                     for (const offset of [-.28, .28]) {
                         box(staticGroup, face, b.y + .7, b.z + b.d * offset, .08, 1.85, 1.75, 0x526669);
                         box(staticGroup, face + side * .045, b.y + .68, b.z + b.d * offset, .04, 1.48, 1.38, 0x364b50);
-                        box(staticGroup, face, b.y - .28, b.z + b.d * offset, .3, .18, 2.05, 0xe7d9bc);
+                        box(staticGroup, face, b.y - .28, b.z + b.d * offset, .3, .18, 2.05, 0xb4b1a9);
                     }
                 }
             }
         }
         if (b.kind === 'crate') {
+            // Bands split the large cover crates into a visibly stacked pair without changing bounds.
+            if (b.w > 4) {
+                box(staticGroup, b.x, b.y, b.z, b.w + .04, .12, b.d + .04, 0x65503d);
+                for (const side of [-1, 1]) for (const column of [-1, 1]) for (const row of [-1, 1]) {
+                    const x = b.x + column * b.w / 4, y = b.y + row * b.h / 4, z = b.z + side * (b.d / 2 + .045);
+                    box(staticGroup, x, y, z, b.w / 2 - .1, b.h / 2 - .08, .07, row > 0 ? 0xa27850 : 0xb98a58);
+                    for (const edge of [-1, 1]) {
+                        box(staticGroup, x + edge * (b.w / 4 - .1), y, z + side * .05, .14, b.h / 2, .07, 0xd1a368);
+                        box(staticGroup, x, y + edge * (b.h / 4 - .1), z + side * .05, b.w / 2, .14, .07, 0xd1a368);
+                    }
+                    const brace = box(staticGroup, x, y, z + side * .05, Math.hypot(b.w / 2 - .3, b.h / 2 - .3), .12, .07, 0x65503d);
+                    brace.rotation.z = column * Math.atan2(b.h / 2 - .3, b.w / 2 - .3);
+                }
+                continue;
+            }
             for (const s of [-1, 1]) {
                 for (const t of [-1, 1]) {
                     box(staticGroup, b.x + t * (b.w / 2 - 0.15), b.y, b.z + s * (b.d / 2 + 0.025), 0.22, b.h, 0.08, 0x876039);
@@ -73,6 +120,17 @@ export function buildMap(scene: THREE.Scene) {
                     box(staticGroup, b.x + x, b.y, b.z + s * (b.d / 2 + 0.04), 0.08, b.h - 0.2, 0.08, b.color);
             box(staticGroup, b.x, b.y + b.h / 2, b.z, b.w + 0.1, 0.12, b.d + 0.1, 0x345559);
         }
+    }
+    for (const b of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
+        for (const side of [-1, 1]) {
+            const face = b.z + side * (b.d / 2 + .09);
+            box(staticGroup, b.x, 1.7, face, 3.3, 3.4, .12, b.x > 0 ? 0x3d5369 : 0x735c49);
+            for (let y = .4; y < 3.4; y += .35) box(staticGroup, b.x, y, face + side * .075, 3.15, .04, .03, 0x30383c);
+            box(staticGroup, b.x, 3.55, face, 3.7, .18, .4, 0x656563);
+        }
+        box(staticGroup, b.x + 3, b.h + .4, b.z - 2, 2.2, .8, 1.8, 0x656563);
+        box(staticGroup, b.x + 3, b.h + .85, b.z - 2, 2.4, .12, 2, 0x969795);
+        for (let n = 0; n < 4; n++) box(staticGroup, b.x + 2.3 + n * .45, b.h + .92, b.z - 2, .08, .03, 1.6, 0x30383c);
     }
     for (const r of RAMPS) {
         const x0 = r.x - r.w / 2, x1 = r.x + r.w / 2, z0 = r.z - r.d / 2, z1 = r.z + r.d / 2;
@@ -92,7 +150,7 @@ export function buildMap(scene: THREE.Scene) {
         const x = ((i * 29.73) % 70) - 35, z = ((i * 17.39) % 70) - 35;
         if (BOXES.some(b => Math.abs(x - b.x) < b.w / 2 + .5 && Math.abs(z - b.z) < b.d / 2 + .5)) continue;
         if (RAMPS.some(r => Math.abs(x - r.x) < r.w / 2 && Math.abs(z - r.z) < r.d / 2)) continue;
-        const chip = box(staticGroup, x, .003, z, .35 + (i % 4) * .2, .005, .18 + (i % 3) * .13, i % 2 ? 0xb2a38c : 0xd2c3a9);
+        const chip = box(staticGroup, x, .003, z, .35 + (i % 4) * .2, .005, .18 + (i % 3) * .13, i % 2 ? 0x9c6c55 : 0xd49e7c);
         chip.rotation.y = i * 1.73;
     }
     // Painted lane markers and a plaza inset help players learn the three routes at a glance.
@@ -100,7 +158,7 @@ export function buildMap(scene: THREE.Scene) {
         box(staticGroup, s * 31, 0.007, 12 * s, 0.18, 0.013, 14, 0xe4dac0);
         box(staticGroup, s * 21, 0.01, -30 * s, 16, 0.02, 0.13, 0xe4dac0);
     }
-    box(staticGroup, 0, 0.009, 21, 5, 0.018, 6, 0xb1a58e);
+    box(staticGroup, 0, 0.009, 21, 5, 0.018, 6, 0x96938a);
     for (const x of [-1, 1]) {
         box(staticGroup, x * 4.55, 4.015, 0, 0.17, 0.03, 8, 0xe4b450);
         box(staticGroup, x * 4.5, 4.015, -8, 0.13, 0.03, 6, 0xe4b450);
@@ -113,37 +171,52 @@ export function buildMap(scene: THREE.Scene) {
     }
     for (let i = 0; i < 16; i++) {
         const x = (i % 8 - 3.5) * 15, z = i < 8 ? -48 : 49, h = 5 + (i * 7 % 9);
-        box(staticGroup, x, h / 2, z, 10, h, 9, 0xc3bdad);
-        box(staticGroup, x, h + 0.12, z, 10.4, 0.25, 9.4, 0xdcd6c5);
+        box(staticGroup, x, h / 2, z, 10, h, 9, [0x797b7c, 0x9b8173, 0x969795, 0x687580][i % 4]);
+        box(staticGroup, x, h + 0.12, z, 10.4, 0.25, 9.4, 0xb4b1a9);
     }
-    // Merge static geometry by material so detail does not turn into hundreds of draw calls.
-    staticGroup.updateMatrixWorld(true);
-    const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    staticGroup.traverse(o => { if (o instanceof THREE.Mesh) {
-        const mat = o.material as THREE.Material, g = o.geometry.clone().applyMatrix4(o.matrixWorld);
-        if (g.index) {
-            const n = g.toNonIndexed();
-            g.dispose();
-            if (!batches.has(mat))
-                batches.set(mat, []);
-            batches.get(mat)!.push(n);
-        }
-        else {
-            if (!batches.has(mat))
-                batches.set(mat, []);
-            batches.get(mat)!.push(g);
-        }
-    } });
-    for (const [mat, geos] of batches) {
-        const merged = mergeGeometries(geos);
-        if (!merged)
-            continue;
-        const m = new THREE.Mesh(merged, mat);
-        m.receiveShadow = true;
-        m.castShadow = true;
-        scene.add(m);
-        geos.forEach(g => g.dispose());
+    // A fixed crane behind the boundary gives the industrial yard a recognisable skyline.
+    const steel = 0x655c4e, yellow = 0xb89a5f;
+    for (const x of [-30.7, -29.3]) box(staticGroup, x, 10, -44, .22, 20, .22, steel);
+    for (let y = 1; y < 20; y += 2) {
+        const brace = box(staticGroup, -30, y, -44, 2.4, .13, .13, yellow);
+        brace.rotation.z = (y % 4 === 1 ? 1 : -1) * .95;
     }
+    box(staticGroup, -22, 19, -44, 24, .25, .8, steel);
+    box(staticGroup, -22, 20.1, -44, 24, .18, .8, yellow);
+    for (let x = -33; x < -10; x += 2) {
+        const brace = box(staticGroup, x, 19.55, -44, 2.15, .1, .15, yellow);
+        brace.rotation.z = .52;
+    }
+    box(staticGroup, -30, 17.7, -44, 2.6, 1.8, 2.2, yellow);
+    box(staticGroup, -29.6, 17.8, -42.88, 1.5, .85, .04, 0x30383c);
+    box(staticGroup, -12, 15.3, -44, .06, 7.2, .06, steel);
+    box(staticGroup, -11.8, 11.75, -44, .46, .16, .12, steel);
+    // Fences sit on top of solid boundary walls; their thin bars require no extra physics.
+    for (const side of [-1, 1]) {
+        for (let z = -30; z <= 30; z += 3) box(staticGroup, side * 38, 7, z, .12, 2, .12, 0x656563);
+        for (const y of [6.4, 7.6]) box(staticGroup, side * 38, y, 0, .06, .06, 60, 0x656563);
+        for (let z = -30; z < 30; z += .75) {
+            const wire = box(staticGroup, side * 38, 7, z, .035, 1.6, .035, 0x969795);
+            wire.rotation.x = .45;
+        }
+    }
+    // Static folded pennants and broad wall flags, kept above playable sight lines.
+    for (const z of [-13, 13]) {
+        box(staticGroup, 0, 8.5, z, 26, .035, .035, 0x65503d);
+        for (let x = -10; x <= 10; x += 2.5) {
+            const flag = box(staticGroup, x, 8.05, z, .72, .9, .035, (x + 10) % 5 === 0 ? 0x3d5369 : 0xb3654c);
+            flag.rotation.z = .12; flag.rotation.y = .16;
+        }
+    }
+    for (const b of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
+        const z = b.z + b.d / 2 + .16;
+        box(staticGroup, b.x + 4.1, 5.7, z, 2.5, 1.35, .055, b.x > 0 ? 0x3d5369 : 0xb3654c);
+        box(staticGroup, b.x + 4.1, 5.7, z + .035, 2.5, .26, .03, 0xd4bf84);
+        box(staticGroup, b.x + 3.6, 5.7, z + .035, .23, 1.35, .03, 0xd4bf84);
+    }
+    // All static solid colours share one vertex-colour batch; props add triangles, not draw calls.
+    batchMeshes(staticGroup);
+    scene.add(staticGroup);
     sign(scene, 'SANDYARD', -19, 5.65, -5.94, 7.6, 1.4, 0, '#355b5a');
     sign(scene, 'WAREHOUSE 02', 19, 5.2, 20.06, 7.5, 1.3, 0, '#3b5b5b');
     sign(scene, 'A  →', -12, 2.3, 13.94, 3, 1.15, Math.PI, '#a66348');

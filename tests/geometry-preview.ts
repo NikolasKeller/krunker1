@@ -8,7 +8,7 @@ import { Viewmodel } from '../src/client/viewmodel';
 import { orientCamera } from '../src/client/camera';
 Object.defineProperty(globalThis, 'document', { value: { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() {}, fillText() {} }) }) } });
 const width = 1024, height = 614, rgba = Buffer.alloc(width * height * 4), depth = new Float64Array(width * height);
-for (let i = 0; i < width * height; i++) { rgba[i * 4] = 169; rgba[i * 4 + 1] = 210; rgba[i * 4 + 2] = 221; rgba[i * 4 + 3] = 255; }
+for (let i = 0; i < width * height; i++) { rgba[i * 4] = 205; rgba[i * 4 + 1] = 191; rgba[i * 4 + 2] = 190; rgba[i * 4 + 3] = 255; }
 const sun = new THREE.Vector3(-30, 55, 20).normalize();
 function render(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
     depth.fill(Infinity); scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
