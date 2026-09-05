@@ -1,0 +1,600 @@
+{
+  "date": "2026-09-05T22:35:25.144Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 30.2,
+      "latencyMsOneWay": 0,
+      "tickHz": 60.01,
+      "meanTickMs": 0.322,
+      "maxWindowP95Ms": 0.894,
+      "peakTickMs": 2.422,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 5138,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 1.972,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1424,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 1780,
+        "maxInputQueue": 15
+      },
+      "inputQueues": [
+        {
+          "maxPending": 7,
+          "maxInFlight": 6,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 11
+        },
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 13
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 8.08,
+          "upKBps": 2.13,
+          "shots": 13,
+          "hits": 1,
+          "kills": 1,
+          "movedMetres": 151.6,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.4482,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 61
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 8.15,
+          "upKBps": 2.13,
+          "shots": 77,
+          "hits": 26,
+          "kills": 6,
+          "movedMetres": 186,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.7506,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 53,
+          "maxSnapshotGapMs": 62
+        }
+      ]
+    },
+    {
+      "humans": 5,
+      "bots": 7,
+      "durationSeconds": 30.2,
+      "latencyMsOneWay": 0,
+      "tickHz": 59.99,
+      "meanTickMs": 0.4,
+      "maxWindowP95Ms": 1.177,
+      "peakTickMs": 2.229,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 8724,
+        "skippedSnapshots": 2,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 1.972,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1784,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 1780,
+        "maxInputQueue": 15
+      },
+      "inputQueues": [
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 6,
+          "maxInFlight": 6,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 4
+        },
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 14
+        },
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 40
+        },
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 8
+        },
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 6
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 10.24,
+          "upKBps": 2.13,
+          "shots": 15,
+          "hits": 4,
+          "kills": 4,
+          "movedMetres": 134.4,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.4482,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 4,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 54
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 10.29,
+          "upKBps": 2.13,
+          "shots": 89,
+          "hits": 30,
+          "kills": 8,
+          "movedMetres": 188.6,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.2999,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 4,
+          "snapshotGapP99Ms": 53,
+          "maxSnapshotGapMs": 64
+        },
+        {
+          "name": "Load 3",
+          "downKBps": 10.22,
+          "upKBps": 2.13,
+          "shots": 16,
+          "hits": 8,
+          "kills": 0,
+          "movedMetres": 178.5,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.8521,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 91
+        },
+        {
+          "name": "Load 4",
+          "downKBps": 10.35,
+          "upKBps": 2.14,
+          "shots": 128,
+          "hits": 26,
+          "kills": 4,
+          "movedMetres": 220.9,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 1.004,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 4,
+          "snapshotGapP99Ms": 54,
+          "maxSnapshotGapMs": 60
+        },
+        {
+          "name": "Load 5",
+          "downKBps": 10.24,
+          "upKBps": 2.13,
+          "shots": 13,
+          "hits": 4,
+          "kills": 4,
+          "movedMetres": 131.3,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.9409,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 57
+        }
+      ]
+    },
+    {
+      "humans": 10,
+      "bots": 7,
+      "durationSeconds": 30.2,
+      "latencyMsOneWay": 0,
+      "tickHz": 59.99,
+      "meanTickMs": 0.733,
+      "maxWindowP95Ms": 2.598,
+      "peakTickMs": 8.862,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 15910,
+        "skippedSnapshots": 2,
+        "maxSnapshotSendGapMs": 55,
+        "maxSendCallbackMs": 8.079,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 2391,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 1780,
+        "maxInputQueue": 30
+      },
+      "inputQueues": [
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 37,
+          "maxInFlight": 30,
+          "maxOutgoing": 9,
+          "dropped": 0,
+          "maxBufferedBytes": 307
+        },
+        {
+          "maxPending": 6,
+          "maxInFlight": 6,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 6,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        },
+        {
+          "maxPending": 7,
+          "maxInFlight": 7,
+          "maxOutgoing": 4,
+          "dropped": 0,
+          "maxBufferedBytes": 142
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 11
+        },
+        {
+          "maxServerSnapshotGapMs": 55,
+          "maxDeliveryJitterMs": 16
+        },
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 7
+        },
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 529
+        },
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 16
+        },
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 15
+        },
+        {
+          "maxServerSnapshotGapMs": 55,
+          "maxDeliveryJitterMs": 10
+        },
+        {
+          "maxServerSnapshotGapMs": 55,
+          "maxDeliveryJitterMs": 15
+        },
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 10
+        },
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 13
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 13.91,
+          "upKBps": 2.12,
+          "shots": 14,
+          "hits": 1,
+          "kills": 1,
+          "movedMetres": 96.7,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.5926,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 60
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 13.98,
+          "upKBps": 2.13,
+          "shots": 69,
+          "hits": 15,
+          "kills": 3,
+          "movedMetres": 165.2,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.7245,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 53,
+          "maxSnapshotGapMs": 66
+        },
+        {
+          "name": "Load 3",
+          "downKBps": 13.97,
+          "upKBps": 2.13,
+          "shots": 16,
+          "hits": 6,
+          "kills": 3,
+          "movedMetres": 143.5,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.2612,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 57
+        },
+        {
+          "name": "Load 4",
+          "downKBps": 14.07,
+          "upKBps": 2.13,
+          "shots": 122,
+          "hits": 28,
+          "kills": 4,
+          "movedMetres": 216.3,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.9803,
+          "correctionSpikes": [
+            {
+              "error": 2.7454887203536757,
+              "alive": true,
+              "ack": 896,
+              "pending": 16,
+              "life": 3
+            }
+          ],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0.001,
+          "maxAckLag": 35,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 579
+        },
+        {
+          "name": "Load 5",
+          "downKBps": 13.84,
+          "upKBps": 2.12,
+          "shots": 11,
+          "hits": 0,
+          "kills": 0,
+          "movedMetres": 102.8,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.8886,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 66
+        },
+        {
+          "name": "Load 6",
+          "downKBps": 14.06,
+          "upKBps": 2.13,
+          "shots": 99,
+          "hits": 36,
+          "kills": 10,
+          "movedMetres": 184.8,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.6244,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 66
+        },
+        {
+          "name": "Load 7",
+          "downKBps": 14.04,
+          "upKBps": 2.13,
+          "shots": 18,
+          "hits": 12,
+          "kills": 4,
+          "movedMetres": 151.2,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.722,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 4,
+          "snapshotGapP99Ms": 53,
+          "maxSnapshotGapMs": 60
+        },
+        {
+          "name": "Load 8",
+          "downKBps": 13.98,
+          "upKBps": 2.13,
+          "shots": 83,
+          "hits": 22,
+          "kills": 2,
+          "movedMetres": 142.1,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 1.127,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 6,
+          "snapshotGapP99Ms": 52,
+          "maxSnapshotGapMs": 64
+        },
+        {
+          "name": "Load 9",
+          "downKBps": 14.02,
+          "upKBps": 2.13,
+          "shots": 15,
+          "hits": 6,
+          "kills": 6,
+          "movedMetres": 191,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.901,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 4,
+          "snapshotGapP99Ms": 53,
+          "maxSnapshotGapMs": 61
+        },
+        {
+          "name": "Load 10",
+          "downKBps": 14.01,
+          "upKBps": 2.13,
+          "shots": 65,
+          "hits": 20,
+          "kills": 6,
+          "movedMetres": 177.2,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 0.9024,
+          "correctionSpikes": [],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0,
+          "maxAckLag": 4,
+          "snapshotGapP99Ms": 54,
+          "maxSnapshotGapMs": 63
+        }
+      ]
+    }
+  ],
+  "runner": "Railway container, connecting through the public HTTPS/WSS URL",
+  "testedRevision": "af0af0fc265147f516fb86b16cfce7827d3798e5"
+}

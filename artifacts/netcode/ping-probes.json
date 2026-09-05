@@ -1,0 +1,39 @@
+{
+  "publicURL": "https://krunker1-production.up.railway.app",
+  "local": [
+    {
+      "client": "ws, small JSON ping",
+      "sent": 385,
+      "received": 384,
+      "rttMinMs": 45,
+      "rttP99Ms": 4498,
+      "gapP99Ms": 654,
+      "maxGapMs": 3942
+    },
+    {
+      "client": "ws, ping padded by 1000 bytes",
+      "sent": 384,
+      "received": 381,
+      "rttMinMs": 46,
+      "rttP99Ms": 2997,
+      "gapP99Ms": 890,
+      "maxGapMs": 1886
+    },
+    {
+      "client": "Node native WebSocket, small ping",
+      "sent": 384,
+      "received": 378,
+      "rttMinMs": 41,
+      "rttP99Ms": 3038,
+      "gapP99Ms": 525,
+      "maxGapMs": 1479
+    }
+  ],
+  "railwayThroughPublicURL": {
+    "received": 398,
+    "rttMinMs": 5,
+    "rttP99Ms": 8,
+    "maxGapMs": 62,
+    "gapP99Ms": 53
+  }
+}

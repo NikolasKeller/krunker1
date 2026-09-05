@@ -53,11 +53,13 @@ Audio unlocks on Ready or Click to Play. When the countdown ends (or an invite j
 
 `src/shared` holds protocol types, weapon/class stats, map data, collision, movement, and hitscan math. `src/server` holds the fixed-step simulation, rooms and transport, lag history, round logic, and bot navigation. `src/client` separates networking/prediction, controls, scene/map rendering, models, viewmodels, effects, audio, and UI.
 
-- **60 Hz authoritative simulation**, **20 Hz snapshots**, inputs batched in pairs at 60 Hz.
+- **60 Hz authoritative simulation**, **20 Hz snapshots**, and **20 Hz binary input packets** carrying 60 Hz simulation steps.
 - The client predicts with the same fixed-step movement function. Snapshots acknowledge an input sequence; pending inputs are replayed from authoritative state. Small corrections decay visually without altering collision state. Inputs carry the current life generation so delayed pre-death input cannot move or fire after a respawn.
-- Remote players interpolate 100 ms behind server time. Clock offset is estimated with ping/pong.
+- Clients predict at 60 Hz and send accumulated simulation steps in binary packets at 20 Hz, independently of rendering. The unsent input window holds at most 12 steps, prediction history at most 120 and the unacknowledged transmission window at most 30; a blocked socket retains recent controls instead of accumulating serialized messages. Prediction is rebuilt when inputs are discarded so it does not keep advancing through unsent movement. Sequence gaps from discarded inputs are valid, while server simulation credit still limits movement.
+- The `arena-v2` WebSocket subprotocol carries binary input, snapshot deltas and combat events. Lobby/control messages remain JSON, and older JSON clients can still connect. Input packets are at most 398 bytes; the server accepts messages up to 4 KB. Snapshots remain 20 Hz, with 100 ms remote interpolation. Clock offset is estimated with ping/pong.
+- The server retains up to 200 ms of unused input-processing credit for jitter and discards stale command backlog after spending each tick’s movement budget. Snapshot sends skip busy sockets without advancing their delta baseline. `/api/health` exposes send cadence, write callback duration, buffered bytes and input arrival/queue measurements.
 - The server rewinds hitboxes to the shot timestamp, constrained by its own measured connection RTT and a 250 ms maximum. History interpolation never crosses respawn generations. Static geometry still blocks shots.
-- Delta snapshots contain only changed player fields and removed IDs, with periodic full keyframes. Remote positions use centimetres and angles use milliradians; local movement retains higher precision for prediction. Remote snapshots omit private prediction/ammo fields. Room metadata is sent only on changes. A broken baseline requests a full resync. Slow sockets cannot build an unbounded send queue.
+- Delta snapshots contain only changed player fields and removed IDs, with periodic full keyframes. Remote positions use centimetres and angles use milliradians; local movement retains exact double precision for prediction. Remote snapshots omit private prediction/ammo fields. Room metadata is sent only on changes. A broken baseline requests a full resync. Slow sockets cannot build an unbounded send queue.
 - Server-side limits validate finite inputs, sequence monotonicity, movement time budgets, fire rate, magazine state, reload timing, team damage, line of sight, and spawn protection. Clients never submit positions, damage, health, or score.
 - Bots use a precomputed graph of ground and elevated surfaces, visibility tests, reaction delays, aim error, strafing, cover selection while vulnerable, reloads, and stuck recovery. Their navigation connects the ground lanes, all three ramps and the upper deck while preserving the bridge underpass.
 
@@ -90,6 +92,8 @@ With a built production server running on port 8080, run the real-time acceptanc
 LOAD_REPORT=artifacts/load-local.json npm run test:load
 LOAD_COUNTS=10 LOAD_LATENCY_MS=40 LOAD_REPORT=artifacts/load-latency.json npm run test:load
 ```
+
+The load runner shares the production binary codec and input buffer; its original acceptance thresholds are unchanged. See [NETCODE.md](NETCODE.md) and [raw network measurements](artifacts/netcode) for public-deployment verification.
 
 The default run measures 2, 5, and 10 independent simulated clients, each alongside **seven server bots**, for 30 seconds per case. Override `GAME_URL`, `LOAD_SECONDS`, `LOAD_COUNTS`, and `LOAD_BOTS` as needed. Use an isolated server with no other human connections during measurements. The clients predict movement, navigate and shoot through real packets; the test checks replica agreement, snapshot continuity, input backlog, prediction error, movement, combat, server tick cost, and inbound/outbound bandwidth (including WebSocket framing). `LOAD_LATENCY_MS` adds application-level one-way delay in both directions. Death corrections are reported separately from continuous movement prediction.
 

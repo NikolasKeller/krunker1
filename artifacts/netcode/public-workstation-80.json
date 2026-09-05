@@ -1,0 +1,232 @@
+{
+  "date": "2026-09-05T22:18:02.159Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 30.5,
+      "latencyMsOneWay": 80,
+      "tickHz": 60.62,
+      "meanTickMs": 0.349,
+      "maxWindowP95Ms": 1.033,
+      "peakTickMs": 3.43,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 3038,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 9.569,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1424,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 4646,
+        "maxInputQueue": 46
+      },
+      "inputQueues": [
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 416,
+          "maxBufferedBytes": 0
+        },
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 775,
+          "maxBufferedBytes": 0
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 1900
+        },
+        {
+          "maxServerSnapshotGapMs": 53,
+          "maxDeliveryJitterMs": 3961
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 7.54,
+          "upKBps": 1.62,
+          "shots": 10,
+          "hits": 0,
+          "kills": 0,
+          "movedMetres": 194.1,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 3.8936,
+          "correctionSpikes": [
+            {
+              "error": 0.1953455127276434,
+              "alive": true,
+              "ack": 920,
+              "pending": 24,
+              "life": 5
+            },
+            {
+              "error": 0.6893345759393857,
+              "alive": true,
+              "ack": 1234,
+              "pending": 33,
+              "life": 6
+            },
+            {
+              "error": 0.6420397706658311,
+              "alive": true,
+              "ack": 1955,
+              "pending": 24,
+              "life": 7
+            }
+          ],
+          "predictionP95Metres": 0.001,
+          "predictionP99Metres": 0.0512,
+          "maxAckLag": 189,
+          "snapshotGapP99Ms": 439,
+          "maxSnapshotGapMs": 1950
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 7.64,
+          "upKBps": 1.22,
+          "shots": 44,
+          "hits": 8,
+          "kills": 3,
+          "movedMetres": 147.2,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 5.7277,
+          "correctionSpikes": [
+            {
+              "error": 0.18900749480940712,
+              "alive": true,
+              "ack": 391,
+              "pending": 22,
+              "life": 3
+            },
+            {
+              "error": 0.12178667378079987,
+              "alive": true,
+              "ack": 634,
+              "pending": 42,
+              "life": 3
+            },
+            {
+              "error": 2.2417056455451307,
+              "alive": true,
+              "ack": 704,
+              "pending": 15,
+              "life": 3
+            },
+            {
+              "error": 0.11928825547254111,
+              "alive": true,
+              "ack": 707,
+              "pending": 12,
+              "life": 3
+            },
+            {
+              "error": 0.18639316969411165,
+              "alive": true,
+              "ack": 707,
+              "pending": 13,
+              "life": 3
+            },
+            {
+              "error": 0.14590339659452317,
+              "alive": true,
+              "ack": 1133,
+              "pending": 36,
+              "life": 4
+            },
+            {
+              "error": 0.42915793116143963,
+              "alive": true,
+              "ack": 1133,
+              "pending": 36,
+              "life": 4
+            },
+            {
+              "error": 0.419552123533756,
+              "alive": true,
+              "ack": 1133,
+              "pending": 36,
+              "life": 4
+            },
+            {
+              "error": 0.425376494663782,
+              "alive": true,
+              "ack": 1133,
+              "pending": 36,
+              "life": 4
+            },
+            {
+              "error": 0.21217477799953727,
+              "alive": true,
+              "ack": 1133,
+              "pending": 36,
+              "life": 4
+            },
+            {
+              "error": 0.20116535720045198,
+              "alive": true,
+              "ack": 1267,
+              "pending": 33,
+              "life": 4
+            },
+            {
+              "error": 0.1185884277978053,
+              "alive": true,
+              "ack": 1291,
+              "pending": 30,
+              "life": 4
+            },
+            {
+              "error": 0.18469119014896335,
+              "alive": true,
+              "ack": 1291,
+              "pending": 33,
+              "life": 4
+            },
+            {
+              "error": 0.20506958687485266,
+              "alive": true,
+              "ack": 1386,
+              "pending": 34,
+              "life": 4
+            },
+            {
+              "error": 0.14608836797899982,
+              "alive": true,
+              "ack": 1916,
+              "pending": 12,
+              "life": 5
+            },
+            {
+              "error": 0.11166002816202714,
+              "alive": true,
+              "ack": 1916,
+              "pending": 17,
+              "life": 5
+            }
+          ],
+          "predictionP95Metres": 0.0314,
+          "predictionP99Metres": 0.189,
+          "maxAckLag": 292,
+          "snapshotGapP99Ms": 418,
+          "maxSnapshotGapMs": 4010
+        }
+      ]
+    }
+  ],
+  "runner": "Workstation Node 25, public HTTPS/WSS URL",
+  "testedRevision": "8a452c604cf0094f718bb7e7d98a04e3904b7734"
+}

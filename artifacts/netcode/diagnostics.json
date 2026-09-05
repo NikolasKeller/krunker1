@@ -1,0 +1,270 @@
+{
+  "date": "2026-09-05T21:55:25.503Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 30.8,
+      "latencyMsOneWay": 0,
+      "tickHz": 59.36,
+      "meanTickMs": 0.481,
+      "maxWindowP95Ms": 1.269,
+      "peakTickMs": 5.109,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 1484,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 57,
+        "maxSendCallbackMs": 3.819,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 3401,
+        "maxInputMessageBytes": 511,
+        "maxInputArrivalGapMs": 2931,
+        "maxInputQueue": 120
+      },
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 57,
+          "maxDeliveryJitterMs": 1898
+        },
+        {
+          "maxServerSnapshotGapMs": 56,
+          "maxDeliveryJitterMs": 967
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 17.95,
+          "upKBps": 14.26,
+          "shots": 10,
+          "hits": 0,
+          "kills": 0,
+          "movedMetres": 203.1,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 5.079,
+          "correctionSpikes": [
+            {
+              "error": 0.251584686674428,
+              "alive": true,
+              "ack": 418,
+              "pending": 9,
+              "life": 3
+            },
+            {
+              "error": 0.20283118114227033,
+              "alive": true,
+              "ack": 904,
+              "pending": 65,
+              "life": 3
+            },
+            {
+              "error": 0.14100194974888328,
+              "alive": true,
+              "ack": 904,
+              "pending": 68,
+              "life": 3
+            },
+            {
+              "error": 0.11982847893076659,
+              "alive": true,
+              "ack": 922,
+              "pending": 86,
+              "life": 3
+            },
+            {
+              "error": 0.18796120655946644,
+              "alive": true,
+              "ack": 922,
+              "pending": 89,
+              "life": 3
+            },
+            {
+              "error": 0.2420135081465786,
+              "alive": true,
+              "ack": 1469,
+              "pending": 112,
+              "life": 4
+            },
+            {
+              "error": 0.2617661728785879,
+              "alive": true,
+              "ack": 1469,
+              "pending": 179,
+              "life": 4
+            },
+            {
+              "error": 0.28000038634268853,
+              "alive": true,
+              "ack": 1469,
+              "pending": 179,
+              "life": 4
+            },
+            {
+              "error": 0.3032330128480698,
+              "alive": true,
+              "ack": 1469,
+              "pending": 179,
+              "life": 4
+            },
+            {
+              "error": 0.3469498928878062,
+              "alive": true,
+              "ack": 1469,
+              "pending": 180,
+              "life": 4
+            },
+            {
+              "error": 0.42170911277271445,
+              "alive": true,
+              "ack": 1469,
+              "pending": 182,
+              "life": 4
+            },
+            {
+              "error": 0.4999478078936364,
+              "alive": true,
+              "ack": 1469,
+              "pending": 187,
+              "life": 4
+            },
+            {
+              "error": 0.3824045934032866,
+              "alive": true,
+              "ack": 1469,
+              "pending": 187,
+              "life": 4
+            },
+            {
+              "error": 13.887594347261663,
+              "alive": true,
+              "ack": 1638,
+              "pending": 99,
+              "life": 4
+            }
+          ],
+          "predictionP95Metres": 0.0054,
+          "predictionP99Metres": 0.2618,
+          "maxAckLag": 220,
+          "snapshotGapP99Ms": 384,
+          "maxSnapshotGapMs": 1948
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 18.1,
+          "upKBps": 13.88,
+          "shots": 55,
+          "hits": 5,
+          "kills": 1,
+          "movedMetres": 189.4,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 9.308,
+          "correctionSpikes": [
+            {
+              "error": 0.2135986770020908,
+              "alive": true,
+              "ack": 907,
+              "pending": 65,
+              "life": 4
+            },
+            {
+              "error": 0.33135907096844947,
+              "alive": true,
+              "ack": 907,
+              "pending": 68,
+              "life": 4
+            },
+            {
+              "error": 0.35675991686036146,
+              "alive": true,
+              "ack": 907,
+              "pending": 72,
+              "life": 4
+            },
+            {
+              "error": 0.3757384886481328,
+              "alive": true,
+              "ack": 907,
+              "pending": 75,
+              "life": 4
+            },
+            {
+              "error": 0.21901393300925923,
+              "alive": true,
+              "ack": 907,
+              "pending": 77,
+              "life": 4
+            },
+            {
+              "error": 0.18122134693036193,
+              "alive": true,
+              "ack": 907,
+              "pending": 81,
+              "life": 4
+            },
+            {
+              "error": 0.13604285888583337,
+              "alive": true,
+              "ack": 907,
+              "pending": 83,
+              "life": 4
+            },
+            {
+              "error": 0.17270873008942017,
+              "alive": true,
+              "ack": 907,
+              "pending": 95,
+              "life": 4
+            },
+            {
+              "error": 2.4784523065055346,
+              "alive": true,
+              "ack": 921,
+              "pending": 90,
+              "life": 4
+            },
+            {
+              "error": 2.221271403743389,
+              "alive": true,
+              "ack": 1318,
+              "pending": 88,
+              "life": 5
+            },
+            {
+              "error": 0.20540367985208632,
+              "alive": true,
+              "ack": 1469,
+              "pending": 87,
+              "life": 5
+            },
+            {
+              "error": 0.14180702717107824,
+              "alive": true,
+              "ack": 1469,
+              "pending": 89,
+              "life": 5
+            },
+            {
+              "error": 9.464985065445077,
+              "alive": true,
+              "ack": 1650,
+              "pending": 92,
+              "life": 5
+            }
+          ],
+          "predictionP95Metres": 0.0001,
+          "predictionP99Metres": 0.2136,
+          "maxAckLag": 229,
+          "snapshotGapP99Ms": 390,
+          "maxSnapshotGapMs": 1016
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,379 @@
+{
+  "date": "2026-09-05T21:58:10.561Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 30.9,
+      "latencyMsOneWay": 0,
+      "tickHz": 60.01,
+      "meanTickMs": 0.233,
+      "maxWindowP95Ms": 0.838,
+      "peakTickMs": 1.255,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 1096,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 1.582,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1356,
+        "maxInputMessageBytes": 134,
+        "maxInputArrivalGapMs": 9124,
+        "maxInputQueue": 82
+      },
+      "inputQueues": [
+        {
+          "maxPending": 120,
+          "maxOutgoing": 12,
+          "dropped": 1410,
+          "maxBufferedBytes": 208
+        },
+        {
+          "maxPending": 120,
+          "maxOutgoing": 12,
+          "dropped": 1524,
+          "maxBufferedBytes": 208
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 339
+        },
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 330
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 4.31,
+          "upKBps": 1.37,
+          "shots": 0,
+          "hits": 0,
+          "kills": 0,
+          "movedMetres": 206.9,
+          "desyncs": 0,
+          "errors": [
+            "Disconnected 1006 "
+          ],
+          "deathCorrectionMaxMetres": 8.7059,
+          "correctionSpikes": [
+            {
+              "error": 0.7039919070325786,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5316028328211485,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5329960795893136,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 1.090607439420875,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.4061216379388868,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5514117043245276,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.16433547233289353,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 1.8691455219205801,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5562461392430155,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 1.6160432940334228,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.9501400613801226,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 2.609145059987365,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.7187245255129062,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 10.5515024900901,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.247876528674425,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.35028752044652167,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 10.16982423026696,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.2913850196647032,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.555357299943154,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5638712510204474,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            }
+          ],
+          "predictionP95Metres": 0.6995,
+          "predictionP99Metres": 4.3655,
+          "maxAckLag": 1016,
+          "snapshotGapP99Ms": 269,
+          "maxSnapshotGapMs": 389
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 4.09,
+          "upKBps": 1.3,
+          "shots": 5,
+          "hits": 0,
+          "kills": 0,
+          "movedMetres": 157.7,
+          "desyncs": 0,
+          "errors": [
+            "Disconnected 1006 "
+          ],
+          "deathCorrectionMaxMetres": 2.6062,
+          "correctionSpikes": [
+            {
+              "error": 0.12434887937269536,
+              "alive": true,
+              "ack": 238,
+              "pending": 44,
+              "life": 3
+            },
+            {
+              "error": 0.11951155010607895,
+              "alive": true,
+              "ack": 250,
+              "pending": 55,
+              "life": 3
+            },
+            {
+              "error": 0.18676425776400582,
+              "alive": true,
+              "ack": 250,
+              "pending": 62,
+              "life": 3
+            },
+            {
+              "error": 5.832265194956539,
+              "alive": true,
+              "ack": 250,
+              "pending": 70,
+              "life": 3
+            },
+            {
+              "error": 0.18416469209212233,
+              "alive": true,
+              "ack": 250,
+              "pending": 70,
+              "life": 3
+            },
+            {
+              "error": 6.072909219844398,
+              "alive": true,
+              "ack": 250,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 1.4846820640136653,
+              "alive": true,
+              "ack": 250,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 1.3317557191202407,
+              "alive": true,
+              "ack": 255,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5003639084285989,
+              "alive": true,
+              "ack": 258,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.20143227309053205,
+              "alive": true,
+              "ack": 261,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.2318749963813264,
+              "alive": true,
+              "ack": 264,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 1.3024061848190336,
+              "alive": true,
+              "ack": 267,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.607966583119441,
+              "alive": true,
+              "ack": 270,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.44648704789889304,
+              "alive": true,
+              "ack": 273,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.28971290458064336,
+              "alive": true,
+              "ack": 276,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 5.4221423176817725,
+              "alive": true,
+              "ack": 282,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.5639417966085203,
+              "alive": true,
+              "ack": 285,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.14894158338052302,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.4473504759159822,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            },
+            {
+              "error": 0.40145112714173264,
+              "alive": true,
+              "ack": 290,
+              "pending": 120,
+              "life": 3
+            }
+          ],
+          "predictionP95Metres": 1.2338,
+          "predictionP99Metres": 2.1218,
+          "maxAckLag": 918,
+          "snapshotGapP99Ms": 217,
+          "maxSnapshotGapMs": 381
+        }
+      ]
+    }
+  ]
+}

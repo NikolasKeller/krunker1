@@ -1,0 +1,137 @@
+{
+  "date": "2026-09-05T21:53:08.559Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 30.5,
+      "latencyMsOneWay": 0,
+      "tickHz": 60.54,
+      "meanTickMs": 0.295,
+      "maxWindowP95Ms": 0.778,
+      "peakTickMs": 1.709,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 18.31,
+          "upKBps": 14.12,
+          "shots": 9,
+          "hits": 0,
+          "kills": 0,
+          "movedMetres": 176.1,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 9.9894,
+          "correctionSpikes": [
+            {
+              "error": 16.990760275150883,
+              "alive": true,
+              "ack": 649,
+              "pending": 80,
+              "life": 4
+            },
+            {
+              "error": 0.2617529163656378,
+              "alive": true,
+              "ack": 820,
+              "pending": 88,
+              "life": 4
+            },
+            {
+              "error": 0.10822433584724347,
+              "alive": true,
+              "ack": 820,
+              "pending": 88,
+              "life": 4
+            },
+            {
+              "error": 5.824936318141616,
+              "alive": true,
+              "ack": 953,
+              "pending": 73,
+              "life": 4
+            },
+            {
+              "error": 0.24808537734726474,
+              "alive": true,
+              "ack": 1625,
+              "pending": 80,
+              "life": 6
+            },
+            {
+              "error": 0.24823761069766648,
+              "alive": true,
+              "ack": 1667,
+              "pending": 92,
+              "life": 6
+            }
+          ],
+          "predictionP95Metres": 0.0001,
+          "predictionP99Metres": 0.0337,
+          "maxAckLag": 204,
+          "snapshotGapP99Ms": 345,
+          "maxSnapshotGapMs": 895
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 18.48,
+          "upKBps": 14.07,
+          "shots": 67,
+          "hits": 5,
+          "kills": 2,
+          "movedMetres": 212.4,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 12.0276,
+          "correctionSpikes": [
+            {
+              "error": 5.501847823317281,
+              "alive": true,
+              "ack": 650,
+              "pending": 84,
+              "life": 3
+            },
+            {
+              "error": 0.16255046368460527,
+              "alive": true,
+              "ack": 821,
+              "pending": 87,
+              "life": 3
+            },
+            {
+              "error": 0.16253777566456948,
+              "alive": true,
+              "ack": 821,
+              "pending": 89,
+              "life": 3
+            },
+            {
+              "error": 0.149397025456395,
+              "alive": true,
+              "ack": 821,
+              "pending": 91,
+              "life": 3
+            },
+            {
+              "error": 15.078426743387004,
+              "alive": true,
+              "ack": 947,
+              "pending": 79,
+              "life": 3
+            }
+          ],
+          "predictionP95Metres": 0.0001,
+          "predictionP99Metres": 0.0001,
+          "maxAckLag": 237,
+          "snapshotGapP99Ms": 390,
+          "maxSnapshotGapMs": 1888
+        }
+      ]
+    }
+  ]
+}

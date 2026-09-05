@@ -1,0 +1,155 @@
+{
+  "date": "2026-09-05T22:33:14.881Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 31.5,
+      "latencyMsOneWay": 80,
+      "tickHz": 59.12,
+      "meanTickMs": 0.318,
+      "maxWindowP95Ms": 0.99,
+      "peakTickMs": 1.458,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 3108,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 1.972,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1424,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 1780,
+        "maxInputQueue": 15
+      },
+      "inputQueues": [
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 195,
+          "maxBufferedBytes": 107
+        },
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 146,
+          "maxBufferedBytes": 142
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 869
+        },
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 914
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 7.39,
+          "upKBps": 1.89,
+          "shots": 12,
+          "hits": 2,
+          "kills": 2,
+          "movedMetres": 156.4,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 3.278,
+          "correctionSpikes": [
+            {
+              "error": 0.27338360662257416,
+              "alive": true,
+              "ack": 704,
+              "pending": 24,
+              "life": 3
+            },
+            {
+              "error": 0.21338615872636524,
+              "alive": true,
+              "ack": 1864,
+              "pending": 25,
+              "life": 7
+            },
+            {
+              "error": 0.27039122996871257,
+              "alive": true,
+              "ack": 1864,
+              "pending": 25,
+              "life": 7
+            },
+            {
+              "error": 7.853524408339841,
+              "alive": true,
+              "ack": 1864,
+              "pending": 25,
+              "life": 7
+            },
+            {
+              "error": 0.16248545789463975,
+              "alive": true,
+              "ack": 1864,
+              "pending": 25,
+              "life": 7
+            },
+            {
+              "error": 0.14947968009614598,
+              "alive": true,
+              "ack": 1864,
+              "pending": 25,
+              "life": 7
+            }
+          ],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0.0357,
+          "maxAckLag": 70,
+          "snapshotGapP99Ms": 437,
+          "maxSnapshotGapMs": 919
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 7.4,
+          "upKBps": 1.96,
+          "shots": 46,
+          "hits": 8,
+          "kills": 0,
+          "movedMetres": 175.6,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 4.2976,
+          "correctionSpikes": [
+            {
+              "error": 0.2331604791180585,
+              "alive": true,
+              "ack": 1027,
+              "pending": 26,
+              "life": 4
+            },
+            {
+              "error": 0.19922454386084903,
+              "alive": true,
+              "ack": 1730,
+              "pending": 23,
+              "life": 5
+            }
+          ],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0.007,
+          "maxAckLag": 76,
+          "snapshotGapP99Ms": 403,
+          "maxSnapshotGapMs": 963
+        }
+      ]
+    }
+  ],
+  "runner": "Workstation Node 25, public HTTPS/WSS URL",
+  "testedRevision": "af0af0fc265147f516fb86b16cfce7827d3798e5"
+}

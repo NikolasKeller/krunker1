@@ -1,0 +1,113 @@
+{
+  "date": "2026-09-05T22:32:33.683Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 31.5,
+      "latencyMsOneWay": 0,
+      "tickHz": 58.26,
+      "meanTickMs": 0.364,
+      "maxWindowP95Ms": 1.265,
+      "peakTickMs": 4.001,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 1533,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 1.972,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1424,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 1780,
+        "maxInputQueue": 15
+      },
+      "inputQueues": [
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 307,
+          "maxBufferedBytes": 406
+        },
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 319,
+          "maxBufferedBytes": 406
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 2049
+        },
+        {
+          "maxServerSnapshotGapMs": 54,
+          "maxDeliveryJitterMs": 1930
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 7.62,
+          "upKBps": 1.77,
+          "shots": 10,
+          "hits": 1,
+          "kills": 1,
+          "movedMetres": 161.7,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 1.2604,
+          "correctionSpikes": [
+            {
+              "error": 0.2766570895699454,
+              "alive": true,
+              "ack": 322,
+              "pending": 12,
+              "life": 3
+            }
+          ],
+          "predictionP95Metres": 0,
+          "predictionP99Metres": 0.0246,
+          "maxAckLag": 127,
+          "snapshotGapP99Ms": 453,
+          "maxSnapshotGapMs": 2099
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 8.22,
+          "upKBps": 1.87,
+          "shots": 67,
+          "hits": 15,
+          "kills": 5,
+          "movedMetres": 200.2,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 1.8464,
+          "correctionSpikes": [
+            {
+              "error": 0.17789176527177905,
+              "alive": true,
+              "ack": 1800,
+              "pending": 18,
+              "life": 5
+            }
+          ],
+          "predictionP95Metres": 0.0001,
+          "predictionP99Metres": 0.0232,
+          "maxAckLag": 137,
+          "snapshotGapP99Ms": 446,
+          "maxSnapshotGapMs": 1980
+        }
+      ]
+    }
+  ],
+  "runner": "Workstation Node 25, public HTTPS/WSS URL",
+  "testedRevision": "af0af0fc265147f516fb86b16cfce7827d3798e5"
+}

@@ -1,0 +1,225 @@
+{
+  "date": "2026-09-05T22:17:21.614Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "passed": false,
+  "report": [
+    {
+      "humans": 2,
+      "bots": 7,
+      "durationSeconds": 30.7,
+      "latencyMsOneWay": 0,
+      "tickHz": 60.16,
+      "meanTickMs": 0.402,
+      "maxWindowP95Ms": 1.008,
+      "peakTickMs": 2.137,
+      "overBudgetTicks": 0,
+      "maxQueueBytes": 0,
+      "transport": {
+        "snapshots": 1500,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 54,
+        "maxSendCallbackMs": 2.359,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1424,
+        "maxInputMessageBytes": 398,
+        "maxInputArrivalGapMs": 1788,
+        "maxInputQueue": 30
+      },
+      "inputQueues": [
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 298,
+          "maxBufferedBytes": 406
+        },
+        {
+          "maxPending": 42,
+          "maxInFlight": 30,
+          "maxOutgoing": 12,
+          "dropped": 287,
+          "maxBufferedBytes": 406
+        }
+      ],
+      "timing": [
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 1885
+        },
+        {
+          "maxServerSnapshotGapMs": 52,
+          "maxDeliveryJitterMs": 821
+        }
+      ],
+      "replicaErrors": 0,
+      "clients": [
+        {
+          "name": "Load 1",
+          "downKBps": 7.63,
+          "upKBps": 1.78,
+          "shots": 11,
+          "hits": 3,
+          "kills": 3,
+          "movedMetres": 221.8,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 4.2368,
+          "correctionSpikes": [
+            {
+              "error": 0.11883562055463397,
+              "alive": true,
+              "ack": 892,
+              "pending": 35,
+              "life": 3
+            },
+            {
+              "error": 0.1856402383166433,
+              "alive": true,
+              "ack": 892,
+              "pending": 42,
+              "life": 3
+            },
+            {
+              "error": 2.477343979042691,
+              "alive": true,
+              "ack": 959,
+              "pending": 15,
+              "life": 3
+            },
+            {
+              "error": 0.11523956333190254,
+              "alive": true,
+              "ack": 1251,
+              "pending": 35,
+              "life": 3
+            },
+            {
+              "error": 2.5278719442511615,
+              "alive": true,
+              "ack": 1310,
+              "pending": 21,
+              "life": 3
+            },
+            {
+              "error": 0.4481308580775422,
+              "alive": true,
+              "ack": 1471,
+              "pending": 18,
+              "life": 3
+            }
+          ],
+          "predictionP95Metres": 0.006,
+          "predictionP99Metres": 0.0705,
+          "maxAckLag": 133,
+          "snapshotGapP99Ms": 262,
+          "maxSnapshotGapMs": 1935
+        },
+        {
+          "name": "Load 2",
+          "downKBps": 7.07,
+          "upKBps": 1.78,
+          "shots": 62,
+          "hits": 7,
+          "kills": 2,
+          "movedMetres": 126.6,
+          "desyncs": 0,
+          "errors": [],
+          "deathCorrectionMaxMetres": 4.0355,
+          "correctionSpikes": [
+            {
+              "error": 0.11903389066590124,
+              "alive": true,
+              "ack": 877,
+              "pending": 39,
+              "life": 4
+            },
+            {
+              "error": 0.18595578904276128,
+              "alive": true,
+              "ack": 877,
+              "pending": 39,
+              "life": 4
+            },
+            {
+              "error": 0.201275943659445,
+              "alive": true,
+              "ack": 905,
+              "pending": 28,
+              "life": 4
+            },
+            {
+              "error": 0.13875185125385883,
+              "alive": true,
+              "ack": 905,
+              "pending": 31,
+              "life": 4
+            },
+            {
+              "error": 0.1006496959807637,
+              "alive": true,
+              "ack": 926,
+              "pending": 40,
+              "life": 4
+            },
+            {
+              "error": 2.285447365289653,
+              "alive": true,
+              "ack": 987,
+              "pending": 18,
+              "life": 4
+            },
+            {
+              "error": 0.17857378707037422,
+              "alive": true,
+              "ack": 1218,
+              "pending": 42,
+              "life": 5
+            },
+            {
+              "error": 0.3009786611275643,
+              "alive": true,
+              "ack": 1218,
+              "pending": 42,
+              "life": 5
+            },
+            {
+              "error": 0.34411718952259224,
+              "alive": true,
+              "ack": 1218,
+              "pending": 42,
+              "life": 5
+            },
+            {
+              "error": 0.35089721532902063,
+              "alive": true,
+              "ack": 1218,
+              "pending": 42,
+              "life": 5
+            },
+            {
+              "error": 0.7706259291140601,
+              "alive": true,
+              "ack": 1472,
+              "pending": 15,
+              "life": 6
+            },
+            {
+              "error": 1.0305908001188806,
+              "alive": true,
+              "ack": 1655,
+              "pending": 15,
+              "life": 6
+            }
+          ],
+          "predictionP95Metres": 0.006,
+          "predictionP99Metres": 0.2013,
+          "maxAckLag": 143,
+          "snapshotGapP99Ms": 386,
+          "maxSnapshotGapMs": 871
+        }
+      ]
+    }
+  ],
+  "runner": "Workstation Node 25, public HTTPS/WSS URL",
+  "testedRevision": "8a452c604cf0094f718bb7e7d98a04e3904b7734"
+}
