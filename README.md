@@ -67,6 +67,7 @@ Audio unlocks on Deploy. Mouse sensitivity, master volume, and graphics quality 
 npm test
 npm run test:integration
 npm run test:soak
+npm run test:lifecycle
 npm run typecheck
 npm run build
 ```
@@ -74,6 +75,8 @@ npm run build
 Unit tests cover ray/hitbox and ramp math, damage zones, weapon falloff, spread/recoil, movement validation, deterministic movement, bunny hops and slides, ramp traversal, rewind interpolation and bounds, fire rate, reloads, respawn, spawn protection, friendly fire, round transitions, and bot pathing.
 
 The integration test runs a real ephemeral HTTP/WebSocket server and two clients, sends actual input packets, and checks movement replication, all four primaries, damage to another connected client, headshot/kill events, reloads, respawn, historical hitscan, input rejection, round reset, reconnect identity, and delta compression. Deterministic test positions are set in the test process; the production protocol has no teleport or test endpoints.
+
+`npm run test:production` targets an already running production server at `http://127.0.0.1:8080` (override with `GAME_URL`) and verifies asset serving and two independent clients navigating and killing through input packets only. See [VERIFICATION.md](VERIFICATION.md) for measured results and the remaining external browser checks.
 
 The soak test advances a two-minute match with seven bots and validates finite states, bounds, movement, and combat activity.
 

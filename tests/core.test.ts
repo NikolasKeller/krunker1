@@ -254,3 +254,37 @@ test('prediction reconciles from an older acknowledgement and replays only pendi
 test('a class change waits for the next spawn and does not inherit the previous health pool', () => { const r = room(), a = r.add('A', 'triggerman', 'blue'); r.start(0); a.pendingClass = 'hunter'; assert.equal(a.state.classId, 'triggerman'); r.spawn(a, 1000); assert.equal(a.state.classId, 'hunter'); assert.equal(a.state.hp, 60); assert.equal(a.state.weapon, 'sniper'); });
 test('the bridge underpass connects the side lanes without a dead end', () => { const p = moveState(-9, 0, -9), i = { ...neutralInput(), forward: 1, yaw: -Math.PI / 2 }; for (let n = 0; n < 100; n++)
     move(p, i); assert.ok(p.x > 7, `underpass exit x=${p.x}`); assert.equal(p.y, 0); });
+
+test('switching rooms clears stale input sequences; a resumed snapshot restores its acknowledgement', async () => {
+    const { Network } = await import('../src/client/network');
+    class Socket {
+        static OPEN = 1;
+        static latest: Socket;
+        readyState = 1;
+        sent: string[] = [];
+        onopen?: () => void;
+        onmessage?: (event: { data: string }) => void;
+        constructor() { Socket.latest = this; }
+        close() {}
+        send(data: string) { this.sent.push(data); }
+    }
+    const keys = ['WebSocket', 'location', 'sessionStorage', 'setInterval'] as const;
+    const descriptors = keys.map(key => Object.getOwnPropertyDescriptor(globalThis, key));
+    const values = [Socket, { protocol: 'http:', host: 'localhost:5173' }, { getItem: () => null, setItem() {} }, () => 0];
+    keys.forEach((key, i) => Object.defineProperty(globalThis, key, { configurable: true, value: values[i] }));
+    try {
+        const n = new Network();
+        n.seq = 20000; n.id = 'old';
+        n.connect({ name: 'A', room: 'NEW', classId: 'hunter', team: 'blue' });
+        assert.equal(n.seq, 0); assert.equal(n.id, '');
+        Socket.latest.onopen?.();
+        const p = player(); p.ack = 700;
+        Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'welcome', id: p.id, room: 'NEW', token: 'token', host: p.id, serverTime: Date.now() }) });
+        Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'snapshot', n: 1, base: 0, time: Date.now(), full: true, players: [p], removed: [], round: newRound(), host: p.id, difficulty: 'normal', bots: 0 }) });
+        assert.equal(n.seq, 700); assert.equal(n.local?.id, p.id);
+        Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'snapshot', n: 3, base: 2, full: false }) });
+        assert.ok(Socket.latest.sent.some(s => JSON.parse(s).type === 'sync'));
+    } finally {
+        keys.forEach((key, i) => { const descriptor = descriptors[i]; if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); });
+    }
+});

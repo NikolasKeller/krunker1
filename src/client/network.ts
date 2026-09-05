@@ -52,6 +52,11 @@ export class Network {
         clearTimeout(this.reconnectTimer);
         this.ws?.close();
         this.status = 'CONNECTING';
+        this.id = '';
+        this.host = '';
+        this.seq = 0;
+        this.round = undefined;
+        this.receivedAt = 0;
         this.players.clear();
         this.frames = [];
         this.predicted = undefined;
