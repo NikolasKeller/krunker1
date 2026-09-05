@@ -210,9 +210,9 @@ export function buildMap(scene: THREE.Scene) {
     }
     for (const b of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
         const z = b.z + b.d / 2 + .16;
-        box(staticGroup, b.x + 4.1, 5.7, z, 2.5, 1.35, .055, b.x > 0 ? 0x3d5369 : 0xb3654c);
-        box(staticGroup, b.x + 4.1, 5.7, z + .035, 2.5, .26, .03, 0xd4bf84);
-        box(staticGroup, b.x + 3.6, 5.7, z + .035, .23, 1.35, .03, 0xd4bf84);
+        box(staticGroup, b.x + 5.2, 5.7, z, 1.4, 1.1, .055, b.x > 0 ? 0x3d5369 : 0xb3654c);
+        box(staticGroup, b.x + 5.2, 5.7, z + .035, 1.4, .2, .03, 0xd4bf84);
+        box(staticGroup, b.x + 4.95, 5.7, z + .035, .18, 1.1, .03, 0xd4bf84);
     }
     // All static solid colours share one vertex-colour batch; props add triangles, not draw calls.
     batchMeshes(staticGroup);
