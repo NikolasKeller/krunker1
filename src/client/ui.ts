@@ -5,6 +5,7 @@ import type { Network } from './network';
 import { LobbyPanel } from './lobby';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
+import { inviteAddresses } from '../shared/invite';
 export const escapeHTML = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 export function gunIcon(id: WeaponId) { const paths: Record<WeaponId, string> = { sniper: 'M3 29h20v-5h25v-7h14v-5h30v7h-5v5h30v5h37v4h-38v4H71l-7 17H54l3-17H32L12 47H3z M60 16h25v-6H60z', rifle: 'M4 25h21v-5h62v5h25v4h39v5h-48v7H72l9 17-14 6-15-23H32L9 49H4z M74 18h16v-6h-9z', shotgun: 'M4 27h22l10-6h63v4h51v5H99v4h51v5H75l-13 13H48l7-13H31L8 49H4z', smg: 'M9 25h20v-7h71v5h29v6h20v5h-30v6H82v23H67V40H48l-7 15H29V39H9z', pistol: 'M31 14h90v23H76L63 62H39l9-25H31z', knife: 'M15 47l35-11 3-10 14 8 65-22-37 31-27 5-8 13-14-9-28 10z' }; return `<svg viewBox="0 0 160 72" aria-hidden="true"><path d="${paths[id]}" fill="currentColor"/></svg>`; }
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -137,15 +138,15 @@ export class UI {
         $('share-code').textContent = this.net.room;
         $('lobby-sharing').classList.remove('hidden');
         $<HTMLInputElement>('share-url').value = url.href;
-        $('lan-links').textContent = 'Finding LAN address…';
+        $('lan-links').textContent = '';
         const room = this.net.room;
         try {
             const info = await (await fetch('/api/connection')).json();
             if (this.net.room !== room) return;
-            if (info.publicUrl) { const publicUrl = new URL(info.publicUrl); publicUrl.searchParams.set('room', room); $<HTMLInputElement>('share-url').value = publicUrl.href; }
-            const origins: string[] = info.lan ?? [];
-            $('lan-links').innerHTML = origins.length ? origins.map(origin => { const lan = new URL(origin); if (import.meta.env.DEV) lan.port = location.port; lan.searchParams.set('room', room); return `<div>LAN <a href="${escapeHTML(lan.href)}">${escapeHTML(lan.href)}</a></div>`; }).join('') : 'LAN address unavailable on this host. Use the invite URL.';
-        } catch { $('lan-links').textContent = 'Use the invite URL on this network.'; }
+            const addresses = inviteAddresses(location.href, room, info, import.meta.env?.DEV);
+            $<HTMLInputElement>('share-url').value = addresses.invite;
+            $('lan-links').innerHTML = addresses.lan.map(href => `<div>LAN <a href="${escapeHTML(href)}">${escapeHTML(href)}</a></div>`).join('');
+        } catch { $('lan-links').textContent = ''; }
     }
     choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
         this.net.send({ type: 'class', classId: id, team: this.team }); }

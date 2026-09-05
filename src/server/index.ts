@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { networkInterfaces } from 'node:os';
+import { connectionInfo } from './connection';
 import { randomBytes } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -51,11 +51,8 @@ export function createGameServer() {
         if (url.pathname === '/api/connection') {
             const address = server.address();
             const port = typeof address === 'object' && address ? address.port : 3000;
-            const lan = Object.values(networkInterfaces()).flat().filter(i => i && !i.internal && i.family === 'IPv4').map(i => `http://${i!.address}:${port}`);
-            const domain = process.env.RAILWAY_PUBLIC_DOMAIN;
-            const publicUrl = process.env.PUBLIC_URL || (domain ? `https://${domain}` : null);
             res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-            res.end(JSON.stringify({ publicUrl, lan }));
+            res.end(JSON.stringify(connectionInfo(req.headers, port)));
             return;
         }
         if (url.pathname === '/api/rooms') {
