@@ -45,6 +45,7 @@ class Client {
     deathCorrections: number[] = [];
     correctionSpikes: unknown[] = [];
     desyncs = 0; errors: string[] = []; corrections: number[] = []; ackLag: number[] = []; gaps: number[] = [];
+    serverGaps: number[] = []; deliveryJitter: number[] = []; snapshotTime = 0;
     pending: Input[] = []; outgoing: Input[] = []; players = new Map<string, PlayerState>();
     predicted?: PlayerState; round?: RoundState; ai = brain();
     running = false; timer?: ReturnType<typeof setTimeout>;
@@ -77,6 +78,11 @@ class Client {
         if (m.type !== 'snapshot') return;
         if (!m.full && m.base !== this.n) { this.desyncs++; this.send({ type: 'sync' }); return; }
         if (this.measured && this.receivedAt) this.gaps.push(Date.now() - this.receivedAt);
+        if (this.measured && this.snapshotTime) {
+            this.serverGaps.push(m.time - this.snapshotTime);
+            this.deliveryJitter.push(Date.now() - this.receivedAt - (m.time - this.snapshotTime));
+        }
+        this.snapshotTime = m.time;
         this.receivedAt = Date.now(); this.n = m.n;
         if (m.full) this.players.clear();
         for (const p of m.players) {
@@ -159,6 +165,8 @@ for (const count of counts) {
             peakTickMs: Math.max(...samples.map(s => s.peakTickMs)),
             overBudgetTicks: end.overBudgetTicks - begin.overBudgetTicks,
             maxQueueBytes: Math.max(...samples.map(s => s.queuedBytes)),
+            transport: end.transport,
+            timing: clients.map(c => ({ maxServerSnapshotGapMs: Math.max(...c.serverGaps), maxDeliveryJitterMs: Math.max(...c.deliveryJitter) })),
             replicaErrors,
             clients: clients.map(c => ({ name: `Load ${c.index + 1}`, downKBps: +(c.bytesIn / duration / 1000).toFixed(2), upKBps: +(c.bytesOut / duration / 1000).toFixed(2), shots: c.shots, hits: c.hits, kills: c.kills, movedMetres: +c.moved.toFixed(1), desyncs: c.desyncs, errors: c.errors, deathCorrectionMaxMetres: +Math.max(0, ...c.deathCorrections).toFixed(4), correctionSpikes: c.correctionSpikes, predictionP95Metres: +percentile(c.corrections, .95).toFixed(4), predictionP99Metres: +percentile(c.corrections, .99).toFixed(4), maxAckLag: Math.max(...c.ackLag), snapshotGapP99Ms: percentile(c.gaps, .99), maxSnapshotGapMs: Math.max(...c.gaps) }))
         };

@@ -24,6 +24,8 @@ interface Connection {
     strikes: number;
     pingAt: number;
     pongAt: number;
+    lastSnapshotAt: number;
+    lastInputAt: number;
 }
 export function createGameServer() {
     const rooms = new Map<string, Room>();
@@ -35,12 +37,13 @@ export function createGameServer() {
     }>();
     const connections = new Set<Connection>();
     const stats = { tickRate: 0, tickMs: 0, peakTickMs: 0, tickP95Ms: 0, tickP99Ms: 0, totalTickMs: 0, overBudgetTicks: 0, ticks: 0, bytesOut: 0, players: 0, rooms: 0 };
+    const transport = { snapshots: 0, skippedSnapshots: 0, maxSnapshotSendGapMs: 0, maxSendCallbackMs: 0, maxBufferedBytes: 0, maxMessageBytes: 0, maxInputMessageBytes: 0, maxInputArrivalGapMs: 0, maxInputQueue: 0 };
     const root = path.resolve('dist/client');
     const server = http.createServer(async (req, res) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         if (url.pathname === '/api/health') {
             res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-            res.end(JSON.stringify({ ok: true, ...stats, configuredTickRate: TICK_RATE, connections: connections.size, rooms: rooms.size, players: [...connections].filter(c => c.actor).length, queuedBytes: [...connections].reduce((n, c) => n + c.ws.bufferedAmount, 0) }));
+            res.end(JSON.stringify({ ok: true, ...stats, transport, revision: process.env.RAILWAY_GIT_COMMIT_SHA, configuredTickRate: TICK_RATE, connections: connections.size, rooms: rooms.size, players: [...connections].filter(c => c.actor).length, queuedBytes: [...connections].reduce((n, c) => n + c.ws.bufferedAmount, 0) }));
             return;
         }
         if (url.pathname === '/api/connection') {
@@ -93,7 +96,10 @@ export function createGameServer() {
     const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 16384, perMessageDeflate: false });
     function send(c: Connection, m: ServerMessage) { if (c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount < 256000) {
         const data = JSON.stringify(m);
-        c.ws.send(data);
+        const started = performance.now();
+        c.ws.send(data, () => { transport.maxSendCallbackMs = Math.max(transport.maxSendCallbackMs, +(performance.now() - started).toFixed(3)); });
+        transport.maxMessageBytes = Math.max(transport.maxMessageBytes, Buffer.byteLength(data));
+        transport.maxBufferedBytes = Math.max(transport.maxBufferedBytes, c.ws.bufferedAmount);
         stats.bytesOut += Buffer.byteLength(data);
     } }
     wss.on('connection', (ws, req) => {
@@ -107,7 +113,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { id: connectionId, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now() };
+        const c: Connection = { id: connectionId, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0 };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -211,8 +217,12 @@ export function createGameServer() {
             if (!r || !a)
                 return;
             if (m.type === 'input') {
+                transport.maxInputMessageBytes = Math.max(transport.maxInputMessageBytes, Buffer.byteLength(data.toString()));
+                if (c.lastInputAt) transport.maxInputArrivalGapMs = Math.max(transport.maxInputArrivalGapMs, now - c.lastInputAt);
+                c.lastInputAt = now;
                 if (!r.enqueue(a, m.inputs, now) && ++c.strikes > 10)
                     ws.close(1008, 'Invalid input');
+                transport.maxInputQueue = Math.max(transport.maxInputQueue, a.queue.length);
             }
             if (m.type === 'sync')
                 snapshot(c, true);
@@ -278,9 +288,14 @@ export function createGameServer() {
         if (!c.room || !c.actor)
             return;
         if (c.ws.bufferedAmount >= 256000) {
+            transport.skippedSnapshots++;
             c.baseline.clear();
             return;
         }
+        const now = Date.now();
+        if (c.lastSnapshotAt) transport.maxSnapshotSendGapMs = Math.max(transport.maxSnapshotSendGapMs, now - c.lastSnapshotAt);
+        c.lastSnapshotAt = now;
+        transport.snapshots++;
         const full = force || !c.baseline.size || snapshotId % 100 === c.keyframeSlot, patches: PlayerPatch[] = [], removed: string[] = [];
         for (const a of c.room.players.values()) {
             if (!a.connected) continue;
