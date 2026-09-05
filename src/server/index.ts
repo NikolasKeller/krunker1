@@ -28,6 +28,7 @@ interface Connection {
     pongAt: number;
     lastSnapshotAt: number;
     lastInputAt: number;
+    lastChatAt: number;
 }
 export function createGameServer() {
     const rooms = new Map<string, Room>();
@@ -112,7 +113,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { id: connectionId, binary: ws.protocol === WIRE_PROTOCOL, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0 };
+        const c: Connection = { id: connectionId, binary: ws.protocol === WIRE_PROTOCOL, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -215,6 +216,14 @@ export function createGameServer() {
             const r = c.room, a = c.actor;
             if (!r || !a)
                 return;
+            if (m.type === 'chat' && typeof m.text === 'string' && now - c.lastChatAt >= 750) {
+                const text = m.text.replace(/[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]/g, '').trim().slice(0, 160);
+                if (text) {
+                    c.lastChatAt = now;
+                    for (const peer of connections) if (peer.room === r && peer.actor)
+                        send(peer, { type: 'chat', player: a.state.id, name: a.state.name, team: a.state.team, text });
+                }
+            }
             if (m.type === 'input') {
                 transport.maxInputMessageBytes = Math.max(transport.maxInputMessageBytes, Array.isArray(data) ? Buffer.concat(data).byteLength : data.byteLength);
                 if (c.lastInputAt) transport.maxInputArrivalGapMs = Math.max(transport.maxInputArrivalGapMs, now - c.lastInputAt);

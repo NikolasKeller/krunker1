@@ -44,11 +44,13 @@ controls.onLock = locked => { if (playing && !ui.menu) {
     ui.visibility();
 } };
 controls.onScore = open => { ui.scoreOpen = open; };
+controls.onChat = () => ui.focusChat();
 controls.onPause = () => { if (!controls.locked && playing && !ui.menu) {
     ui.paused = true;
     ui.visibility();
 } };
 net.onNotice = text => ui.notice(text);
+net.onChat = message => ui.chat(message);
 let phase = '';
 net.onWelcome = () => { nextShot = 0; lastLife = -1; phase = ''; void ui.welcomed(); };
 net.onEvents = events => {
@@ -128,7 +130,7 @@ function frame(time: number) {
         }
         net.input(input);
     }
-    if (p && playing && controls.locked && !ui.menu && p.alive && net.round?.phase === 'playing') {
+    if (p && playing && controls.locked && !controls.typing && !ui.menu && p.alive && net.round?.phase === 'playing') {
         if (controls.fire && now >= nextShot && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
             const w = WEAPONS[p.weapon];
             nextShot = now + w.interval;

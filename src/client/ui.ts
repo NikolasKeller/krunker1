@@ -1,6 +1,6 @@
 import { CLASS_IDS, CLASSES, WEAPONS } from '../shared/weapons';
 import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
-import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
+import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId, type ServerMessage } from '../shared/types';
 import type { Network } from './network';
 import { LobbyPanel } from './lobby';
 import type { Renderer } from './renderer';
@@ -26,13 +26,11 @@ export class UI {
         }>;
         until: number;
     }[] = [];
-    private numbers: {
-        x: number;
-        y: number;
-        damage: number;
-        head: boolean;
-        until: number;
-    }[] = [];
+    private numbers: { node: HTMLElement; until: number }[] = [];
+    private lastKill = -Infinity;
+    private multiKill = 0;
+    private lastKillLife = -1;
+    private lastChatAt = -Infinity;
     readonly lobby: LobbyPanel;
     private lastBoard = '';
     private hurtUntil = 0;
@@ -71,11 +69,29 @@ export class UI {
         <section class="class-picker"><div class="picker-heading"><span>THE LINEUP</span><small>4 CLASSES <span> / </span> FIND YOUR PLAYSTYLE</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
         <footer class="menu-footer"><span><kbd>W A S D</kbd> MOVE <kbd>SPACE</kbd> HOP <kbd>SHIFT</kbd> SLIDE <kbd>R</kbd> RELOAD</span><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
       </div>
-      <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" width="300" height="300"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="killfeed" id="killfeed"></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><span class="health-plus">+</span><strong id="health">100</strong><span class="health-max" id="health-max">/ 100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line"><strong id="ammo">3</strong><span>/</span><b id="ammo-max">3</b><i id="ammo-alert">▰▰▰</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
+      <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div id="team-scores" class="team-scores hidden" aria-label="Team scores"></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" width="300" height="300"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="communication-hud"><div class="killfeed" id="killfeed" aria-label="Kill feed"></div><div id="chat-log" class="chat-log" role="log" aria-label="Room messages" aria-live="polite"></div><form id="chat-form" class="chat-form"><input id="chat-input" aria-label="Room message" placeholder="Enter Message" maxlength="160" autocomplete="off" spellcheck="false"/><svg class="chat-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M6 10v3a6 6 0 0 0 12 0v-3M12 19v4M8 23h8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="chat-status" class="hidden" role="status"></span></form></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><strong id="health">100</strong><span class="health-max" id="health-max">|100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line" id="ammo-line"><strong id="ammo">3</strong><span>|</span><b id="ammo-max">3</b><i id="ammo-alert" class="hidden">!!!</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
       <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>ROUND LIVE<span class="lime">.</span></h2><p>Click to capture your mouse and play.</p><button id="resume" class="deploy-button">CLICK TO PLAY <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
       <div id="scoreboard" class="modal-layer hidden"><div class="score-panel"><div class="panel-heading"><span id="board-eyebrow">LIVE SCOREBOARD</span><span id="board-round">ROUND 01</span></div><h2 id="board-title">SANDYARD</h2><p id="board-subtitle">FREE FOR ALL / FIRST TO 25 KILLS</p><div id="board-table"></div><div id="board-footer">HOLD TAB TO VIEW</div></div></div>
       <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity') ?? 0.0022}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume') ?? 0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><p>Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
     `;
+        const chatInput = $<HTMLInputElement>('chat-input');
+        $('chat-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (text && (this.net.status !== 'CONNECTED' || performance.now() - this.lastChatAt < 800)) {
+                $('chat-status').textContent = this.net.status !== 'CONNECTED' ? 'Reconnecting…' : 'Wait a moment…';
+                $('chat-status').classList.remove('hidden');
+                return;
+            }
+            if (text) { this.net.send({ type: 'chat', text }); this.lastChatAt = performance.now(); }
+            chatInput.value = '';
+            chatInput.blur();
+            $('chat-status').classList.add('hidden');
+        });
+        chatInput.addEventListener('keydown', e => {
+            e.stopPropagation();
+            if (e.code === 'Escape') { e.preventDefault(); chatInput.value = ''; chatInput.blur(); }
+        });
         const room = new URLSearchParams(location.search).get('room') ?? '';
         $('player-name').setAttribute('value', localStorage.getItem('arena-name') ?? `Guest_${Math.floor(Math.random() * 900 + 100)}`);
         $('room-code').setAttribute('value', room);
@@ -151,21 +167,45 @@ export class UI {
     choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
         this.net.send({ type: 'class', classId: id, team: this.team }); }
     visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); }
+    focusChat() { if (!this.menu && !this.paused) $<HTMLInputElement>('chat-input').focus(); }
+    chat(message: Extract<ServerMessage, { type: 'chat' }>) {
+        const row = document.createElement('div'), name = document.createElement('span');
+        name.className = message.team;
+        name.textContent = message.name;
+        row.append(name, document.createTextNode(`: ${message.text}`));
+        const log = $('chat-log');
+        log.append(row);
+        while (log.children.length > 4) log.firstElementChild!.remove();
+        log.scrollTop = log.scrollHeight;
+    }
     notice(text: string) { $('notice').textContent = text; this.noticeUntil = performance.now() + 3500; }
     event(e: GameEvent, renderer: Renderer, now: number) {
         if (e.type === 'kill') {
-            this.feeds.unshift({ event: e, until: now + 6500 });
-            this.feeds = this.feeds.slice(0, 5);
+            this.feeds.push({ event: e, until: now + 8500 });
+            this.feeds = this.feeds.slice(-5);
             if (e.killer === this.net.id) {
-                this.killUntil = now + 1800;
-                $('kill-notice').innerHTML = `<span>${e.headshot ? 'HEADSHOT' : 'ELIMINATION'}</span><strong>+${e.headshot ? '150' : '100'}</strong><small>${escapeHTML(e.victimName)}</small>`;
+                const life = this.net.predicted?.life ?? 0;
+                this.multiKill = life === this.lastKillLife && now - this.lastKill < 3000 ? this.multiKill + 1 : 1;
+                this.lastKill = now;
+                this.lastKillLife = life;
+                this.killUntil = now + 2400;
+                const title = this.multiKill > 1 ? (['', '', 'DOUBLE KILL', 'TRIPLE KILL', 'QUAD KILL'][this.multiKill] ?? 'MULTI KILL') : e.headshot ? 'HEADSHOT' : 'ELIMINATION';
+                $('kill-notice').innerHTML = `<span>${title}</span><strong>+${e.headshot ? '50' : '100'}</strong>${this.multiKill > 1 && e.headshot ? '<small>HEADSHOT</small>' : ''}`;
+                $('kill-notice').style.opacity = '1';
             }
         }
         if (e.type === 'hit' && e.shooter === this.net.id) {
             this.hitUntil = now + 160;
             $('hitmarker').classList.toggle('headshot', e.zone === 'head');
             const p = renderer.project(e.point);
-            this.numbers.push({ x: p.x + (Math.random() - 0.5) * 24, y: p.y, damage: e.damage, head: e.zone === 'head', until: now + 850 });
+            const node = document.createElement('span');
+            node.className = e.zone === 'head' ? 'head' : 'body';
+            node.textContent = `+${Math.round(e.damage)}`;
+            node.style.left = `${p.visible ? p.x : window.innerWidth / 2}px`;
+            node.style.top = `${p.visible ? p.y - 28 : window.innerHeight / 2 - 45}px`;
+            $('damage-numbers').append(node);
+            this.numbers.push({ node, until: now + 1100 });
+            if (this.numbers.length > 16) this.numbers.shift()!.node.remove();
         }
         if (e.type === 'hit' && e.victim === this.net.id) {
             this.hurtUntil = now + 450;
@@ -185,8 +225,8 @@ export class UI {
         $('damage-direction').style.transform = `translate(-50%,-50%) rotate(${this.damageAngle}rad)`;
         $('kill-notice').style.opacity = now < this.killUntil ? '1' : '0';
         $('notice').style.opacity = now < this.noticeUntil ? '1' : '0';
-        this.numbers = this.numbers.filter(n => n.until > now);
-        $('damage-numbers').innerHTML = this.numbers.map(n => `<span class="${n.head ? 'head' : ''}" style="left:${n.x}px;top:${n.y - (850 - (n.until - now)) * 0.055}px;opacity:${Math.min(1, (n.until - now) / 250)}">${n.damage}</span>`).join('');
+        this.numbers = this.numbers.filter(n => { if (n.until > now) return true; n.node.remove(); return false; });
+        $('score-top').classList.toggle('hidden', now < this.killUntil || round?.mode === 'tdm');
         $('scope').classList.toggle('hidden', !(aiming && p?.weapon === 'sniper' && renderer.viewmodel.aim > 0.82 && !this.menu));
         $('crosshair').classList.toggle('hidden', aiming && p?.weapon === 'sniper');
         if (p) {
@@ -207,11 +247,17 @@ export class UI {
         $('timer').textContent = `${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')}`;
         $('timer').classList.toggle('urgent', time < 30);
         $('match-mode').innerHTML = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'}<span>on ${MAP_NAME}</span>`;
-        $('score-top').innerHTML = round.mode === 'tdm' ? `<b class="blue">${round.blue}</b><span>FIRST TO ${round.scoreLimit}</span><b class="red">${round.red}</b>` : `<strong>${net.local?.kills ?? 0}</strong><span>/ ${round.scoreLimit}<small>ELIMINATIONS</small></span>`;
+        $('team-scores').classList.toggle('hidden', round.mode !== 'tdm');
+        $('team-scores').innerHTML = `<div class="red" aria-label="Red team ${round.red}"><i></i><b>${round.red}</b></div><div class="blue" aria-label="Blue team ${round.blue}"><i></i><b>${round.blue}</b></div>`;
+        $('score-top').innerHTML = `<strong>${net.local?.kills ?? 0}</strong><span>/ ${round.scoreLimit}<small>ELIMINATIONS</small></span>`;
         $('performance').innerHTML = `<b>${renderer.fps}</b> FPS <span>·</span> <b>${net.ping}</b> MS <span>·</span> 60 HZ`;
         $('mini-board').innerHTML = players.slice(0, 5).map((p, i) => `<div class="${p.id === net.id ? 'self' : ''}"><b>${i + 1}.</b><span>${escapeHTML(p.name)}</span><strong>${p.score}</strong></div>`).join('');
         this.feeds = this.feeds.filter(f => f.until > now);
-        $('killfeed').innerHTML = this.feeds.map(({ event: e }) => `<div class="feed-row ${e.killer === net.id ? 'own' : ''}"><span class="${e.team}">${escapeHTML(e.killerName)}</span>${gunIcon(e.weapon)}${e.headshot ? '<b class="feed-head">⌖</b>' : ''}<span>${escapeHTML(e.victimName)}</span></div>`).join('');
+        const feed = this.feeds.map(({ event: e }) => {
+            const victimTeam = net.players.get(e.victim)?.team ?? (e.team === 'red' ? 'blue' : 'red');
+            return `<div class="feed-row">${e.killer === net.id ? 'You' : `<span class="${e.team}">${escapeHTML(e.killerName)}</span>`} killed <span class="${victimTeam}">${escapeHTML(e.victimName)}</span></div>`;
+        }).join('');
+        if ($('killfeed').innerHTML !== feed) $('killfeed').innerHTML = feed;
         $('scoreboard').classList.toggle('hidden', !this.scoreOpen);
         if (results) {
             $('board-eyebrow').textContent = 'ROUND COMPLETE';
@@ -235,7 +281,7 @@ export class UI {
         }
         if (p) {
             $('health').textContent = String(p.hp);
-            $('health-max').textContent = `/ ${p.maxHp}`;
+            $('health-max').textContent = `|${p.maxHp}`;
             $('health-bar').style.width = `${p.hp / p.maxHp * 100}%`;
             $('health-bar').classList.toggle('low', p.hp < 30);
             $('health-status').textContent = p.protectionEnd > serverNow ? 'SPAWN PROTECTED' : p.slide > 0 ? 'SLIDING' : !p.grounded ? 'AIRBORNE' : 'LOCKED & LOADED';
@@ -243,10 +289,12 @@ export class UI {
             const w = WEAPONS[p.weapon];
             $('ammo').textContent = p.weapon === 'knife' ? '∞' : String(p.ammo);
             $('ammo-max').textContent = String(w.magazine);
-            $('ammo-alert').classList.toggle('low', p.ammo <= Math.ceil(w.magazine * 0.25));
+            const empty = p.weapon !== 'knife' && p.ammo === 0;
+            $('ammo-line').classList.toggle('empty', empty);
+            $('ammo-alert').classList.toggle('hidden', !empty);
             $('hud-weapon').textContent = w.name;
             $('weapon-slots').innerHTML = ([CLASSES[p.classId].weapon, 'pistol', 'knife'] as WeaponId[]).map((w, i) => `<div class="${w === p.weapon ? 'active' : ''}"><kbd>${i + 1}</kbd>${gunIcon(w)}</div>`).join('');
-            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? '<kbd>R</kbd> RELOAD' : '';
+            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? '<span class="reload-empty">[R] Reload</span>' : '';
             $('death-card').classList.toggle('hidden', p.alive || round.phase !== 'playing');
             $('respawn-time').textContent = Math.max(0, (p.respawnAt - serverNow) / 1000).toFixed(1);
             this.minimap(p, players);

@@ -6,6 +6,7 @@ import { InputBuffer } from '../shared/input-buffer';
 export const JOIN_RETRY_MS = 1500;
 export const CONNECT_TIMEOUT_MS = 10000;
 export class Network {
+    onChat: (message: Extract<ServerMessage, { type: 'chat' }>) => void = () => {};
     ws?: WebSocket;
     id = '';
     room = '';
@@ -156,6 +157,7 @@ export class Network {
     }
     flush() { if (this.ws) this.inputs.flush(this.ws); }
     private receive(m: ServerMessage) {
+        if (m.type === 'chat') this.onChat(m);
         if (m.type === 'welcome') {
             const firstWelcome = this.id !== m.id || this.room !== m.room;
             this.id = m.id;

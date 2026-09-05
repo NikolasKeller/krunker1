@@ -126,6 +126,9 @@ export type GameEvent = {
     text: string;
 };
 export type ClientMessage = {
+    type: 'chat';
+    text: string;
+} | {
     type: 'join';
     name: string;
     room: string;
@@ -162,6 +165,12 @@ export type ClientMessage = {
     type: 'sync';
 };
 export type ServerMessage = {
+    type: 'chat';
+    player: string;
+    name: string;
+    team: Team;
+    text: string;
+} | {
     type: 'welcome';
     id: string;
     token: string;
