@@ -95,3 +95,4 @@ test('prediction reconciles from an older acknowledgement and replays only pendi
   const result=reconcile(authoritative,inputs,true);assert.equal(result.remaining.length,30);almost(result.predicted.x,predicted.x);almost(result.predicted.y,predicted.y);almost(result.predicted.z,predicted.z);almost(result.predicted.vz,predicted.vz);
 });
 test('a class change waits for the next spawn and does not inherit the previous health pool',()=>{const r=room(),a=r.add('A','triggerman','blue');r.start(0);a.pendingClass='hunter';assert.equal(a.state.classId,'triggerman');r.spawn(a,1000);assert.equal(a.state.classId,'hunter');assert.equal(a.state.hp,60);assert.equal(a.state.weapon,'sniper');});
+test('the bridge underpass connects the side lanes without a dead end',()=>{const p=moveState(-9,0,-9),i={...neutralInput(),forward:1,yaw:-Math.PI/2};for(let n=0;n<100;n++)move(p,i);assert.ok(p.x>7,`underpass exit x=${p.x}`);assert.equal(p.y,0);});
