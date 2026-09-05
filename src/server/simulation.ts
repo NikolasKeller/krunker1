@@ -7,7 +7,7 @@ import { distance, hitPlayer, worldHit } from '../shared/math';
 import { History, rewindTime } from './history';
 import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
-import { MAX_INPUT_BATCH } from '../shared/protocol';
+import { MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../shared/protocol';
 export interface Actor {
     state: PlayerState;
     queue: Input[];
@@ -138,10 +138,9 @@ export class Room {
         }
         a.lastSeq = lastSeq;
         a.queue.push(...inputs);
-        if (a.queue.length > 120) {
-            a.queue.length = 0;
-            return false;
-        }
+        // Bound a coalesced TCP receive burst even before the next simulation tick.
+        if (a.queue.length > MAX_PENDING_INPUTS)
+            a.queue.splice(0, a.queue.length - MAX_PENDING_INPUTS);
         a.lastInputAt = now;
         return true;
     }
@@ -207,6 +206,11 @@ export class Room {
                         p.reloadEnd = now + WEAPONS[weapon].reload;
                 }
             }
+            // A slow link can deliver seconds of old commands in one TCP burst.
+            // After this tick's budget, retain only a recent 200 ms input window.
+            // Sequence acknowledgement naturally discards skipped prediction steps.
+            if (a.queue.length > MAX_INPUT_BATCH)
+                a.queue.splice(0, a.queue.length - MAX_INPUT_BATCH);
             if (!processed && now - a.lastInputAt > 250 && p.alive && this.round.phase === 'playing') {
                 const i = neutralInput(p.ack);
                 i.yaw = p.yaw;

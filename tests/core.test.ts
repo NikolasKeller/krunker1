@@ -364,3 +364,16 @@ test('dropped input sequence gaps recover while movement remains limited by serv
     assert.equal(a.lastSeq, 10000, 'invalid batch is rejected atomically');
     assert.equal(a.queue.length, 0);
 });
+
+test('a stalled TCP stream resumes with recent controls instead of replaying seconds of backlog', () => {
+    const r = room(), a = r.add('Burst', 'triggerman', 'blue'); r.start(1000);
+    for (let tick = 1; tick <= 60; tick++) r.tick(1000 + tick * STEP * 1000);
+    for (let batch = 0; batch < 6; batch++)
+        assert.ok(r.enqueue(a, Array.from({ length: 10 }, (_, n) => neutralInput(batch * 10 + n + 1)), 2001));
+    r.tick(2017);
+    assert.ok(a.queue.length <= 12, 'only the recent input window survives a simulation tick');
+    r.tick(2034);
+    assert.ok(a.state.ack >= 48, 'stale controls do not consume future simulation time');
+    for (let tick = 0; tick < 15; tick++) r.tick(2051 + tick * STEP * 1000);
+    assert.equal(a.state.ack, 60); assert.equal(a.queue.length, 0);
+});
