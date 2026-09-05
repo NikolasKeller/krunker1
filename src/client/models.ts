@@ -57,7 +57,7 @@ export function makeGun(id: WeaponId): THREE.Group {
     }
     const sniper = id === 'sniper', shotgun = id === 'shotgun', smg = id === 'smg';
     box(g, 0, 0, sniper ? 0.38 : 0.43, sniper ? 0.12 : 0.16, sniper ? 0.16 : 0.22, sniper ? 0.42 : 0.49, stock);
-    box(g, 0, -0.035, sniper ? 0.61 : 0.67, sniper ? 0.14 : 0.23, sniper ? 0.23 : 0.3, 0.075, black);
+    box(g, 0, -0.035, sniper ? 0.61 : 0.67, sniper ? 0.14 : 0.23, sniper ? 0.24 : 0.3, 0.075, black);
     box(g, 0, 0.015, 0, sniper ? 0.17 : 0.19, sniper ? 0.17 : 0.22, 0.52, dark);
     box(g, 0, -0.20, 0.15, 0.13, 0.27, 0.16, black).rotation.x = -0.28;
     if (!shotgun && !sniper) {
