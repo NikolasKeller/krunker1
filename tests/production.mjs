@@ -18,7 +18,7 @@ for (const asset of [...assets, '/fonts/barlow.ttf', '/fonts/barlow-bold.ttf', '
     assert.equal(response.status, 200, asset);
     assert.ok((await response.arrayBuffer()).byteLength > 100);
 }
-console.log('PASS: production HTML, JS, CSS and self-hosted assets on PORT=8080');
+console.log(`PASS: production HTML, JS, CSS and self-hosted assets at ${origin}`);
 const wait = async (fn, label, ms = 5000) => { const t = Date.now(); while (!fn()) {
     if (Date.now() - t > ms)
         throw new Error(label);

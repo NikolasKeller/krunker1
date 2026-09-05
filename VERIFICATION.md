@@ -8,6 +8,7 @@ Verified on 2026-09-05 using Node 25.9.0 on the local macOS host. No browser, Ch
 - `npm run build` passed TypeScript, Vite client compilation and esbuild server bundling. `PORT=8080 npm start` ran the actual built entry point, bound to **0.0.0.0:8080**; its default is port 3000 when `PORT` is absent.
 - `npm run test:production` verified HTTP 200 for the page, compiled JS/CSS, self-hosted fonts and favicon. It reads the healthcheck path directly from `railway.json` and verifies HTTP 200 and `ok: true` at `/api/health`.
 - Two independent WebSocket clients connected to **that same port**, navigated using input packets, met in a firing lane, registered a headshot elimination and respawned. No test/teleport endpoint was used. `/api/connection` supplies LAN origins and the configured public origin.
+- A separate fresh `npm ci --omit=dev` installed only the two production packages. The built server started from that isolated directory on port 8081, and the same asset/health/WebSocket navigation, elimination and respawn checks passed (60 Hz; 0.216 ms mean / 0.729 ms peak in the final health sample). No dev dependency was available to that server.
 - The Dockerfile uses Node 22 and includes the lockfile in both `npm ci` stages. Docker is not installed here, so the container build and Railway-hosted runtime are not claimed as tested. Run one Railway replica because rooms are in memory.
 
 ## Real-time load measurements
