@@ -31,6 +31,7 @@ export class UI {
     private multiKill = 0;
     private lastKillLife = -1;
     private lastChatAt = -Infinity;
+    private chatRoom = '';
     readonly lobby: LobbyPanel;
     private lastBoard = '';
     private hurtUntil = 0;
@@ -147,6 +148,14 @@ export class UI {
         } catch { field.select(); $('copy-status').textContent = 'Link selected. Press Ctrl+C / ⌘C to copy.'; }
     }
     async welcomed() {
+        if (this.chatRoom !== this.net.room) {
+            this.chatRoom = this.net.room;
+            $('chat-log').replaceChildren();
+            $<HTMLInputElement>('chat-input').value = '';
+            this.feeds = [];
+            this.lastKill = -Infinity;
+            this.killUntil = 0;
+        }
         const url = new URL(location.href);
         url.searchParams.set('room', this.net.room);
         history.replaceState(null, '', url);
@@ -166,7 +175,7 @@ export class UI {
     }
     choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
         this.net.send({ type: 'class', classId: id, team: this.team }); }
-    visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); }
+    visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); if (this.menu || this.paused) $('chat-input').blur(); }
     focusChat() { if (!this.menu && !this.paused) $<HTMLInputElement>('chat-input').focus(); }
     chat(message: Extract<ServerMessage, { type: 'chat' }>) {
         const row = document.createElement('div'), name = document.createElement('span');
@@ -201,8 +210,9 @@ export class UI {
             const node = document.createElement('span');
             node.className = e.zone === 'head' ? 'head' : 'body';
             node.textContent = `+${Math.round(e.damage)}`;
-            node.style.left = `${p.visible ? p.x : window.innerWidth / 2}px`;
-            node.style.top = `${p.visible ? p.y - 28 : window.innerHeight / 2 - 45}px`;
+            const onScreen = p.visible && p.x > 32 && p.x < window.innerWidth - 32 && p.y > 70 && p.y < window.innerHeight - 80;
+            node.style.left = `${onScreen ? p.x : window.innerWidth / 2}px`;
+            node.style.top = `${onScreen ? p.y - 28 : window.innerHeight / 2 - 45}px`;
             $('damage-numbers').append(node);
             this.numbers.push({ node, until: now + 1100 });
             if (this.numbers.length > 16) this.numbers.shift()!.node.remove();

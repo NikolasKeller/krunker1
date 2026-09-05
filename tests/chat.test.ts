@@ -28,7 +28,7 @@ test('real sockets broadcast authenticated chat only inside the room, with lengt
         const a = await join('CHAT', 'Alpha'), b = await join('CHAT', 'Bravo'), other = await join('OTHER', 'Charlie');
         a.ws.send(JSON.stringify({ type: 'chat', text: '  Hello\n room  ', name: 'Spoof', team: 'red' }));
         const end = Date.now() + 3000;
-        while (!b.chats().length) { assert.ok(Date.now() < end, 'chat broadcast timeout'); await delay(10); }
+        while (!a.chats().length || !b.chats().length) { assert.ok(Date.now() < end, 'chat broadcast timeout'); await delay(10); }
         assert.equal(a.chats()[0].text, 'Hello room');
         assert.equal(b.chats()[0].name, 'Alpha'); assert.equal(b.chats()[0].team, 'blue');
         assert.equal(other.chats().length, 0);

@@ -67,6 +67,11 @@ test('decoded combat events show damage, headshot bonus, multi-kills and coloure
         assert.equal(node('killfeed').querySelector('.red')!.textContent, '<Bravo>');
         ui.update(150, renderer, false);
         assert.equal(node('damage-numbers').firstElementChild, damage, 'animation node survives frames');
+        renderer.project = () => ({ x: -900, y: -100, visible: true });
+        ui.event({ ...events[0], type: 'hit', shooter: a.id, victim: b.id, damage: 35, zone: 'body', point: { x: 0, y: 1, z: 0 }, from: { x: 0, y: 1, z: 2 }, lethal: false }, renderer, 160);
+        const body = node('damage-numbers').querySelector<HTMLElement>('.body')!;
+        assert.equal(body.textContent, '+35');
+        assert.equal(body.style.left, `${window.innerWidth / 2}px`, 'late hit feedback remains visible after turning away');
         ui.event(kill, renderer, 500); ui.update(500, renderer, false);
         assert.equal(node('kill-notice').textContent, 'DOUBLE KILL+50HEADSHOT');
         ui.event({ ...kill, killer: b.id, victim: a.id, killerName: b.name, victimName: a.name, team: 'red' }, renderer, 600);
@@ -79,6 +84,22 @@ test('decoded combat events show damage, headshot bonus, multi-kills and coloure
         assert.equal(node('kill-notice').textContent, 'HEADSHOT+50', 'respawn resets rapid-kill chain');
         ui.update(12000, renderer, false); assert.equal(node('killfeed').children.length, 0);
     } finally { restore(); }
+});
+
+test('changing rooms clears chat history and opening the lobby releases chat focus', async () => {
+    const { restore, ui, net } = setup(), originalFetch = globalThis.fetch;
+    try {
+        globalThis.fetch = async () => ({ json: async () => ({ lan: [] }) }) as Response;
+        await ui.welcomed();
+        ui.chat({ type: 'chat', player: 'b', name: 'Bravo', team: 'red', text: 'old room' });
+        await ui.welcomed();
+        assert.equal(node('chat-log').children.length, 1, 'reconnect preserves this room history');
+        ui.focusChat(); assert.equal(document.activeElement, node('chat-input'));
+        ui.menu = true; ui.visibility();
+        assert.notEqual(document.activeElement, node('chat-input'));
+        net.room = 'NEXT'; await ui.welcomed();
+        assert.equal(node('chat-log').children.length, 0);
+    } finally { globalThis.fetch = originalFetch; restore(); }
 });
 
 test('chat opens deliberately, suppresses movement and shooting while typing, sends and cancels safely', () => {
