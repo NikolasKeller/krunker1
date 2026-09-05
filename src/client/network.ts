@@ -1,6 +1,8 @@
 import { INTERPOLATION_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { predictInput, reconcile } from './prediction';
 import { angleLerp, clamp, lerp } from '../shared/math';
+import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
+import { InputBuffer } from '../shared/input-buffer';
 export const JOIN_RETRY_MS = 1500;
 export const CONNECT_TIMEOUT_MS = 10000;
 export class Network {
@@ -17,8 +19,11 @@ export class Network {
     round?: RoundState;
     difficulty: Difficulty = 'normal';
     bots = 5;
-    pending: Input[] = [];
-    outgoing: Input[] = [];
+    readonly inputs = new InputBuffer();
+    get pending() { return this.inputs.pending; }
+    set pending(value: Input[]) { this.inputs.pending = value; }
+    get outgoing() { return this.inputs.outgoing; }
+    set outgoing(value: Input[]) { this.inputs.outgoing = value; }
     frames: {
         time: number;
         players: Map<string, PlayerState>;
@@ -37,6 +42,7 @@ export class Network {
     private reconnectTimer?: ReturnType<typeof setTimeout>;
     private handshakeTimer?: ReturnType<typeof setTimeout>;
     private joinTimer?: ReturnType<typeof setInterval>;
+    private inputTimer?: ReturnType<typeof setInterval>;
     private heartbeatTimer: ReturnType<typeof setInterval>;
     private tokens = new Map<string, string>();
     private config?: {
@@ -60,6 +66,7 @@ export class Network {
         this.clearHandshake();
         clearTimeout(this.reconnectTimer);
         clearInterval(this.heartbeatTimer);
+        clearInterval(this.inputTimer);
         this.ws?.close();
         this.ws = undefined;
         this.status = 'DISCONNECTED';
@@ -85,11 +92,13 @@ export class Network {
         this.players.clear();
         this.frames = [];
         this.predicted = undefined;
-        this.pending = [];
-        this.outgoing = [];
+        this.inputs.clear();
         this.lastSnapshot = 0;
-        const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+        const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`, WIRE_PROTOCOL);
+        ws.binaryType = 'arraybuffer';
         this.ws = ws;
+        clearInterval(this.inputTimer);
+        this.inputTimer = setInterval(() => this.flush(), INPUT_SEND_MS);
         const reconnect = () => {
             if (generation !== this.generation) return;
             ++this.generation;
@@ -118,8 +127,8 @@ export class Network {
         };
         ws.onmessage = e => { if (generation !== this.generation)
             return; try {
-            this.bytes += e.data.length;
-            this.receive(JSON.parse(e.data));
+            this.bytes += typeof e.data === 'string' ? new TextEncoder().encode(e.data).length : e.data.byteLength;
+            this.receive(decodeServerMessage(e.data));
         }
         catch (error) {
             console.error('Invalid server message', error);
@@ -133,20 +142,15 @@ export class Network {
         ws.onerror = () => { if (generation === this.generation) this.status = 'SERVER UNREACHABLE'; };
     }
     send(message: ClientMessage) { if (this.ws?.readyState === WebSocket.OPEN)
-        this.ws.send(JSON.stringify(message)); }
+        this.ws.send(encodeClientMessage(message)); }
     get serverNow() { return Date.now() + this.offset; }
     get local() { return this.players.get(this.id); }
-    input(i: Input) { if (!this.predicted)
-        return; i.life = this.predicted.life; this.pending.push(i); this.outgoing.push(i); if (this.pending.length > 240) {
-        this.pending = [];
-        this.predicted = { ...this.local! };
-        this.send({ type: 'sync' });
-        return;
-    } predictInput(this.predicted, i, this.round?.phase === 'playing'); if (this.outgoing.length >= 2)
-        this.flush(); }
-    flush() { if (this.outgoing.length) {
-        this.send({ type: 'input', inputs: this.outgoing.splice(0, 12) });
-    } }
+    input(input: Input) {
+        if (!this.predicted) return;
+        const i = this.inputs.enqueue({ ...input, life: this.predicted.life });
+        predictInput(this.predicted, i, this.round?.phase === 'playing');
+    }
+    flush() { if (this.ws) this.inputs.flush(this.ws); }
     private receive(m: ServerMessage) {
         if (m.type === 'welcome') {
             const firstWelcome = this.id !== m.id || this.room !== m.room;

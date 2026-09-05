@@ -9,9 +9,11 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Room, type Actor } from './simulation';
 import { wirePlayer, playerDelta } from '../shared/snapshot';
 import { CLASS_IDS } from '../shared/weapons';
-import { MAX_HUMANS, MAX_BOTS, TICK_RATE, type ClientMessage, type PlayerPatch, type ServerMessage } from '../shared/types';
+import { decodeClientMessage, encodeServerMessage, MAX_CLIENT_PAYLOAD, WIRE_PROTOCOL } from '../shared/protocol';
+import { MAX_HUMANS, MAX_BOTS, TICK_RATE, SNAPSHOT_RATE, type ClientMessage, type PlayerPatch, type ServerMessage } from '../shared/types';
 interface Connection {
     id: string;
+    binary: boolean;
     ws: WebSocket;
     room?: Room;
     actor?: Actor;
@@ -93,9 +95,9 @@ export function createGameServer() {
     });
     const socketLog = (event: string, details: Record<string, unknown>) => console.log(JSON.stringify({ event: `ws.${event}`, ...details }));
     server.on('upgrade', req => socketLog('upgrade', { requestId: req.headers['x-railway-request-id'], path: req.url }));
-    const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 16384, perMessageDeflate: false });
-    function send(c: Connection, m: ServerMessage) { if (c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount < 256000) {
-        const data = JSON.stringify(m);
+    const wss = new WebSocketServer({ server, path: '/ws', maxPayload: MAX_CLIENT_PAYLOAD, perMessageDeflate: false });
+    function send(c: Connection, m: ServerMessage) { if (c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount === 0) {
+        const data = c.binary ? encodeServerMessage(m) : JSON.stringify(m);
         const started = performance.now();
         c.ws.send(data, () => { transport.maxSendCallbackMs = Math.max(transport.maxSendCallbackMs, +(performance.now() - started).toFixed(3)); });
         transport.maxMessageBytes = Math.max(transport.maxMessageBytes, Buffer.byteLength(data));
@@ -113,11 +115,11 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { id: connectionId, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0 };
+        const c: Connection = { id: connectionId, binary: ws.protocol === WIRE_PROTOCOL, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0 };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
-        ws.on('message', data => {
+        ws.on('message', (data, isBinary) => {
             receivedMessages++;
             if (++c.messages > 200) {
                 ws.close(1008, 'Message rate exceeded');
@@ -125,10 +127,10 @@ export function createGameServer() {
             }
             let m: ClientMessage;
             try {
-                m = JSON.parse(data.toString());
+                m = decodeClientMessage(isBinary ? (Array.isArray(data) ? Buffer.concat(data) : data) : data.toString());
             }
             catch {
-                ws.close(1008, 'Invalid JSON');
+                ws.close(1008, 'Invalid message');
                 return;
             }
             if (!m || typeof m !== 'object')
@@ -217,7 +219,7 @@ export function createGameServer() {
             if (!r || !a)
                 return;
             if (m.type === 'input') {
-                transport.maxInputMessageBytes = Math.max(transport.maxInputMessageBytes, Buffer.byteLength(data.toString()));
+                transport.maxInputMessageBytes = Math.max(transport.maxInputMessageBytes, Array.isArray(data) ? Buffer.concat(data).byteLength : data.byteLength);
                 if (c.lastInputAt) transport.maxInputArrivalGapMs = Math.max(transport.maxInputArrivalGapMs, now - c.lastInputAt);
                 c.lastInputAt = now;
                 if (!r.enqueue(a, m.inputs, now) && ++c.strikes > 10)
@@ -287,9 +289,9 @@ export function createGameServer() {
     function snapshot(c: Connection, force = false) {
         if (!c.room || !c.actor)
             return;
-        if (c.ws.bufferedAmount >= 256000) {
+        if (c.ws.readyState !== WebSocket.OPEN || c.ws.bufferedAmount > 0) {
             transport.skippedSnapshots++;
-            c.baseline.clear();
+            // Retain the last transmitted baseline; the next delta skips obsolete states.
             return;
         }
         const now = Date.now();
@@ -322,7 +324,7 @@ export function createGameServer() {
         for (const r of rooms.values())
             if ([...r.players.values()].some(a => !a.state.bot && a.connected))
                 r.tick(now);
-        if (tick++ % 3 === 0) {
+        if (tick++ % (TICK_RATE / SNAPSHOT_RATE) === 0) {
             snapshotId++;
             for (const c of connections)
                 snapshot(c);

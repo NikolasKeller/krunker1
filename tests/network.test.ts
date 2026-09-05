@@ -6,6 +6,8 @@ import { WebSocket as RealWebSocket, WebSocketServer } from 'ws';
 import { Network, CONNECT_TIMEOUT_MS, JOIN_RETRY_MS } from '../src/client/network';
 import { createGameServer } from '../src/server/index';
 import { Room } from '../src/server/simulation';
+import { decodeClientMessage, decodeServerMessage, encodeServerMessage, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../src/shared/protocol';
+import { neutralInput } from '../src/shared/movement';
 import type { ClientMessage, ServerMessage } from '../src/shared/types';
 
 const config = { name: 'Alpha', room: '', classId: 'hunter', team: 'blue', create: true } as const;
@@ -23,15 +25,16 @@ class Socket {
     static OPEN = 1;
     static instances: Socket[] = [];
     readyState = 0;
+    bufferedAmount = 0;
     sent: ClientMessage[] = [];
     onopen?: () => void;
     onmessage?: (event: { data: string }) => void;
     onclose?: (event: { code: number }) => void;
     onerror?: () => void;
     constructor(public url: string) { Socket.instances.push(this); }
-    send(data: string) {
+    send(data: string | Uint8Array) {
         assert.equal(this.readyState, Socket.OPEN, 'nothing is sent before open');
-        this.sent.push(JSON.parse(data));
+        this.sent.push(decodeClientMessage(data));
     }
     open() { this.readyState = Socket.OPEN; this.onopen?.(); }
     receive(message: ServerMessage) { this.onmessage?.({ data: JSON.stringify(message) }); }
@@ -143,26 +146,27 @@ test('real delayed WebSocket handshakes recover a lost join and lost assignment 
     });
     wss.on('connection', (down: RealWebSocket) => {
         const index = connectionCount++;
-        const up = new RealWebSocket(`ws://127.0.0.1:${address.port}/ws`);
+        const up = new RealWebSocket(`ws://127.0.0.1:${address.port}/ws`, down.protocol || undefined);
         sockets.add(up); sockets.add(down);
         let joins = 0;
-        const pending: string[] = [];
-        up.on('open', () => { for (const message of pending) up.send(message); });
-        down.on('message', data => {
-            const text = data.toString(), message = JSON.parse(text);
+        const pending: { data: Buffer; binary: boolean }[] = [];
+        up.on('open', () => { for (const message of pending) up.send(message.data, { binary: message.binary }); });
+        down.on('message', (data, binary) => {
+            const raw = Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data as ArrayBuffer);
+            const message = decodeClientMessage(binary ? raw : raw.toString());
             if (message.type === 'join') {
                 joins++;
                 if (index === 0 && joins === 1) { droppedJoins++; return; }
             }
-            if (up.readyState === RealWebSocket.OPEN) up.send(text);
-            else pending.push(text);
+            if (up.readyState === RealWebSocket.OPEN) up.send(raw, { binary });
+            else pending.push({ data: raw, binary });
         });
-        up.on('message', data => {
+        up.on('message', (data, binary) => {
             if (index === 1 && joins < 2) {
-                if (JSON.parse(data.toString()).type === 'welcome') droppedWelcomes++;
+                if (!binary && JSON.parse(data.toString()).type === 'welcome') droppedWelcomes++;
                 return;
             }
-            if (down.readyState === RealWebSocket.OPEN) down.send(data.toString());
+            if (down.readyState === RealWebSocket.OPEN) down.send(data, { binary });
         });
         down.on('close', () => up.close()); up.on('close', () => down.close());
         down.on('error', () => {}); up.on('error', () => {});
@@ -194,4 +198,25 @@ test('real delayed WebSocket handshakes recover a lost join and lost assignment 
         await new Promise<void>(resolve => proxy.close(() => resolve()));
         await app.close();
     }
+});
+
+test('inputs coalesce independently of rendering and remain bounded while the socket is blocked', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    for (let seq = 1; seq <= 3; seq++) net.input(neutralInput(seq));
+    assert.equal(ws.sent.filter(m => m.type === 'input').length, 0, 'rendering does not send packets');
+    net.inputs.flush(ws, 1000);
+    const batch = ws.sent.find(m => m.type === 'input');
+    assert.ok(batch?.type === 'input');
+    assert.deepEqual(batch.inputs.map(i => i.seq), [1, 2, 3]);
+    ws.bufferedAmount = 100;
+    for (let seq = 4; seq <= 1000; seq++) {
+        net.input(neutralInput(seq)); net.inputs.flush(ws, 1000 + seq * INPUT_SEND_MS);
+    }
+    assert.equal(ws.sent.filter(m => m.type === 'input').length, 1, 'blocked transport does not queue sends');
+    assert.ok(net.pending.length <= MAX_PENDING_INPUTS);
+    assert.equal(net.outgoing.length, MAX_INPUT_BATCH);
+    ws.bufferedAmount = 0; net.inputs.flush(ws, 100000);
+    const latest = ws.sent.at(-1); assert.ok(latest?.type === 'input');
+    assert.equal(latest.inputs.at(-1)?.seq, 1000);
+    assert.equal(latest.inputs[0].seq, 1000 - MAX_INPUT_BATCH + 1, 'resume with recent controls');
 });

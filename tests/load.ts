@@ -5,6 +5,8 @@ import { WebSocket } from 'ws';
 import { brain, botInput } from '../src/server/bots';
 import { predictInput, reconcile } from '../src/client/prediction';
 import { CLASS_IDS } from '../src/shared/weapons';
+import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../src/shared/protocol';
+import { InputBuffer } from '../src/shared/input-buffer';
 import type { ClientMessage, Input, PlayerState, RoundState, ServerMessage } from '../src/shared/types';
 
 // This process has no access to the server simulation. It exercises the actual HTTP/WS production port.
@@ -46,25 +48,33 @@ class Client {
     correctionSpikes: unknown[] = [];
     desyncs = 0; errors: string[] = []; corrections: number[] = []; ackLag: number[] = []; gaps: number[] = [];
     serverGaps: number[] = []; deliveryJitter: number[] = []; snapshotTime = 0;
-    pending: Input[] = []; outgoing: Input[] = []; players = new Map<string, PlayerState>();
+    inputs = new InputBuffer();
+    get pending() { return this.inputs.pending; }
+    set pending(value: Input[]) { this.inputs.pending = value; }
+    get outgoing() { return this.inputs.outgoing; }
+    set outgoing(value: Input[]) { this.inputs.outgoing = value; }
+    players = new Map<string, PlayerState>();
     predicted?: PlayerState; round?: RoundState; ai = brain();
     running = false; timer?: ReturnType<typeof setTimeout>;
     moved = 0; measured = false;
+    inputTimer?: ReturnType<typeof setInterval>;
+    delayedSends = new Set<ReturnType<typeof setTimeout>>();
     constructor(public index: number, room: string) {
-        this.ws = new WebSocket(origin.replace(/^http/, 'ws') + '/ws');
+        this.ws = new WebSocket(origin.replace(/^http/, 'ws') + '/ws', WIRE_PROTOCOL);
         this.ws.on('open', () => this.send({ type: 'join', name: `Load ${index + 1}`, room, classId: CLASS_IDS[index % 4], team: index % 2 ? 'red' : 'blue' }));
         this.ws.on('error', e => this.errors.push(e.message));
         this.ws.on('close', (code, reason) => { if (this.running) this.errors.push(`Disconnected ${code} ${reason}`); });
-        this.ws.on('message', data => {
-            const size = Buffer.byteLength(data.toString());
+        this.ws.on('message', (data, isBinary) => {
+            const raw = Array.isArray(data) ? Buffer.concat(data) : data;
+            const size = raw.byteLength;
             if (this.measured) { this.bytesIn += size + (size < 126 ? 2 : 4); this.packets++; }
-            const m = JSON.parse(data.toString()) as ServerMessage;
+            const m = decodeServerMessage(isBinary ? raw : raw.toString());
             if (latency) setTimeout(() => this.receive(m), latency); else this.receive(m);
         });
     }
     send(m: ClientMessage) {
-        const data = JSON.stringify(m);
-        const transmit = () => { if (this.ws.readyState !== 1) return; this.ws.send(data); if (this.measured) this.bytesOut += Buffer.byteLength(data) + (data.length < 126 ? 6 : 8); };
+        const data = encodeClientMessage(m);
+        const transmit = () => { if (this.ws.readyState !== 1) return; this.ws.send(data); if (this.measured) this.bytesOut += Buffer.byteLength(data) + (Buffer.byteLength(data) < 126 ? 6 : 8); };
         if (latency) setTimeout(transmit, latency); else transmit();
     }
     receive(m: ServerMessage) {
@@ -113,18 +123,35 @@ class Client {
     }
     start() {
         this.running = true;
+        const self = this;
+        const socket = {
+            get readyState() { return self.ws.readyState; },
+            get bufferedAmount() { return self.ws.bufferedAmount; },
+            send(data: Uint8Array) {
+                const transmit = () => {
+                    if (!self.running || self.ws.readyState !== 1) return;
+                    self.ws.send(data);
+                    if (self.measured) self.bytesOut += data.byteLength + (data.byteLength < 126 ? 6 : 8);
+                };
+                if (latency) {
+                    const timer = setTimeout(() => { self.delayedSends.delete(timer); transmit(); }, latency);
+                    self.delayedSends.add(timer);
+                } else transmit();
+            }
+        };
+        this.inputTimer = setInterval(() => this.inputs.flush(socket), INPUT_SEND_MS);
         let next = performance.now();
         const tick = () => {
             if (!this.running) return;
             if (this.predicted && this.round?.phase === 'playing') {
                 const p = this.predicted;
-                const i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
+                let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
                 i.seq = ++this.seq; i.shotTime = Date.now() + this.offset - 100;
+                i = this.inputs.enqueue(i);
                 const prev = { x: p.x, z: p.z };
                 predictInput(p, i, true);
                 if (this.measured) this.moved += Math.hypot(p.x - prev.x, p.z - prev.z);
-                this.pending.push(i); this.outgoing.push(i);
-                if (this.outgoing.length >= 2) this.send({ type: 'input', inputs: this.outgoing.splice(0, 2) });
+
                 if (this.pending.length > 240) { this.desyncs++; this.pending = []; this.send({ type: 'sync' }); }
             }
             next += 1000 / 60;
@@ -133,7 +160,7 @@ class Client {
         };
         tick();
     }
-    close() { this.running = false; clearTimeout(this.timer); this.ws.close(); }
+    close() { this.running = false; clearTimeout(this.timer); clearInterval(this.inputTimer); for (const timer of this.delayedSends) clearTimeout(timer); this.ws.close(); }
 }
 const report = [];
 for (const count of counts) {
@@ -166,6 +193,7 @@ for (const count of counts) {
             overBudgetTicks: end.overBudgetTicks - begin.overBudgetTicks,
             maxQueueBytes: Math.max(...samples.map(s => s.queuedBytes)),
             transport: end.transport,
+            inputQueues: clients.map(c => ({ maxPending: c.inputs.maxPending, maxOutgoing: c.inputs.maxOutgoing, dropped: c.inputs.dropped, maxBufferedBytes: c.inputs.maxBufferedBytes })),
             timing: clients.map(c => ({ maxServerSnapshotGapMs: Math.max(...c.serverGaps), maxDeliveryJitterMs: Math.max(...c.deliveryJitter) })),
             replicaErrors,
             clients: clients.map(c => ({ name: `Load ${c.index + 1}`, downKBps: +(c.bytesIn / duration / 1000).toFixed(2), upKBps: +(c.bytesOut / duration / 1000).toFixed(2), shots: c.shots, hits: c.hits, kills: c.kills, movedMetres: +c.moved.toFixed(1), desyncs: c.desyncs, errors: c.errors, deathCorrectionMaxMetres: +Math.max(0, ...c.deathCorrections).toFixed(4), correctionSpikes: c.correctionSpikes, predictionP95Metres: +percentile(c.corrections, .95).toFixed(4), predictionP99Metres: +percentile(c.corrections, .99).toFixed(4), maxAckLag: Math.max(...c.ackLag), snapshotGapP99Ms: percentile(c.gaps, .99), maxSnapshotGapMs: Math.max(...c.gaps) }))
