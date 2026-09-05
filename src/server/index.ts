@@ -39,7 +39,7 @@ export function createGameServer() {
         const url = new URL(req.url ?? '/', 'http://localhost');
         if (url.pathname === '/api/health') {
             res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-            res.end(JSON.stringify({ ok: true, ...stats, configuredTickRate: TICK_RATE, rooms: rooms.size, players: [...connections].filter(c => c.actor).length, queuedBytes: [...connections].reduce((n, c) => n + c.ws.bufferedAmount, 0) }));
+            res.end(JSON.stringify({ ok: true, ...stats, configuredTickRate: TICK_RATE, connections: connections.size, rooms: rooms.size, players: [...connections].filter(c => c.actor).length, queuedBytes: [...connections].reduce((n, c) => n + c.ws.bufferedAmount, 0) }));
             return;
         }
         if (url.pathname === '/api/connection') {
@@ -87,13 +87,21 @@ export function createGameServer() {
             res.end('Client not built. Development: http://localhost:5173 · Production: npm run build && npm start');
         }
     });
+    const socketLog = (event: string, details: Record<string, unknown>) => console.log(JSON.stringify({ event: `ws.${event}`, ...details }));
+    server.on('upgrade', req => socketLog('upgrade', { requestId: req.headers['x-railway-request-id'], path: req.url }));
     const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 16384, perMessageDeflate: false });
     function send(c: Connection, m: ServerMessage) { if (c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount < 256000) {
         const data = JSON.stringify(m);
         c.ws.send(data);
         stats.bytesOut += Buffer.byteLength(data);
     } }
-    wss.on('connection', ws => {
+    wss.on('connection', (ws, req) => {
+        const connectionId = randomBytes(4).toString('hex'), openedAt = Date.now();
+        let receivedMessages = 0;
+        const log = (event: string, details: Record<string, unknown> = {}) => socketLog(event, { connectionId, ...details });
+        log('connection', { requestId: req.headers['x-railway-request-id'] });
+        ws.on('error', error => log('error', { message: error.message, code: (error as NodeJS.ErrnoException).code }));
+        ws.on('close', (code, reason) => log('close', { code, reason: reason.toString(), durationMs: Date.now() - openedAt, receivedMessages }));
         if (connections.size >= 256) {
             ws.close(1013, 'Server full');
             return;
@@ -102,8 +110,8 @@ export function createGameServer() {
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
-        ws.on('error', () => { });
         ws.on('message', data => {
+            receivedMessages++;
             if (++c.messages > 200) {
                 ws.close(1008, 'Message rate exceeded');
                 return;
@@ -118,6 +126,7 @@ export function createGameServer() {
             }
             if (!m || typeof m !== 'object')
                 return;
+            if (receivedMessages === 1 || m.type === 'join') log('message', { type: m.type, bytes: Buffer.byteLength(data.toString()) });
             const now = Date.now();
             if (m.type === 'ping') {
                 if (Number.isFinite(m.time))
@@ -125,8 +134,10 @@ export function createGameServer() {
                 return;
             }
             if (m.type === 'join' && !c.actor) {
-                if (!CLASS_IDS.includes(m.classId) || !['blue', 'red'].includes(m.team))
+                if (!CLASS_IDS.includes(m.classId) || !['blue', 'red'].includes(m.team)) {
+                    log('join-rejected', { reason: 'Invalid class or team' });
                     return;
+                }
                 let id = String(m.room ?? '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18);
                 if (m.create || !id) {
                     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -183,6 +194,7 @@ export function createGameServer() {
                 }
                 c.room!.lastActive = now;
                 c.room!.updateLobby(now);
+                log('joined', { room: c.room!.id, player: c.actor.state.id });
                 send(c, { type: 'welcome', id: c.actor.state.id, token: c.token!, room: c.room!.id, host: c.room!.host, serverTime: now });
                 snapshot(c, true);
                 return;
