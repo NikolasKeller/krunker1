@@ -1,7 +1,7 @@
 import type { ClientMessage, GameEvent, Input, PlayerPatch, PlayerState, ServerMessage } from './types';
 
 // Control/lobby messages stay JSON. Versioned binary frames carry the frequent traffic.
-export const WIRE_PROTOCOL = 'arena-v1';
+export const WIRE_PROTOCOL = 'arena-v2';
 export const INPUT_RATE = 20;
 export const INPUT_SEND_MS = 1000 / INPUT_RATE;
 export const MAX_INPUT_BATCH = 12;
@@ -54,12 +54,12 @@ const boolFields = new Set<keyof PlayerState>(['bot', 'ready', 'grounded', 'slid
 const stringFields = new Set<keyof PlayerState>(['name', 'classId', 'team', 'weapon']);
 const integerFields = new Set<keyof PlayerState>(['ack', 'life', 'kills', 'deaths', 'score', 'streak']);
 const timeFields = new Set<keyof PlayerState>(['reloadEnd', 'respawnAt', 'protectionEnd']);
-// Append-only field order is part of arena-v1. Two presence masks preserve sparse deltas.
+// Append-only field order is part of arena-v2. Two presence masks preserve sparse deltas.
 const fields = ['name', 'classId', 'team', 'bot', 'ready', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'grounded', 'slide', 'slideHeld', 'jumpHeld', 'groundTime', 'jumpBuffer', 'coyote', 'slideAge', 'yaw', 'pitch', 'hp', 'maxHp', 'alive', 'kills', 'deaths', 'score', 'weapon', 'ammo', 'reloadEnd', 'respawnAt', 'protectionEnd', 'ack', 'aiming', 'bloom', 'streak', 'life'] as const;
-function writePlayer(w: Writer, p: PlayerPatch) {
+function writePlayer(w: Writer, p: PlayerPatch, precise: boolean) {
     w.string(p.id);
     for (let start = 0; start < fields.length; start += 32) {
-        let mask = 0;
+        let mask = start === 32 && precise ? 0x80000000 : 0;
         for (let k = start; k < Math.min(start + 32, fields.length); k++) if (p[fields[k]] !== undefined) mask |= 1 << (k - start);
         w.u32(mask);
     }
@@ -68,7 +68,7 @@ function writePlayer(w: Writer, p: PlayerPatch) {
         if (boolFields.has(key)) w.u8(v ? 1 : 0);
         else if (stringFields.has(key)) w.string(v as string);
         else if (integerFields.has(key)) w.u32(v as number);
-        else if (timeFields.has(key)) w.f64(v as number);
+        else if (timeFields.has(key) || precise) w.f64(v as number);
         else w.f32(v as number);
     }
 }
@@ -77,7 +77,7 @@ function readPlayer(r: Reader): PlayerPatch {
     for (let k = 0; k < fields.length; k++) {
         if (!(masks[k >>> 5] & (1 << (k % 32)))) continue;
         const key = fields[k];
-        p[key] = boolFields.has(key) ? !!r.u8() : stringFields.has(key) ? r.string() : integerFields.has(key) ? r.u32() : timeFields.has(key) ? r.f64() : r.f32();
+        p[key] = boolFields.has(key) ? !!r.u8() : stringFields.has(key) ? r.string() : integerFields.has(key) ? r.u32() : (timeFields.has(key) || (masks[1] & 0x80000000)) ? r.f64() : r.f32();
     }
     return p as PlayerPatch;
 }
@@ -128,12 +128,12 @@ export function decodeClientMessage(data: WireData): ClientMessage {
     }
     r.done(); return { type: 'input', inputs };
 }
-export function encodeServerMessage(m: ServerMessage): string | Uint8Array {
+export function encodeServerMessage(m: ServerMessage, selfId?: string): string | Uint8Array {
     if (m.type !== 'snapshot' && m.type !== 'events') return JSON.stringify(m);
     const w = new Writer();
     if (m.type === 'snapshot') {
         w.u8(SNAPSHOT); w.u32(m.n); w.u32(m.base); w.f64(m.time); w.u8(+m.full); w.u8(m.players.length);
-        for (const p of m.players) writePlayer(w, p);
+        for (const p of m.players) writePlayer(w, p, p.id === selfId);
         w.u8(m.removed.length); for (const id of m.removed) w.string(id);
         // Infrequent round/lobby metadata includes results and arbitrary player names.
         const { round, host, difficulty, bots } = m;

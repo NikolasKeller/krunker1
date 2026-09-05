@@ -6,7 +6,7 @@ import { WebSocket as RealWebSocket, WebSocketServer } from 'ws';
 import { Network, CONNECT_TIMEOUT_MS, JOIN_RETRY_MS } from '../src/client/network';
 import { createGameServer } from '../src/server/index';
 import { Room } from '../src/server/simulation';
-import { decodeClientMessage, decodeServerMessage, encodeServerMessage, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../src/shared/protocol';
+import { decodeClientMessage, WIRE_PROTOCOL, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../src/shared/protocol';
 import { neutralInput } from '../src/shared/movement';
 import type { ClientMessage, ServerMessage } from '../src/shared/types';
 
@@ -219,4 +219,26 @@ test('inputs coalesce independently of rendering and remain bounded while the so
     const latest = ws.sent.at(-1); assert.ok(latest?.type === 'input');
     assert.equal(latest.inputs.at(-1)?.seq, 1000);
     assert.equal(latest.inputs[0].seq, 1000 - MAX_INPUT_BATCH + 1, 'resume with recent controls');
+});
+
+
+test('cached arena-v1 clients retain JSON snapshots while current clients negotiate precise binary snapshots', async () => {
+    const app = createGameServer();
+    await new Promise<void>(resolve => app.server.listen(0, '127.0.0.1', resolve));
+    const address = app.server.address(); assert.ok(address && typeof address === 'object');
+    try {
+        for (const protocol of ['arena-v1', WIRE_PROTOCOL]) {
+            const ws = new RealWebSocket(`ws://127.0.0.1:${address.port}/ws`, protocol);
+            try {
+                await new Promise<void>((resolve, reject) => {
+                    ws.once('error', reject);
+                    ws.once('open', () => ws.send(JSON.stringify({ ...config, type: 'join' })));
+                    ws.on('message', (data, binary) => {
+                        if (!binary && JSON.parse(data.toString()).type !== 'snapshot') return;
+                        try { assert.equal(binary, protocol === WIRE_PROTOCOL); resolve(); } catch (error) { reject(error); }
+                    });
+                });
+            } finally { ws.terminate(); }
+        }
+    } finally { await app.close(); }
 });

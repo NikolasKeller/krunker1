@@ -97,7 +97,7 @@ export function createGameServer() {
     server.on('upgrade', req => socketLog('upgrade', { requestId: req.headers['x-railway-request-id'], path: req.url }));
     const wss = new WebSocketServer({ server, path: '/ws', maxPayload: MAX_CLIENT_PAYLOAD, perMessageDeflate: false });
     function send(c: Connection, m: ServerMessage) { if (c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount === 0) {
-        const data = c.binary ? encodeServerMessage(m) : JSON.stringify(m);
+        const data = c.binary ? encodeServerMessage(m, c.actor?.state.id) : JSON.stringify(m);
         const started = performance.now();
         c.ws.send(data, () => { transport.maxSendCallbackMs = Math.max(transport.maxSendCallbackMs, +(performance.now() - started).toFixed(3)); });
         transport.maxMessageBytes = Math.max(transport.maxMessageBytes, Buffer.byteLength(data));

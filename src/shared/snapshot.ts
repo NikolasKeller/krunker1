@@ -4,13 +4,13 @@ import type { PlayerPatch, PlayerState } from './types';
 const visibleFields = ['id', 'name', 'classId', 'team', 'bot', 'ready', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'pitch', 'slide', 'grounded', 'alive', 'hp', 'maxHp', 'kills', 'deaths', 'score', 'weapon', 'aiming', 'life', 'protectionEnd'] as const;
 const roundTo = (n: number, scale: number) => Math.round(n * scale) / scale;
 export function wirePlayer(p: PlayerState, self: boolean): PlayerPatch {
-    const value: PlayerPatch = self ? { ...p } : Object.fromEntries(visibleFields.map(key => [key, p[key]])) as PlayerPatch;
-    for (const key of ['x', 'y', 'z', 'vx', 'vy', 'vz'] as const) value[key] = roundTo(p[key], self ? 10000 : 100);
+    // Collision tests branch at exact contact boundaries. Rounding authoritative
+    // local movement can put prediction inside a wall and eject it metres away.
+    if (self) return { ...p };
+    const value = Object.fromEntries(visibleFields.map(key => [key, p[key]])) as PlayerPatch;
+    for (const key of ['x', 'y', 'z', 'vx', 'vy', 'vz'] as const) value[key] = roundTo(p[key], 100);
     for (const key of ['yaw', 'pitch'] as const) value[key] = roundTo(p[key], 1000);
     value.slide = roundTo(p.slide, 10000);
-    if (self) {
-        for (const key of ['groundTime', 'jumpBuffer', 'coyote', 'slideAge', 'bloom'] as const) value[key] = roundTo(p[key], 1000000);
-    }
     return value;
 }
 export function playerDelta(next: PlayerPatch, before?: PlayerPatch): PlayerPatch | undefined {
