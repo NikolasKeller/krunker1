@@ -230,7 +230,6 @@ export class Network {
                 else {
                     this.pending = [];
                     this.outgoing = [];
-                    if (old?.life !== local.life) this.inputs.clear();
                     this.correction = { x: 0, y: 0, z: 0 };
                 }
             }

@@ -377,3 +377,12 @@ test('a stalled TCP stream resumes with recent controls instead of replaying sec
     for (let tick = 0; tick < 15; tick++) r.tick(2051 + tick * STEP * 1000);
     assert.equal(a.state.ack, 60); assert.equal(a.queue.length, 0);
 });
+
+
+test('respawn acknowledges received inputs discarded with the previous life', () => {
+    const r = room(), a = r.add('Generation', 'hunter', 'blue'); r.start(1000);
+    assert.ok(r.enqueue(a, [neutralInput(1), neutralInput(2), neutralInput(3)], 1001));
+    r.spawn(a, 1002);
+    assert.equal(a.queue.length, 0);
+    assert.equal(a.state.ack, 3, 'the client can release transmission credit for discarded commands');
+});

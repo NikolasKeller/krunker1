@@ -103,6 +103,9 @@ export class Room {
         a.recoilIndex = 0;
         a.aimTime = 0;
         a.queue = [];
+        // These received commands were discarded by the new life. Release their
+        // transmission credit without pretending to have simulated their movement.
+        if (!p.bot) p.ack = a.lastSeq;
     }
     fillBots(now: number) {
         const humans = [...this.players.values()].filter(a => !a.state.bot).length;

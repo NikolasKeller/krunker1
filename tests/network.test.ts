@@ -274,3 +274,18 @@ test('prediction does not keep advancing through inputs discarded during a block
     assert.equal(net.pending.length, MAX_INPUT_BATCH);
     assert.ok(Math.abs(net.predicted!.z - 30) < 3, 'prediction stays within the retained input window of authority');
 });
+
+
+test('a respawn does not reopen the transmission window for still-unacknowledged packets', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    for (let seq = 1; seq <= MAX_IN_FLIGHT_INPUTS; seq++) {
+        net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS);
+    }
+    ws.receive({ type: 'snapshot', n: 2, base: 0, time: Date.now(), full: true, players: [{ ...net.local!, life: net.local!.life + 1 }], removed: [] });
+    for (let seq = 31; seq <= 60; seq++) { net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS); }
+    assert.equal(net.inputs.inFlight.length, MAX_IN_FLIGHT_INPUTS);
+    assert.equal(ws.sent.filter(m => m.type === 'input').reduce((n, m) => n + m.inputs.length, 0), MAX_IN_FLIGHT_INPUTS);
+    ws.receive({ type: 'snapshot', n: 3, base: 0, time: Date.now(), full: true, players: [{ ...net.local!, ack: 30 }], removed: [] });
+    net.inputs.flush(ws, 10000);
+    const packet = ws.sent.at(-1); assert.ok(packet?.type === 'input'); assert.equal(packet.inputs.at(-1)?.seq, 60);
+});

@@ -119,7 +119,7 @@ class Client {
                 }
                 this.ackLag.push(this.seq - local.ack);
             }
-        } else { this.inputs.clear(); }
+        } else { this.pending = []; this.outgoing = []; }
         if (this.measured) compareReplicas(m.n, this);
     }
     start() {
