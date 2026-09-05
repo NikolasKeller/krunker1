@@ -8,22 +8,26 @@ export function material(color: number) { if (!materials.has(color))
     materials.set(color, new THREE.MeshLambertMaterial({ color, flatShading: true })); return materials.get(color)!; }
 export function box(parent: THREE.Object3D, x: number, y: number, z: number, w: number, h: number, d: number, color: number) { const mesh = new THREE.Mesh(boxGeometry, material(color)); mesh.position.set(x, y, z); mesh.scale.set(w, h, d); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh; }
 const gunTemplates = new Map<WeaponId, THREE.Group>();
+const vertexMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+// One draw per animated limb/gun; retain the original flat palette as vertex colours.
 export function batchMeshes(group: THREE.Group) {
-    const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    for (const child of [...group.children])
-        if (child instanceof THREE.Mesh) {
-            child.updateMatrix();
-            const geo = child.geometry.clone().applyMatrix4(child.matrix), mat = child.material as THREE.Material;
-            if (!batches.has(mat))
-                batches.set(mat, []);
-            batches.get(mat)!.push(geo);
-            group.remove(child);
-        }
-    for (const [mat, geometries] of batches) {
+    const geometries: THREE.BufferGeometry[] = [];
+    for (const child of [...group.children]) {
+        if (!(child instanceof THREE.Mesh)) continue;
+        child.updateMatrix();
+        const geo = (child.geometry.index ? child.geometry.toNonIndexed() : child.geometry.clone()).applyMatrix4(child.matrix);
+        const color = (child.material as THREE.MeshLambertMaterial).color;
+        const values = new Float32Array(geo.getAttribute('position').count * 3);
+        for (let i = 0; i < values.length; i += 3) { values[i] = color.r; values[i + 1] = color.g; values[i + 2] = color.b; }
+        geo.setAttribute('color', new THREE.BufferAttribute(values, 3));
+        geometries.push(geo);
+        group.remove(child);
+    }
+    if (geometries.length) {
         const merged = mergeGeometries(geometries);
         geometries.forEach(g => g.dispose());
         if (merged) {
-            const mesh = new THREE.Mesh(merged, mat);
+            const mesh = new THREE.Mesh(merged, vertexMaterial);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             group.add(mesh);
@@ -94,6 +98,8 @@ export function makeGun(id: WeaponId): THREE.Group {
     return finishGun(g, id);
 }
 export interface Character {
+    classId: ClassId;
+    color: number;
     group: THREE.Group;
     leftLeg: THREE.Group;
     rightLeg: THREE.Group;
@@ -136,7 +142,7 @@ export function makeCharacter(classId: ClassId, color: number): Character {
     arms.add(gun);
     for (const group of [g, leftLeg, rightLeg, arms, head])
         batchMeshes(group);
-    return { group: g, leftLeg, rightLeg, arms, head, gun, weapon };
+    return { classId, color, group: g, leftLeg, rightLeg, arms, head, gun, weapon };
 }
 export function animateCharacter(c: Character, speed: number, time: number, pitch: number, slide: number) { const walk = Math.sin(time * 13) * Math.min(0.75, speed * 0.08); c.leftLeg.rotation.x = walk; c.rightLeg.rotation.x = -walk; c.arms.rotation.x = pitch * 0.65; c.head.rotation.x = pitch * 0.5; c.group.scale.y = slide > 0 ? 0.68 : 1; }
 export function releaseCharacter(c: Character) {

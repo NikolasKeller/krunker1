@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 const origin = process.env.GAME_URL ?? 'http://127.0.0.1:8080';
-const html = await (await fetch(origin)).text();
+const page = await fetch(origin);
+assert.equal(page.status, 200);
+const html = await page.text();
+const railway = JSON.parse(await readFile(new URL('../railway.json', import.meta.url), 'utf8'));
+const healthcheck = await fetch(origin + railway.deploy.healthcheckPath);
+assert.equal(healthcheck.status, 200);
+assert.equal((await healthcheck.json()).ok, true);
+const connection = await (await fetch(origin + '/api/connection')).json();
+assert.ok(Array.isArray(connection.lan));
 assert.match(html, /<canvas id="game">/);
 const assets = [...html.matchAll(/(?:src|href)="(\/assets\/[^\"]+)"/g)].map(m => m[1]);
 for (const asset of [...assets, '/fonts/barlow.ttf', '/fonts/barlow-bold.ttf', '/fonts/barlow-condensed.ttf', '/favicon.svg']) {

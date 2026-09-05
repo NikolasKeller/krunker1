@@ -3,48 +3,55 @@ import { distance, worldHit, direction, angleLerp } from '../shared/math';
 import { neutralInput } from '../shared/movement';
 import { WEAPONS } from '../shared/weapons';
 import type { Difficulty, Input, PlayerState, Vec3 } from '../shared/types';
-const GRID = 2, N = 35, ORIGIN = -34;
-const cell = (x: number, z: number) => Math.max(0, Math.min(N - 1, Math.round((x - ORIGIN) / GRID))) + Math.max(0, Math.min(N - 1, Math.round((z - ORIGIN) / GRID))) * N;
-const pos = (i: number): Vec3 => ({ x: ORIGIN + (i % N) * GRID, y: 0, z: ORIGIN + Math.floor(i / N) * GRID });
-const blocked = new Set<number>();
-for (let i = 0; i < N * N; i++) {
-    const p = pos(i);
-    if (BOXES.some(b => b.y - b.h / 2 < 2 && Math.abs(p.x - b.x) < b.w / 2 + 0.55 && Math.abs(p.z - b.z) < b.d / 2 + 0.55) || RAMPS.some(r => { const h = rampHeight(r, p.x, p.z); return h !== null && h > 0.5; }))
-        blocked.add(i);
+const GRID = 2, N = 35, ORIGIN = -34, LAYER = N * N;
+const points: Vec3[] = [], walkable = new Set<number>();
+// Two surfaces at the same X/Z retain the bridge underpass and its raised deck.
+for (let layer = 0; layer < 2; layer++) for (let cell = 0; cell < LAYER; cell++) {
+    const x = ORIGIN + cell % N * GRID, z = ORIGIN + Math.floor(cell / N) * GRID;
+    const ramp = RAMPS.map(r => rampHeight(r, x, z)).find(h => h !== null && h > 0);
+    const platform = BOXES.find(b => b.kind === 'platform' && Math.abs(x - b.x) <= b.w / 2 && Math.abs(z - b.z) <= b.d / 2);
+    const surface = ramp ?? (platform ? platform.y + platform.h / 2 : undefined);
+    const y = layer ? surface ?? 0 : 0;
+    points.push({ x, y, z });
+    if ((layer && surface === undefined) || (!layer && ramp !== undefined)) continue;
+    const occupied = BOXES.some(b => b.y + b.h / 2 > y + .05 && b.y - b.h / 2 < y + 1.85 && Math.abs(x - b.x) < b.w / 2 + .5 && Math.abs(z - b.z) < b.d / 2 + .5);
+    if (!occupied) walkable.add(layer * LAYER + cell);
 }
-export function findPath(from: Vec3, to: Vec3): Vec3[] {
-    const start = cell(from.x, from.z);
-    let goal = cell(to.x, to.z);
-    if (blocked.has(goal)) {
-        let best = Infinity;
-        for (let i = 0; i < N * N; i++) {
-            if (blocked.has(i))
-                continue;
-            const d = distance(pos(i), to);
-            if (d < best) {
-                best = d;
-                goal = i;
-            }
+const edges = new Map<number, number[]>();
+for (const i of walkable) {
+    const cell = i % LAYER, neighbours: number[] = [];
+    for (const d of [-1, 1, -N, N]) {
+        const next = cell + d;
+        if (next < 0 || next >= LAYER || Math.abs(next % N - cell % N) > 1) continue;
+        for (const layer of [0, 1]) {
+            const n = next + layer * LAYER;
+            if (walkable.has(n) && Math.abs(points[n].y - points[i].y) <= .85) neighbours.push(n);
         }
     }
+    edges.set(i, neighbours);
+}
+function nearestNode(p: Vec3) {
+    let best = -1, closest = Infinity;
+    for (const i of walkable) {
+        const q = points[i], d = (q.x - p.x) ** 2 + (q.z - p.z) ** 2 + 4 * (q.y - p.y) ** 2;
+        if (d < closest) { closest = d; best = i; }
+    }
+    return best;
+}
+export function findPath(from: Vec3, to: Vec3): Vec3[] {
+    const start = nearestNode(from), goal = nearestNode(to);
     const queue = [start], parent = new Map<number, number>([[start, -1]]);
     for (let cursor = 0; cursor < queue.length; cursor++) {
         const c = queue[cursor];
-        if (c === goal)
-            break;
-        for (const d of [-1, 1, -N, N]) {
-            const n = c + d;
-            if (n < 0 || n >= N * N || Math.abs(n % N - c % N) > 1 || blocked.has(n) || parent.has(n))
-                continue;
-            parent.set(n, c);
-            queue.push(n);
+        if (c === goal) break;
+        for (const n of edges.get(c) ?? []) {
+            if (parent.has(n)) continue;
+            parent.set(n, c); queue.push(n);
         }
     }
-    if (!parent.has(goal))
-        return [];
+    if (!parent.has(goal)) return [];
     const path: Vec3[] = [];
-    for (let n = goal; n !== start && n !== -1; n = parent.get(n) ?? -1)
-        path.push(pos(n));
+    for (let n = goal; n !== start && n !== -1; n = parent.get(n) ?? -1) path.push(points[n]);
     return path.reverse();
 }
 export interface BotBrain {
@@ -103,7 +110,7 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
         input.fire = now - b.seenAt > tune.reaction && Math.abs(Math.atan2(Math.sin(aimYaw - p.yaw), Math.cos(aimYaw - p.yaw))) < 0.16;
         input.aim = dist > 12;
     }
-    while (b.waypoint < b.path.length && distance({ ...p, y: 0 }, b.path[b.waypoint]) < 1.2)
+    while (b.waypoint < b.path.length && distance(p, b.path[b.waypoint]) < 1.2)
         b.waypoint++;
     const waypoint = b.path[b.waypoint];
     if (waypoint) {

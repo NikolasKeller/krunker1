@@ -257,7 +257,7 @@ export function createGameServer() {
     function snapshot(c: Connection, force = false) {
         if (!c.room || !c.actor)
             return;
-        if (c.ws.bufferedAmount > 256000) {
+        if (c.ws.bufferedAmount >= 256000) {
             c.baseline.clear();
             return;
         }

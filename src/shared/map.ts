@@ -62,6 +62,12 @@ export const SPAWNS: (Vec3 & {
     { x: 29, y: 0, z: 32, yaw: 2.5 }, { x: -29, y: 0, z: -32, yaw: -0.6 },
     { x: -7, y: 0, z: 32, yaw: 0 }, { x: 8, y: 0, z: -32, yaw: Math.PI },
     { x: -32, y: 0, z: -1, yaw: -Math.PI / 2 }, { x: 32, y: 0, z: 5, yaw: Math.PI / 2 },
+    { x: -35, y: 0, z: 14, yaw: -Math.PI / 2 }, { x: 35, y: 0, z: -14, yaw: Math.PI / 2 },
+    { x: -18, y: 0, z: 34, yaw: 0 }, { x: 18, y: 0, z: -34, yaw: Math.PI },
+    { x: -35, y: 0, z: -18, yaw: -Math.PI / 2 }, { x: 35, y: 0, z: 18, yaw: Math.PI / 2 },
+    { x: 10, y: 0, z: 34, yaw: 0 }, { x: -12, y: 0, z: -34, yaw: Math.PI },
+    { x: -35, y: 0, z: 24, yaw: -Math.PI / 2 }, { x: 35, y: 0, z: -24, yaw: Math.PI / 2 },
+    { x: 20, y: 0, z: 34, yaw: 0 }, { x: -22, y: 0, z: -34, yaw: Math.PI },
 ];
 export function rampHeight(r: Ramp, x: number, z: number): number | null {
     if (Math.abs(x - r.x) > r.w / 2 || Math.abs(z - r.z) > r.d / 2)

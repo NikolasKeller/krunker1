@@ -232,7 +232,7 @@ test('server validates headshots, spawn protection, friendly fire and wall occlu
 test('respawn resets health, ammo and momentum and adds temporary protection', () => { const r = room(), a = r.add('A', 'hunter', 'blue'); r.start(1000); Object.assign(a.state, { alive: false, hp: 0, respawnAt: 2000, vx: 20, ammo: 0 }); r.tick(2001); assert.equal(a.state.hp, 60); assert.equal(a.state.ammo, 3); assert.equal(a.state.vx, 0); assert.equal(a.state.protectionEnd, 3501); });
 test('bots fill requested slots and paths route around buildings', () => { const r = room(); r.add('Human', 'hunter', 'blue'); r.botCount = 5; r.fillBots(0); assert.equal(r.players.size, 6); r.botCount = 2; r.fillBots(0); assert.equal(r.players.size, 3); const path = findPath({ x: -30, y: 0, z: -30 }, { x: -10, y: 0, z: 5 }); assert.ok(path.length > 4); for (const p of path)
     for (const b of BOXES)
-        assert.ok(!(Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2 && b.y - b.h / 2 < 2)); });
+        assert.ok(!(Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2 && b.y - b.h / 2 < p.y + 1.85 && b.y + b.h / 2 > p.y + .05)); });
 test('prediction reconciles from an older acknowledgement and replays only pending inputs', async () => {
     const { predictInput, reconcile } = await import('../src/client/prediction');
     const start = player();
@@ -282,9 +282,30 @@ test('switching rooms clears stale input sequences; a resumed snapshot restores 
         Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'welcome', id: p.id, room: 'NEW', token: 'token', host: p.id, serverTime: Date.now() }) });
         Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'snapshot', n: 1, base: 0, time: Date.now(), full: true, players: [p], removed: [], round: newRound(), host: p.id, difficulty: 'normal', bots: 0 }) });
         assert.equal(n.seq, 700); assert.equal(n.local?.id, p.id);
-        Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'snapshot', n: 3, base: 2, full: false }) });
+        Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'snapshot', n: 2, base: 1, time: Date.now(), full: false, players: [{ id: p.id, x: p.x + 1 }], removed: [] }) });
+        assert.equal(n.round?.phase, 'lobby', 'unchanged room metadata survives sparse snapshots');
+        assert.equal(n.host, p.id); assert.equal(n.bots, 0); assert.equal(n.local?.x, p.x + 1);
+        Socket.latest.onmessage?.({ data: JSON.stringify({ type: 'snapshot', n: 4, base: 3, full: false }) });
         assert.ok(Socket.latest.sent.some(s => JSON.parse(s).type === 'sync'));
     } finally {
         keys.forEach((key, i) => { const descriptor = descriptors[i]; if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); });
+    }
+});
+
+test('bot navigation reaches the raised deck through a ramp while retaining the underpass', () => {
+    const up = findPath({ x: -20, y: 0, z: 0 }, { x: 3, y: 4, z: -8 });
+    assert.ok(up.some(p => p.y > 0 && p.y < 4), 'uses a ramp');
+    assert.equal(up.at(-1)?.y, 4, 'reaches upper deck');
+    const below = findPath({ x: -10, y: 0, z: -9 }, { x: 10, y: 0, z: -9 });
+    assert.ok(below.length > 0);
+    assert.ok(below.every(p => p.y === 0), 'uses ground-level underpass');
+});
+test('ten teammates spawn at distinct safe locations instead of stacking', () => {
+    const r = room(); r.round.mode = 'tdm';
+    const team = Array.from({ length: 10 }, (_, i) => r.add(`Player ${i}`, 'triggerman', 'blue'));
+    r.start(1000);
+    for (let i = 0; i < team.length; i++) for (let j = i + 1; j < team.length; j++) {
+        const a = team[i].state, b = team[j].state;
+        assert.ok(Math.hypot(a.x - b.x, a.z - b.z) >= 2);
     }
 });

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { buildMap } from '../src/client/map-renderer';
 import { animateCharacter, makeCharacter, makeGun } from '../src/client/models';
+import { orientCamera } from '../src/client/camera';
+import { direction } from '../src/shared/math';
 import { CLASS_IDS, WEAPONS } from '../src/shared/weapons';
 import type { WeaponId } from '../src/shared/types';
 test('map geometry builds without WebGL, merges correctly, and has walkable visible ramps', () => {
@@ -51,4 +53,26 @@ test('all weapon models and animated class silhouettes have finite, nonempty geo
                 assert.ok(bounds.max.y > 1 && bounds.max.y < 2.1);
             }
     }
+});
+
+test('mouse camera direction matches authoritative hitscan at every pitch and yaw', () => {
+    const camera = new THREE.PerspectiveCamera();
+    for (const yaw of [-2.8, -1, 0, 1, 2.8]) for (const pitch of [-1.3, -.4, 0, .4, 1.3]) {
+        orientCamera(camera, yaw, pitch);
+        const forward = camera.getWorldDirection(new THREE.Vector3());
+        const shot = direction(yaw, pitch);
+        assert.ok(forward.distanceTo(new THREE.Vector3(shot.x, shot.y, shot.z)) < 1e-10);
+        camera.updateMatrixWorld(true);
+        const projected = new THREE.Vector3(shot.x, shot.y, shot.z).multiplyScalar(10).project(camera);
+        assert.ok(Math.abs(projected.x) < 1e-8 && Math.abs(projected.y) < 1e-8, 'hitscan lands at the crosshair');
+    }
+});
+test('a full room uses at most six meshes per remote character with preserved vertex colours', () => {
+    let meshes = 0;
+    for (let i = 0; i < 16; i++) {
+        const c = makeCharacter(CLASS_IDS[i % 4], i % 2 ? 0x599fb6 : 0xc66d58);
+        c.group.traverse(o => { if (o instanceof THREE.Mesh) { meshes++; assert.ok(o.geometry.getAttribute('color')); } });
+    }
+    assert.ok(meshes <= 96, `${meshes} remote character meshes`);
+    console.log(`16 remote characters: ${meshes} meshes`);
 });

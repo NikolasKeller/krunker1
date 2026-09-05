@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { orientCamera } from './camera';
 import { buildMap } from './map-renderer';
 import { animateCharacter, makeCharacter, makeGun, releaseCharacter, type Character } from './models';
 import { Effects } from './effects';
@@ -35,6 +36,7 @@ export class Renderer {
         this.gl.shadowMap.enabled = true;
         this.gl.shadowMap.type = THREE.PCFSoftShadowMap;
         this.gl.autoClear = false;
+        this.gl.info.autoReset = false;
         this.scene.background = new THREE.Color(0xa9d2dd);
         this.scene.fog = new THREE.Fog(0xa9d2dd, 75, 160);
         this.scene.add(new THREE.HemisphereLight(0xf4f9ff, 0xaaa18d, 1.7));
@@ -96,6 +98,12 @@ export class Renderer {
             let c = this.characters.get(p.id);
             const friendly = mode === 'tdm' && p.team === local?.team;
             const color = mode === 'tdm' ? (p.team === 'blue' ? 0x599fb6 : 0xc66d58) : 0xb47b59;
+            if (c && (c.classId !== p.classId || c.color !== color)) {
+                this.scene.remove(c.group);
+                releaseCharacter(c);
+                this.characters.delete(p.id);
+                c = undefined;
+            }
             if (!c) {
                 c = makeCharacter(p.classId, color);
                 this.characters.set(p.id, c);
@@ -130,7 +138,7 @@ export class Renderer {
             this.eye = THREE.MathUtils.damp(this.eye, crouch, 18, dt);
             const bob = local.grounded ? Math.sin(time * 14) * Math.min(speed / 10, 1.5) * 0.022 : 0;
             this.camera.position.set(local.x + correction.x, local.y + correction.y + this.eye + bob, local.z + correction.z);
-            this.camera.rotation.set(-look.pitch + Math.sin(time * 72) * this.damageKick * 0.07, look.yaw, Math.cos(time * 61) * this.damageKick * 0.08 + (local.slide > 0 ? -0.035 : 0), 'YXZ');
+            orientCamera(this.camera, look.yaw, look.pitch + Math.sin(time * 72) * this.damageKick * 0.07, Math.cos(time * 61) * this.damageKick * 0.08 + (local.slide > 0 ? -0.035 : 0));
             const scoped = aiming && local.weapon === 'sniper';
             this.camera.fov = THREE.MathUtils.damp(this.camera.fov, scoped ? 32 : aiming ? 73 : 90 + Math.min(8, Math.max(0, speed - 10) * 0.65), scoped ? 18 : 12, dt);
             if (this.viewmodel.weapon !== local.weapon)
@@ -139,10 +147,9 @@ export class Renderer {
         }
         this.camera.updateProjectionMatrix();
         this.gl.setViewport(0, 0, this.width, this.height);
+        this.gl.info.reset();
         this.gl.clear();
         this.gl.render(this.scene, this.camera);
-        this.drawCalls = this.gl.info.render.calls;
-        this.triangles = this.gl.info.render.triangles;
         if (menu) {
             this.gl.clearDepth();
             const w = this.width * (this.width < 900 ? 0.43 : 0.42), h = this.height * 0.78;
@@ -157,8 +164,8 @@ export class Renderer {
         else if (local?.alive && !(aiming && local.weapon === 'sniper' && this.viewmodel.aim > 0.82)) {
             this.gl.clearDepth();
             this.gl.render(this.viewmodel.scene, this.viewmodel.camera);
-            this.drawCalls += this.gl.info.render.calls;
-            this.triangles += this.gl.info.render.triangles;
         }
+        this.drawCalls = this.gl.info.render.calls;
+        this.triangles = this.gl.info.render.triangles;
     }
 }

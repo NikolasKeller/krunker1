@@ -30,6 +30,13 @@ export function buildMap(scene: THREE.Scene) {
             box(staticGroup, b.x, b.y + b.h / 2 + 0.12, b.z, b.w + 0.35, 0.24, b.d + 0.35, 0xf0e6d0);
             box(staticGroup, b.x, b.y - b.h / 2 + 0.3, b.z, b.w + 0.05, 0.6, b.d + 0.05, 0xae9d82);
             if (b.w > 5) {
+                // Exposed blockwork breaks up broad plaster faces without image assets.
+                for (const side of [-1, 1]) for (let row = 0; row < 3; row++) {
+                    for (let column = 0; column < 4; column++) {
+                        const x = b.x - b.w * .39 + column * 1.35 + (row % 2) * .55;
+                        box(staticGroup, x, .85 + row * .38, b.z + side * (b.d / 2 + .045), 1.05, .27, .06, row % 2 ? 0xbcac92 : 0xd1c1a6);
+                    }
+                }
                 for (const x of [-0.28, 0.28])
                     for (const s of [-1, 1]) {
                         box(staticGroup, b.x + b.w * x, b.y + 0.7, b.z + s * (b.d / 2 + 0.025), 1.75, 1.85, 0.08, 0x526669);
@@ -72,6 +79,14 @@ export function buildMap(scene: THREE.Scene) {
         mesh.receiveShadow = true;
         mesh.castShadow = true;
         staticGroup.add(mesh);
+    }
+    // Sparse angular paving fragments retain clean silhouettes and add scale to the yard.
+    for (let i = 0; i < 115; i++) {
+        const x = ((i * 29.73) % 70) - 35, z = ((i * 17.39) % 70) - 35;
+        if (BOXES.some(b => Math.abs(x - b.x) < b.w / 2 + .5 && Math.abs(z - b.z) < b.d / 2 + .5)) continue;
+        if (RAMPS.some(r => Math.abs(x - r.x) < r.w / 2 && Math.abs(z - r.z) < r.d / 2)) continue;
+        const chip = box(staticGroup, x, .003, z, .35 + (i % 4) * .2, .005, .18 + (i % 3) * .13, i % 2 ? 0xb2a38c : 0xd2c3a9);
+        chip.rotation.y = i * 1.73;
     }
     // Painted lane markers and a plaza inset help players learn the three routes at a glance.
     for (const s of [-1, 1]) {
@@ -126,5 +141,6 @@ export function buildMap(scene: THREE.Scene) {
     sign(scene, 'WAREHOUSE 02', 19, 5.2, 20.06, 7.5, 1.3, 0, '#3b5b5b');
     sign(scene, 'A  →', -12, 2.3, 13.94, 3, 1.15, Math.PI, '#a66348');
     sign(scene, '←  B', 20, 2.3, -15.94, 3, 1.15, 0, '#426e74');
+    sign(scene, 'CARGO / 03', 27.5, 1.65, -2.54, 3.5, .65, 0, '#345559', '#e6dbc1');
     sign(scene, '01', -0.5, 5.65, 1.51, 2.1, 1.25, 0, '#cbbb9b', '#f5edda');
 }

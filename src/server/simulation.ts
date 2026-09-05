@@ -87,9 +87,15 @@ export class Room {
             a.pendingClass = undefined;
         }
         const p = a.state, c = CLASSES[p.classId];
-        const enemies = [...this.players.values()].filter(a => a.state.id !== p.id && a.state.alive && (this.round.mode === 'ffa' || a.state.team !== p.team)).map(a => a.state);
+        const occupants = [...this.players.values()].filter(a => a.state.id !== p.id && a.state.alive && a.connected).map(a => a.state);
+        const enemies = occupants.filter(q => this.round.mode === 'ffa' || q.team !== p.team);
         const candidates = SPAWNS.filter((_, i) => this.round.mode === 'ffa' || (p.team === 'blue' ? i % 2 === 0 : i % 2 === 1));
-        const spawn = [...candidates].sort((a, b) => Math.min(100, ...enemies.map(e => distance(b, e))) - Math.min(100, ...enemies.map(e => distance(a, e))))[0];
+        const safety = (point: typeof candidates[number]) => {
+            const occupied = occupants.some(q => distance(point, q) < 2);
+            const nearest = Math.min(100, ...enemies.map(q => distance(point, q)));
+            return (occupied ? -1000 : 0) + nearest;
+        };
+        const spawn = [...candidates].sort((a, b) => safety(b) - safety(a))[0];
         Object.assign(p, moveState(spawn.x, spawn.y, spawn.z), { yaw: spawn.yaw, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: now + 1500, aiming: false, bloom: 0, life: p.life + 1 });
         a.ammo = ammo();
         a.nextShot = now + 250;

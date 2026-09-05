@@ -1,7 +1,7 @@
 import type { PlayerPatch, PlayerState } from './types';
 
 // Remote rendering needs no input acknowledgements, movement buffers or reload/ammo internals.
-const visibleFields = ['id', 'name', 'classId', 'team', 'bot', 'ready', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'pitch', 'slide', 'grounded', 'alive', 'hp', 'maxHp', 'kills', 'deaths', 'score', 'weapon', 'aiming', 'life'] as const;
+const visibleFields = ['id', 'name', 'classId', 'team', 'bot', 'ready', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'pitch', 'slide', 'grounded', 'alive', 'hp', 'maxHp', 'kills', 'deaths', 'score', 'weapon', 'aiming', 'life', 'protectionEnd'] as const;
 const roundTo = (n: number, scale: number) => Math.round(n * scale) / scale;
 export function wirePlayer(p: PlayerState, self: boolean): PlayerPatch {
     const value: PlayerPatch = self ? { ...p } : Object.fromEntries(visibleFields.map(key => [key, p[key]])) as PlayerPatch;
