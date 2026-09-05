@@ -44,8 +44,15 @@ export function buildMap(scene: THREE.Scene) {
                         box(staticGroup, b.x + b.w * x, b.y - 0.28, b.z + s * (b.d / 2 + 0.18), 2.05, 0.18, 0.4, 0xe7d9bc);
                         box(staticGroup, b.x + b.w * x, b.y + 0.68, b.z + s * (b.d / 2 + 0.11), 0.075, 1.55, 0.04, 0x9baca4);
                     }
-                for (const s of [-1, 1])
-                    box(staticGroup, b.x + s * (b.w / 2 + 0.05), b.y - 0.35, b.z, 0.1, 2.65, 1.75, 0x597d7b);
+                for (const side of [-1, 1]) {
+                    const face = b.x + side * (b.w / 2 + .06);
+                    box(staticGroup, face, 1.325, b.z, .1, 2.65, 1.75, 0x597d7b);
+                    for (const offset of [-.28, .28]) {
+                        box(staticGroup, face, b.y + .7, b.z + b.d * offset, .08, 1.85, 1.75, 0x526669);
+                        box(staticGroup, face + side * .045, b.y + .68, b.z + b.d * offset, .04, 1.48, 1.38, 0x364b50);
+                        box(staticGroup, face, b.y - .28, b.z + b.d * offset, .3, .18, 2.05, 0xe7d9bc);
+                    }
+                }
             }
         }
         if (b.kind === 'crate') {

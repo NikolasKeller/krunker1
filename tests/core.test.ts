@@ -309,3 +309,18 @@ test('ten teammates spawn at distinct safe locations instead of stacking', () =>
         assert.ok(Math.hypot(a.x - b.x, a.z - b.z) >= 2);
     }
 });
+
+test('bot ramp waypoints can actually be followed by shared movement', () => {
+    const p = moveState(-20, 0, 0);
+    const path = findPath(p, { x: 3, y: 4, z: -8 });
+    let waypoint = 0;
+    for (let step = 0; step < 1800 && waypoint < path.length; step++) {
+        const target = path[waypoint];
+        if (Math.hypot(target.x - p.x, target.z - p.z, target.y - p.y) < .45) { waypoint++; continue; }
+        const input = neutralInput(step);
+        input.yaw = Math.atan2(-(target.x - p.x), -(target.z - p.z)); input.forward = .8;
+        move(p, input, 9);
+    }
+    assert.equal(waypoint, path.length, 'ramp navigation remains compatible with collision');
+    assert.ok(p.y > 3.9);
+});

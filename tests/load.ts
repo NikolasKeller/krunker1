@@ -42,6 +42,8 @@ class Client {
     ws: WebSocket;
     id = ''; token = ''; room = ''; seq = 0; n = 0; receivedAt = 0; offset = 0;
     bytesIn = 0; bytesOut = 0; packets = 0; shots = 0; hits = 0; kills = 0;
+    deathCorrections: number[] = [];
+    correctionSpikes: unknown[] = [];
     desyncs = 0; errors: string[] = []; corrections: number[] = []; ackLag: number[] = []; gaps: number[] = [];
     pending: Input[] = []; outgoing: Input[] = []; players = new Map<string, PlayerState>();
     predicted?: PlayerState; round?: RoundState; ai = brain();
@@ -92,7 +94,12 @@ class Client {
         this.seq = Math.max(this.seq, local.ack);
         if (old?.life === local.life) {
             if (this.measured) {
-                this.corrections.push(Math.hypot(old.x - this.predicted.x, old.y - this.predicted.y, old.z - this.predicted.z));
+                const error = Math.hypot(old.x - this.predicted.x, old.y - this.predicted.y, old.z - this.predicted.z);
+                if (old.alive !== local.alive) this.deathCorrections.push(error);
+                else {
+                    this.corrections.push(error);
+                    if (error > .1 && this.correctionSpikes.length < 20) this.correctionSpikes.push({ error, alive: local.alive, ack: local.ack, pending: this.pending.length, life: local.life });
+                }
                 this.ackLag.push(this.seq - local.ack);
             }
         } else { this.pending = []; this.outgoing = []; }
@@ -138,6 +145,7 @@ for (const count of counts) {
         for (const c of clients) c.start();
         await delay(2500); // Warm up runtime and wait out spawn protection.
         const begin = await health(), started = Date.now();
+        assert.equal(begin.players, count, 'run benchmarks against an isolated server');
         for (const c of clients) c.measured = true;
         const samples = [];
         while (Date.now() - started < seconds * 1000) { await delay(1000); samples.push(await health()); }
@@ -152,9 +160,10 @@ for (const count of counts) {
             overBudgetTicks: end.overBudgetTicks - begin.overBudgetTicks,
             maxQueueBytes: Math.max(...samples.map(s => s.queuedBytes)),
             replicaErrors,
-            clients: clients.map(c => ({ name: `Load ${c.index + 1}`, downKBps: +(c.bytesIn / duration / 1000).toFixed(2), upKBps: +(c.bytesOut / duration / 1000).toFixed(2), shots: c.shots, hits: c.hits, kills: c.kills, movedMetres: +c.moved.toFixed(1), desyncs: c.desyncs, errors: c.errors, predictionP95Metres: +percentile(c.corrections, .95).toFixed(4), predictionP99Metres: +percentile(c.corrections, .99).toFixed(4), maxAckLag: Math.max(...c.ackLag), snapshotGapP99Ms: percentile(c.gaps, .99), maxSnapshotGapMs: Math.max(...c.gaps) }))
+            clients: clients.map(c => ({ name: `Load ${c.index + 1}`, downKBps: +(c.bytesIn / duration / 1000).toFixed(2), upKBps: +(c.bytesOut / duration / 1000).toFixed(2), shots: c.shots, hits: c.hits, kills: c.kills, movedMetres: +c.moved.toFixed(1), desyncs: c.desyncs, errors: c.errors, deathCorrectionMaxMetres: +Math.max(0, ...c.deathCorrections).toFixed(4), correctionSpikes: c.correctionSpikes, predictionP95Metres: +percentile(c.corrections, .95).toFixed(4), predictionP99Metres: +percentile(c.corrections, .99).toFixed(4), maxAckLag: Math.max(...c.ackLag), snapshotGapP99Ms: percentile(c.gaps, .99), maxSnapshotGapMs: Math.max(...c.gaps) }))
         };
         report.push(row); console.log(JSON.stringify(row, null, 2));
+        if (process.env.LOAD_REPORT) await writeFile(process.env.LOAD_REPORT, JSON.stringify({ date: new Date().toISOString(), origin, report }, null, 2) + '\n');
         assert.ok(row.tickHz >= 57, 'sustain near-60Hz');
         assert.ok(row.maxWindowP95Ms < 16.67, 'tick processing within budget');
         assert.equal(replicaErrors, 0, 'all clients reconstruct the same world');

@@ -20,6 +20,7 @@ export class Viewmodel {
         light.position.set(-3, 5, 3);
         this.scene.add(light);
         this.scene.add(this.rig);
+        this.rig.scale.setScalar(.9);
         const arm = (group: THREE.Group, x: number, z: number) => { box(group, x, -0.2, z, 0.22, 0.21, 0.8, 0x374044); box(group, x, -0.16, z - 0.48, 0.20, 0.20, 0.25, 0xd8aa82); this.rig.add(group); };
         arm(this.leftArm, -0.20, -0.33);
         arm(this.rightArm, 0.16, 0.34);
@@ -40,7 +41,7 @@ export class Viewmodel {
         this.flash.rotation.y += dt * 24;
         const reload = reloadEnd > now ? 1 - (reloadEnd - now) / Math.max(1, WEAPONS[this.weapon].reload) : 0;
         const wave = reload > 0 ? Math.sin(reload * Math.PI) : 0, bob = Math.sin(time * 13) * Math.min(speed / 10, 1.7) * 0.018 * (1 - this.aim);
-        this.rig.position.set(0.39 * (1 - this.aim), -0.32 - this.aim * 0.03 + bob - wave * 0.30, -0.86 + this.aim * 0.12 + this.kick * 0.1);
+        this.rig.position.set(0.36 * (1 - this.aim), -0.37 - this.aim * 0.03 + bob - wave * 0.30, -0.98 + this.aim * 0.12 + this.kick * 0.1);
         this.rig.rotation.set(this.kick * 0.12 - wave * 0.42, Math.sin(time * 1.7) * 0.004 + wave * 0.13, Math.cos(time * 6.5) * Math.min(speed / 10, 1) * 0.012 - wave * 0.45 - (slide > 0 ? 0.13 : 0));
         this.leftArm.position.y = -wave * 0.23;
         this.leftArm.position.z = -Math.sin(reload * Math.PI * 2) * 0.18;
