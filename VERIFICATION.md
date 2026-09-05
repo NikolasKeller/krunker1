@@ -2,6 +2,12 @@
 
 Verified on 2026-09-05 using Node 25.9.0 on the local macOS host. No browser, Chromium, or CDP connection was launched. GPU FPS and browser appearance are not inferred from these results.
 
+## Lobby DOM regression
+
+The old render-driven UI replaced the primary button's children every 90 ms (about 11 times/second) and repeatedly rebuilt results. The lobby now has an independent 100 ms timer (10 polls/second), persistent buttons/inputs, keyed player/result rows, and writes only changed values. Countdown text changes once per displayed second. `window.__arena.metrics.lobby` reports `intervalMs`, `polls`, `updates` (polls that changed the DOM), and `writes`.
+
+Node DOM tests observed **zero mutations over 100 unchanged polls**, including unrelated player-position changes. They retain the button, its text target, every form control, and existing roster/results rows; callsign focus, draft value, selection direction and caret survive readiness/team/countdown updates. These use jsdom, not a browser. The build and **49 tests** passed, including all 39 original tests and seven ready/countdown state-machine regressions.
+
 ## Production acceptance
 
 - `package-lock.json` is tracked on `origin/main`. A fresh `npm ci` in an isolated checkout succeeded with zero reported vulnerabilities. The original missing-lockfile blocker is resolved in the repository.
