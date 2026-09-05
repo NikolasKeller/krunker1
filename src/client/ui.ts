@@ -1,7 +1,8 @@
 import { CLASS_IDS, CLASSES, WEAPONS } from '../shared/weapons';
 import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
-import { MAX_HUMANS, type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
+import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import type { Network } from './network';
+import { LobbyPanel } from './lobby';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
 export const escapeHTML = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -31,7 +32,7 @@ export class UI {
         head: boolean;
         until: number;
     }[] = [];
-    private lastRoster = '';
+    readonly lobby: LobbyPanel;
     private lastBoard = '';
     private hurtUntil = 0;
     private hitUntil = 0;
@@ -56,7 +57,7 @@ export class UI {
           <div class="map-thumb"><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div>
           <div class="room-options">
             <div id="lobby-status" role="status" aria-live="polite">Create a lobby, then invite your friends.</div>
-            <div id="lobby-results" class="hidden"></div>
+            <div id="lobby-results" class="hidden"><strong id="result-winner"></strong><span id="result-round"></span><div id="result-list" class="result-list"></div></div>
             <label>YOUR CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name" autocomplete="nickname"/></label>
             <div class="lobby-sharing hidden" id="lobby-sharing"><div class="share-heading"><strong id="share-code"></strong><button id="copy-link" class="copy-button">COPY INVITE LINK</button></div><label>INVITE URL<input id="share-url" readonly aria-label="Lobby invite URL"/></label><div id="lan-links"></div><div id="copy-status" role="status" aria-live="polite"></div></div>
             <div id="team-select" class="team-select visible"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div>
@@ -64,7 +65,7 @@ export class UI {
             <details id="host-options"><summary>MATCH SETTINGS <span id="host-label">HOST CONTROLS</span></summary><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div class="two-fields"><label>SCORE LIMIT<input id="score-limit" type="number" min="5" max="200" value="25"/></label><label>TIME LIMIT<select id="time-limit">${[1, 2, 3, 4, 5, 10, 15, 30].map(n => `<option value="${n * 60000}" ${n === 4 ? 'selected' : ''}>${n} minutes</option>`).join('')}</select></label></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>EXTRA BOTS<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i} bots</option>`).join('')}</select></label></div></details>
             <details class="join-options"><summary>JOIN ANOTHER LOBBY</summary><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false" placeholder="AB7K4"/><button id="join-room" title="Join room" aria-label="Join room code">↗</button></div></label><button id="create-room" class="secondary-button">CREATE NEW LOBBY</button></details>
           </div>
-          <div class="lobby-actions"><button id="deploy" class="deploy-button"><span>CREATE LOBBY</span><span>↗</span></button><button id="force-start" class="secondary-button hidden">HOST: START EARLY</button><div class="deploy-note" id="deploy-note">SEND A LINK. GET EVERYONE READY.</div></div>
+          <div class="lobby-actions"><button id="deploy" class="deploy-button"><span id="deploy-label">CREATE LOBBY</span><span id="deploy-icon" aria-hidden="true">↗</span></button><button id="force-start" class="secondary-button hidden">HOST: START EARLY</button><div class="deploy-note" id="deploy-note">SEND A LINK. GET EVERYONE READY.</div></div>
         </aside>
         <section class="class-picker"><div class="picker-heading"><span>THE LINEUP</span><small>4 CLASSES <span> / </span> FIND YOUR PLAYSTYLE</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
         <footer class="menu-footer"><span><kbd>W A S D</kbd> MOVE <kbd>SPACE</kbd> HOP <kbd>SHIFT</kbd> SLIDE <kbd>R</kbd> RELOAD</span><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
@@ -100,6 +101,7 @@ export class UI {
         for (const key of ['sensitivity', 'volume', 'quality'])
             $(key).oninput = () => this.onSettings(key, $<HTMLInputElement>(key).value);
         $<HTMLSelectElement>('quality').value = localStorage.getItem('arena-quality') ?? 'balanced';
+        this.lobby = new LobbyPanel(net);
         this.choose(this.selected, false);
         this.visibility();
     }
@@ -163,6 +165,7 @@ export class UI {
         if (e.type === 'notice')
             this.notice(e.text);
     }
+    updateLobby() { this.lobby.update(this.team); }
     update(now: number, renderer: Renderer, aiming: boolean) {
         const net = this.net, p = net.predicted, round = net.round, serverNow = net.serverNow;
         $('hitmarker').style.opacity = now < this.hitUntil ? '1' : '0';
@@ -182,55 +185,11 @@ export class UI {
         if (now - this.lastDraw < 90)
             return;
         this.lastDraw = now;
-        $('connection').textContent = net.status === 'CONNECTED' ? `${net.room} · CONNECTED` : net.status;
         const warning = net.status !== 'CONNECTED' && !this.menu;
         $('network-warning').classList.toggle('hidden', !warning);
         $('network-warning').textContent = net.status;
-        const host = net.host === net.id;
-        const local = net.local, connected = !!local && net.status === 'CONNECTED';
-        const countdown = round?.phase === 'countdown';
-        const active = round?.phase === 'playing';
         const results = round?.phase === 'results';
-        const seconds = Math.max(0, Math.ceil(((round?.nextAt ?? 0) - serverNow) / 1000));
-        const ready = local?.ready ?? false;
-        $<HTMLButtonElement>('deploy').disabled = results || (!!net.ws && !connected);
-        $('deploy').classList.toggle('is-ready', ready && !active);
-        $('deploy').setAttribute('aria-pressed', String(ready));
-        $('deploy').innerHTML = `<span>${!net.ws ? 'CREATE LOBBY' : !connected ? 'CONNECTING…' : active ? 'JOIN MATCH' : results ? `NEXT ROUND IN ${seconds}` : ready ? '✓ READY · CLICK TO UNREADY' : 'READY UP'}</span><span>${countdown ? seconds : '↗'}</span>`;
-        $('force-start').classList.toggle('hidden', !host || !connected || round?.phase !== 'lobby');
-        $('deploy-note').textContent = active ? 'MATCH IN PROGRESS · SPAWN AND PLAY' : countdown ? `EVERYONE DEPLOYS IN ${seconds}…` : 'MATCH STARTS WHEN EVERY PLAYER IS READY';
-        $('lobby-heading').textContent = net.room && net.id ? `LOBBY / ${net.room}` : 'YOUR NEXT ROUND';
-        const humans = [...net.players.values()].filter(p => !p.bot);
-        $('lobby-status').textContent = !net.ws ? 'Create a lobby, then invite your friends.' : !connected ? net.status : countdown ? `MATCH STARTING IN ${seconds}…` : active ? 'Round live. You can join at any time.' : results ? 'Good game! Getting the lobby ready…' : `${humans.filter(p => p.ready).length} / ${humans.length} ready · Pick a team and ready up.`;
-        $('lobby-status').classList.toggle('counting', countdown);
-        $('host-label').textContent = host ? 'YOU ARE THE HOST' : 'HOST CONTROLS';
-        for (const b of document.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
-            b.classList.toggle('selected', b.dataset.mode === round?.mode);
-            b.disabled = !host || active || results;
-        }
-        for (const id of ['difficulty', 'bot-count', 'score-limit', 'time-limit'])
-            $<HTMLInputElement>(id).disabled = !host || active || results;
-        $<HTMLInputElement>('player-name').disabled = active;
-        if (local && document.activeElement !== $('player-name')) $<HTMLInputElement>('player-name').value = local.name;
-        $<HTMLSelectElement>('difficulty').value = net.difficulty;
-        $<HTMLSelectElement>('bot-count').value = String(net.bots);
-        if (round) {
-            if (document.activeElement !== $('score-limit')) $<HTMLInputElement>('score-limit').value = String(round.scoreLimit);
-            $<HTMLSelectElement>('time-limit').value = String(round.duration);
-        }
-        for (const b of document.querySelectorAll<HTMLButtonElement>('[data-team]')) {
-            b.classList.toggle('selected', b.dataset.team === (local?.team ?? this.team));
-            b.disabled = active;
-        }
         const players = [...net.players.values()].sort((a, b) => b.score - a.score || b.kills - a.kills || a.name.localeCompare(b.name));
-        const roster = net.host + players.map(p => `${p.id}:${p.name}:${p.classId}:${p.team}:${p.ready}`).join('|');
-        if (roster !== this.lastRoster) {
-            this.lastRoster = roster;
-            $('player-count').textContent = `${humans.length} / ${MAX_HUMANS} + ${players.length - humans.length} BOTS`;
-            $('roster').innerHTML = [...players].sort((a, b) => Number(a.bot) - Number(b.bot)).map(p => `<div class="roster-player"><span class="roster-dot ${p.team}"></span><span>${escapeHTML(p.name)}${p.id === net.id ? ' <small>YOU</small>' : ''}${p.id === net.host ? ' <small>HOST</small>' : ''}</span><small class="${p.team}">${p.team.toUpperCase()}</small><small class="ready-state ${p.ready || p.bot ? 'ready' : ''}">${p.bot ? 'BOT' : p.ready ? '✓ READY' : 'NOT READY'}</small></div>`).join('');
-        }
-        $('lobby-results').classList.toggle('hidden', !round?.results);
-        if (round?.results) $('lobby-results').innerHTML = `<strong>${round.winner === 'DRAW' ? 'DRAW' : `${escapeHTML(round.winner)} WINS`}</strong><span>ROUND ${round.round} RESULTS</span><div class="result-list">${round.results.map((p, i) => `<div><b>${i + 1}. ${escapeHTML(p.name)}</b><small>${p.kills} K / ${p.deaths} D · ${p.score} PTS</small></div>`).join('')}</div>`;
         if (!round)
             return;
         const time = Math.max(0, Math.ceil((round.endsAt - serverNow) / 1000));

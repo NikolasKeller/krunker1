@@ -4,6 +4,7 @@ import { Network } from './network';
 import { Renderer } from './renderer';
 import { AudioEngine } from './audio';
 import { UI } from './ui';
+import { LOBBY_UPDATE_MS } from './lobby';
 import { STEP, INTERPOLATION_MS, type WeaponId } from '../shared/types';
 import { CLASSES, recoilFor, WEAPONS } from '../shared/weapons';
 import { clamp, distance } from '../shared/math';
@@ -166,5 +167,7 @@ function frame(time: number) {
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+ui.updateLobby();
+setInterval(() => ui.updateLobby(), LOBBY_UPDATE_MS);
 // Read-only diagnostics for external browser verification; no server debug commands are exposed.
-Object.defineProperty(window, '__arena', { value: { get metrics() { return { fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, reconciliations: net.reconciliations, maxCorrection: net.maxCorrection, receivedBytes: net.bytes, connection: net.status }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
+Object.defineProperty(window, '__arena', { value: { get metrics() { return { fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, reconciliations: net.reconciliations, maxCorrection: net.maxCorrection, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
