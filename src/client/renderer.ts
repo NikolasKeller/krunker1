@@ -4,6 +4,7 @@ import { orientCamera } from './camera';
 import { buildMap } from './map-renderer';
 import { animateCharacter, makeCharacter, makeGun, releaseCharacter, type Character } from './models';
 import { Effects } from './effects';
+import { Showroom } from './showroom';
 import { Viewmodel } from './viewmodel';
 import { eyeHeight } from '../shared/movement';
 import { CLASSES } from '../shared/weapons';
@@ -28,10 +29,7 @@ export class Renderer {
     private damageKick = 0;
     private eye = 1.62;
     private menuTime = 0;
-    private previewScene = new THREE.Scene();
-    private previewCamera = new THREE.PerspectiveCamera(31, 1, 0.1, 30);
-    private preview: Character;
-    private selected: ClassId = 'hunter';
+    private showroom = new Showroom();
     constructor(canvas: HTMLCanvasElement, private touch = false) {
         try {
             this.gl = new THREE.WebGLRenderer({ canvas, antialias: !touch, powerPreference: 'high-performance' });
@@ -58,18 +56,6 @@ export class Renderer {
         this.scene.add(sun);
         buildMap(this.scene);
         this.effects = new Effects(this.scene);
-        this.previewScene.add(new THREE.HemisphereLight(0xffffff, 0x738b91, 1.8));
-        const pl = new THREE.DirectionalLight(0xffe3b5, 2.1);
-        pl.position.set(-3, 6, 5);
-        this.previewScene.add(pl);
-        this.preview = makeCharacter('hunter', 0xb9bda2);
-        this.previewScene.add(this.preview.group);
-        this.preview.group.rotation.y = -2.15;
-        const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.18, 0.12, 8), new THREE.MeshLambertMaterial({ color: 0x536267 }));
-        pad.position.y = -0.06;
-        this.previewScene.add(pad);
-        this.previewCamera.position.set(3.5, 2.25, 5);
-        this.previewCamera.lookAt(0, 0.95, 0);
         this.camera.rotation.order = 'YXZ';
         addEventListener('resize', () => this.resize());
         this.resize();
@@ -96,8 +82,13 @@ export class Renderer {
         this.resize();
     }
     private resize() { this.width = innerWidth; this.height = innerHeight; this.gl.setSize(this.width, this.height); this.camera.aspect = this.width / this.height; this.camera.updateProjectionMatrix(); this.viewmodel.resize(this.width, this.height); }
-    setClass(id: ClassId) { if (id === this.selected)
-        return; this.selected = id; this.previewScene.remove(this.preview.group); releaseCharacter(this.preview); this.preview = makeCharacter(id, id === 'hunter' ? 0xb9bda2 : id === 'triggerman' ? 0x768c68 : id === 'vince' ? 0xaa6f54 : 0x619398); this.preview.group.rotation.y = -2.15; this.previewScene.add(this.preview.group); }
+    setClass(id: ClassId) { this.showroom.setClass(id); }
+    renderHome(time: number, rect: DOMRect) {
+        this.gl.info.reset();
+        this.showroom.render(this.gl, time, rect, this.width, this.height);
+        this.drawCalls = this.gl.info.render.calls;
+        this.triangles = this.gl.info.render.triangles;
+    }
     shotMuzzle(local: PlayerState, look: { yaw: number; pitch: number }, correction: Vec3) {
         const camera = this.camera.clone(), view = correctedPosition(local, correction);
         camera.position.set(view.x, view.y + this.eye, view.z);
@@ -183,18 +174,7 @@ export class Renderer {
         this.gl.info.reset();
         this.gl.clear();
         this.gl.render(this.scene, this.camera);
-        if (menu && !this.touch) {
-            this.gl.clearDepth();
-            const w = this.width * (this.width < 900 ? 0.43 : 0.42), h = this.height * 0.78;
-            this.gl.setViewport(this.width * 0.31, this.height * 0.16, w, h);
-            this.previewCamera.aspect = w / h;
-            this.previewCamera.updateProjectionMatrix();
-            this.preview.group.rotation.y = -2.158 + Math.sin(time * 0.5) * 0.06;
-            animateCharacter(this.preview, 0, time, -0.08, 0);
-            this.gl.render(this.previewScene, this.previewCamera);
-            this.gl.setViewport(0, 0, this.width, this.height);
-        }
-        else if (!menu && local?.alive && !(aiming && local.weapon === 'sniper' && this.viewmodel.aim > 0.82)) {
+        if (!menu && local?.alive && !(aiming && local.weapon === 'sniper' && this.viewmodel.aim > 0.82)) {
             this.gl.clearDepth();
             this.gl.render(this.viewmodel.scene, this.viewmodel.camera);
         }

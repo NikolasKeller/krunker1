@@ -23,6 +23,7 @@ const bundle = await build({
                 shotMuzzle(p){return {x:p.x,y:p.y+1.62,z:p.z}}
                 project(){return {visible:false,x:0,y:0}}
                 render(dt,time,p){globalThis.renderedReload=p?.reloadEnd;}
+                renderHome(){globalThis.homeRendered=true;}
             }
         ` }));
     } }],
@@ -76,5 +77,11 @@ for (const touch of [false, true]) for (const rtt of [0, 350]) test(`${touch ? '
         assert.equal(net.predicted!.ammo, 0); assert.equal(net.predicted!.reloadEnd, reload);
         net.weapons.reconcile({ ...actor.state, ack: net.seq }, net.predicted!);
         assert.equal(net.predicted!.ammo, 1); assert.equal(net.predicted!.reloadEnd, 0);
+        (win.document.getElementById('leave-match') as HTMLButtonElement).click();
+        frame(now + 100);
+        assert.equal(ui.home, true); assert.equal(ui.menu, true); assert.equal(ui.paused, false);
+        assert.equal((win as any).homeRendered, true, 'the production loop renders the home character after leaving');
+        assert.equal(net.round, undefined); assert.equal(net.predicted, undefined);
+        assert.equal(win.location.search, '');
     } finally { net.disconnect(); dom.window.close(); }
 });

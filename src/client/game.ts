@@ -23,10 +23,10 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     let spawnReadyAt = 0, lastCombatLog = 0;
     let playing = false, lastLife = -1, previousReload = 0, lastStep = 0, lastTime = performance.now();
     ui.onClass = id => { renderer.setClass(id); };
-    ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); controls.unlock(); net.connect(ui.joinConfig); };
+    ui.onNavigate = () => { playing = !ui.menu; controls.unlock(); controls.clear(); pendingFireAim = undefined; shots.clear(); };
     const deploy = () => {
         audio.unlock();
-        ui.menu = false;
+        ui.showMatch();
         ui.paused = false;
         playing = true;
         ui.visibility();
@@ -54,6 +54,8 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     } };
     net.onNotice = text => ui.notice(text);
     let phase = '';
+    const homeStage = document.getElementById('home-character')!;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let pendingFireAim: Input | undefined;
     const welcomed = net.onWelcome;
     net.onWelcome = () => { shots.clear(); spawnReadyAt = 0; lastLife = -1; phase = ''; welcomed(); };
@@ -127,11 +129,17 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         if (currentPhase !== phase) {
             phase = currentPhase;
             playing = phase === 'playing';
-            ui.menu = !playing;
-            ui.paused = playing && !controls.locked;
+            ui.syncPhase(phase);
+            playing = playing && !ui.home;
+            ui.paused = playing && !ui.menu && !controls.locked;
             ui.scoreOpen = false;
             if (!playing) { controls.unlock(); pendingFireAim = undefined; }
             ui.visibility();
+        }
+        if (ui.home) {
+            renderer.renderHome(reducedMotion?.matches ? 0 : time / 1000, homeStage.getBoundingClientRect());
+            document.getElementById('character-loading')!.classList.add('hidden');
+            return;
         }
         if (p && p.life !== lastLife) {
             lastLife = p.life;

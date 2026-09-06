@@ -417,3 +417,20 @@ test('same-life snapshots cannot change local aim or turn cosmetic drift into mo
     assert.equal(net.movementMetrics.renderedSnapshotMetres.max, 0);
     assert.equal(net.movementMetrics.correctionsPerSecond, 0);
 });
+
+test('leaving for home cancels old packets and retries; joining again restarts the heartbeat', t => {
+    const { net, ws } = setup(t);
+    ws.open(); const staleSnapshot = assignment(ws); staleSnapshot();
+    assert.equal(net.status, 'CONNECTED');
+    net.disconnect();
+    staleSnapshot();
+    assert.equal(net.local, undefined); assert.equal(net.round, undefined); assert.equal(net.room, '');
+    t.mock.timers.tick(CONNECT_TIMEOUT_MS * 2);
+    assert.equal(Socket.instances.length, 1, 'leaving must not schedule a reconnect');
+    net.connect({ ...config, room: 'ABCDE', create: false });
+    const next = Socket.instances[1]; next.open(); assignment(next)();
+    assert.equal(net.status, 'CONNECTED');
+    const pings = next.sent.filter(m => m.type === 'ping').length;
+    t.mock.timers.tick(1500);
+    assert.equal(next.sent.filter(m => m.type === 'ping').length, pings + 1, 'a fresh room still has periodic connection health checks');
+});

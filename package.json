@@ -30,6 +30,7 @@
     "preview:geometry": "tsx tests/geometry-preview.ts",
     "preview:hud": "tsx tests/hud-preview.ts",
     "preview:lobby": "tsx tests/lobby-preview.ts",
+    "preview:home": "tsx tests/home-preview.ts",
     "test:combat:ws": "tsx tests/combat-latency.ts",
     "preview:mobile": "tsx tests/mobile-preview.ts",
     "test:ammo:latency": "tsx tests/ammo-latency.ts"

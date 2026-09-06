@@ -74,3 +74,33 @@ for (const scenario of ['delayed game', 'failed chunk', 'failed first frame']) t
         }
     } finally { game?.net.disconnect(); dom.window.close(); }
 });
+
+for (const room of ['', 'FRND5']) test(`startup routes ${room ? 'an invite directly into its room' : 'the bare URL to home without connecting'}`, async () => {
+    const frames: FrameRequestCallback[] = [], sockets: string[] = [];
+    let net: Network | undefined;
+    const dom = new JSDOM(html, {
+        url: `https://furo.example/${room ? '?room=' + room : ''}`, runScripts: 'dangerously',
+        beforeParse(window) {
+            window.requestAnimationFrame = callback => { frames.push(callback); return frames.length; };
+            window.performance.mark = performance.mark.bind(performance);
+            Object.assign(window, { TextEncoder, TextDecoder,
+                WebSocket: class {
+                    static OPEN = 1; readyState = 0;
+                    constructor(url: string) { sockets.push(url); }
+                    close() {} send() {}
+                },
+                startTestGame(network: Network) { net = network; return Promise.resolve(); },
+            });
+        },
+    });
+    try {
+        await new Promise<void>(resolve => dom.window.document.addEventListener('DOMContentLoaded', () => resolve()));
+        const boot = dom.window.eval(bundle.outputFiles[0].text + '\nlobbyTest.startLobby();') as Promise<void>;
+        assert.equal(dom.window.document.getElementById('home')!.classList.contains('hidden'), !!room);
+        assert.equal(dom.window.document.querySelector('.room-panel')!.classList.contains('hidden'), !room);
+        assert.equal(sockets.length, room ? 1 : 0, 'invite connection starts before the renderer loads');
+        if (room) assert.equal(sockets[0], 'wss://furo.example/ws');
+        frames.shift()!(0); frames.shift()!(16); await boot;
+        assert.equal(net?.room, '', 'no welcome is needed to bypass home');
+    } finally { net?.disconnect(); dom.window.close(); }
+});

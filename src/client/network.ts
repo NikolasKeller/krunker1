@@ -80,7 +80,7 @@ export class Network {
     private lastMessageAt = 0;
     private lastSyncAt = 0;
     private inputTimer?: ReturnType<typeof setInterval>;
-    private heartbeatTimer: ReturnType<typeof setInterval>;
+    private heartbeatTimer?: ReturnType<typeof setInterval>;
     private tokens = new Map<string, string>();
     private config?: {
         name: string;
@@ -89,7 +89,10 @@ export class Network {
         team: Team;
         create?: boolean;
     };
-    constructor() { this.heartbeatTimer = setInterval(() => {
+    constructor() { this.startHeartbeat(); }
+    private startHeartbeat() {
+        clearInterval(this.heartbeatTimer);
+        this.heartbeatTimer = setInterval(() => {
         const now = Date.now();
         if (this.ws?.readyState !== WebSocket.OPEN) return;
         // TCP may be stalled for seconds. Avoid adding probes to a blocked write
@@ -118,7 +121,13 @@ export class Network {
         clearInterval(this.inputTimer);
         this.ws?.close();
         this.ws = undefined;
-        this.status = 'DISCONNECTED';
+        this.status = 'CREATE OR JOIN A LOBBY';
+        this.id = ''; this.room = ''; this.host = ''; this.retry = 0;
+        this.config = undefined; this.reconnect = undefined;
+        this.round = undefined; this.predicted = undefined;
+        this.players.clear(); this.selections = [];
+        this.frames = []; this.interpolation.reset(); this.remoteHealth.reset();
+        this.inputs.clear(); this.predictionHistory.clear(); this.weapons.reset();
     }
     connect(config: {
         name: string;
@@ -127,6 +136,7 @@ export class Network {
         team: Team;
         create?: boolean;
     }) {
+        this.startHeartbeat();
         this.config = config = { ...config };
         const generation = ++this.generation;
         this.clearHandshake();

@@ -3,6 +3,8 @@ import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
 import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import type { Network } from './network';
 import { LobbyPanel } from './lobby';
+import { homeMarkup } from './home';
+import { Navigation, roomCode, type Route } from './navigation';
 import type { ProvisionalHit } from './shot-feedback';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
@@ -12,6 +14,9 @@ export const escapeHTML = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&am
 export function gunIcon(id: WeaponId) { const paths: Record<WeaponId, string> = { sniper: 'M3 29h20v-5h25v-7h14v-5h30v7h-5v5h30v5h37v4h-38v4H71l-7 17H54l3-17H32L12 47H3z M60 16h25v-6H60z', rifle: 'M4 25h21v-5h62v5h25v4h39v5h-48v7H72l9 17-14 6-15-23H32L9 49H4z M74 18h16v-6h-9z', shotgun: 'M4 27h22l10-6h63v4h51v5H99v4h51v5H75l-13 13H48l7-13H31L8 49H4z', smg: 'M9 25h20v-7h71v5h29v6h20v5h-30v6H82v23H67V40H48l-7 15H29V39H9z', pistol: 'M31 14h90v23H76L63 62H39l9-25H31z', knife: 'M15 47l35-11 3-10 14 8 65-22-37 31-27 5-8 13-14-9-28 10z' }; return `<svg viewBox="0 0 160 72" aria-hidden="true"><path d="${paths[id]}" fill="currentColor"/></svg>`; }
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 export class UI {
+    readonly navigation = new Navigation();
+    get home() { return this.navigation.route.screen === 'home'; }
+    onNavigate: () => void = () => {};
     gameReady = true;
     menu = true;
     paused = false;
@@ -57,7 +62,8 @@ export class UI {
             this.team = 'blue';
         $('ui').innerHTML = `
       <div id="menu" class="menu">
-        <header class="menu-header"><div class="brand"><span class="brand-mark">F</span><div>FURO<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
+        <header class="menu-header"><div class="brand"><span class="brand-mark">F</span><div>FURO<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="leave-lobby" class="leave-button">← HOME</button><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
+        ${homeMarkup(gunIcon)}
         <main class="room-panel">
           <section class="lineup-panel" aria-labelledby="lineup-title">
             <div class="lineup-heading">
@@ -91,17 +97,38 @@ export class UI {
 
         <footer class="menu-footer"><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
       </div>
+      <div id="menu-notice" class="menu-notice hidden" role="status"></div>
       <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div id="team-scores" class="team-scores hidden" aria-label="Team scores"></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" class="${this.minimapEnabled ? '' : 'hidden'}" width="300" height="300" aria-label="Minimap"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="communication-hud"><div class="killfeed" id="killfeed" aria-label="Kill feed"></div></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><strong id="health">100</strong><span class="health-max" id="health-max">|100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line" id="ammo-line"><strong id="ammo">3</strong><span>|</span><b id="ammo-max">3</b><i id="ammo-alert" class="hidden">!!!</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
       ${touchMarkup}
       <div id="rotate-prompt" role="status"><span>↻</span><strong>ROTATE TO PLAY</strong><p>Turn your phone sideways for room to move and aim.</p></div>
-      <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>ROUND LIVE<span class="lime">.</span></h2><p id="play-help">Click to capture your mouse and play.</p><button id="resume" class="deploy-button">CLICK TO PLAY <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
+      <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>ROUND LIVE<span class="lime">.</span></h2><p id="play-help">Click to capture your mouse and play.</p><button id="resume" class="deploy-button">CLICK TO PLAY <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><button id="leave-match" class="secondary-button">LEAVE MATCH · HOME</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
       <div id="scoreboard" class="modal-layer hidden"><div class="score-panel"><div class="panel-heading"><span id="board-eyebrow">LIVE SCOREBOARD</span><span id="board-round">ROUND 01</span></div><h2 id="board-title">SANDYARD</h2><p id="board-subtitle">FREE FOR ALL / FIRST TO 25 KILLS</p><div id="board-table"></div><button id="close-score" class="secondary-button touch-only">BACK TO GAME</button><div id="board-footer">HOLD TAB TO VIEW</div></div></div>
       <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity') ?? 0.0022}"/></label><label>TOUCH SENSITIVITY<input id="touch-sensitivity" type="range" min="0.001" max="0.009" step="0.0001" value="${localStorage.getItem('arena-touch-sensitivity') ?? TOUCH_SENSITIVITY}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume') ?? 0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><label>MINIMAP<select id="minimap-setting"><option value="off">Off</option><option value="on">On</option></select></label><p class="desktop-controls">Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><p class="touch-only">Left thumb: move. Right thumb: drag to look, or hold FIRE and drag to aim while shooting. AIM toggles zoom.</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
     `;
-        const room = new URLSearchParams(location.search).get('room') ?? '';
+        const room = this.navigation.route.room;
         $('player-name').setAttribute('value', localStorage.getItem('arena-name') ?? `Guest_${Math.floor(Math.random() * 900 + 100)}`);
         $('room-code').setAttribute('value', room);
-        document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => b.onclick = () => this.choose(b.dataset.class as ClassId));
+        $<HTMLInputElement>('home-name').value = $<HTMLInputElement>('player-name').value;
+        const saveHomeName = () => { $<HTMLInputElement>('player-name').value = $<HTMLInputElement>('home-name').value; this.saveProfile(); };
+        $('home-name').oninput = saveHomeName;
+        $('home-name').onkeydown = e => { if (e.key === 'Enter') $<HTMLInputElement>('home-name').blur(); };
+        $('home-create').onclick = () => { saveHomeName(); $<HTMLInputElement>('room-code').value = ''; this.openRoom(); };
+        $('home-join').onclick = () => {
+            const open = $('home-join-form').classList.toggle('hidden') === false;
+            $('home-join').setAttribute('aria-expanded', String(open));
+            if (open) { $<HTMLInputElement>('home-room-code').focus(); $('home-join-form').scrollIntoView?.({ block: 'nearest' }); }
+        };
+        $('home-join-form').onsubmit = event => {
+            event.preventDefault();
+            const room = roomCode($<HTMLInputElement>('home-room-code').value);
+            if (!room) { $('home-join-error').textContent = 'Enter a room code to join your friends.'; $('home-room-code').focus(); return; }
+            $('home-join-error').textContent = '';
+            saveHomeName(); $<HTMLInputElement>('room-code').value = room; this.openRoom();
+        };
+        $('home-join-form').onkeydown = e => { if (e.key === 'Escape') { $('home-join-form').classList.add('hidden'); $('home-join').setAttribute('aria-expanded', 'false'); $('home-join').focus(); } };
+        for (const id of ['leave-lobby', 'leave-match']) $(id).onclick = () => this.leave();
+        this.navigation.onBack = route => this.restoreRoute(route);
+        document.querySelectorAll<HTMLButtonElement>('[data-class], [data-home-class]').forEach(b => b.onclick = () => this.choose((b.dataset.class ?? b.dataset.homeClass) as ClassId));
         document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => net.send({ type: 'configure', mode: b.dataset.mode as 'ffa' | 'tdm' }));
         document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => {
             b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'team', team: this.team }); this.updateLobby(); };
@@ -116,14 +143,14 @@ export class UI {
         $('time-limit').onchange = () => net.send({ type: 'configure', duration: Number($<HTMLSelectElement>('time-limit').value) });
         $('player-name').onchange = () => this.saveProfile();
         $('player-name').onkeydown = e => { if (e.key === 'Enter') { this.saveProfile(); $<HTMLInputElement>('player-name').blur(); } };
-        $('room-code').onkeydown = e => { if (e.key === 'Enter') this.onRoom(); };
-        $('create-room').onclick = () => { $<HTMLInputElement>('room-code').value = ''; this.onRoom(); };
+        $('room-code').onkeydown = e => { if (e.key === 'Enter') this.openRoom(); };
+        $('create-room').onclick = () => { $<HTMLInputElement>('room-code').value = ''; this.openRoom(); };
         $('force-start').onclick = () => { if (!this.gameReady) return; this.saveProfile(); net.send({ type: 'start' }); };
         $('copy-link').onclick = () => void this.copyLink();
         $('deploy').onclick = () => this.deploy();
-        $('join-room').onclick = () => this.onRoom();
+        $('join-room').onclick = () => this.openRoom();
         $('resume').onclick = () => this.onResume();
-        $('change-class').onclick = () => { this.menu = true; this.paused = false; this.visibility(); };
+        $('change-class').onclick = () => { this.showLobby(); };
         for (const id of ['settings-button', 'pause-settings'])
             $(id).onclick = () => { this.onOverlay(); $('settings').classList.remove('hidden'); };
         $('close-settings').onclick = () => $('settings').classList.add('hidden');
@@ -143,15 +170,16 @@ export class UI {
         this.choose(this.selected, false);
         this.visibility();
     }
-    get joinConfig() { const name = $<HTMLInputElement>('player-name').value, room = $<HTMLInputElement>('room-code').value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18); localStorage.setItem('arena-name', name); localStorage.setItem('arena-room', room); return { name, room, classId: this.selected, team: this.team, create: !room }; }
+    get joinConfig() { const name = $<HTMLInputElement>('player-name').value, room = roomCode($<HTMLInputElement>('room-code').value); localStorage.setItem('arena-name', name); localStorage.setItem('arena-room', room); return { name, room, classId: this.selected, team: this.team, create: !room }; }
     saveProfile() {
         const name = $<HTMLInputElement>('player-name').value;
+        $<HTMLInputElement>('home-name').value = name;
         localStorage.setItem('arena-name', name);
         if (this.net.id && this.net.local?.name !== name) this.net.send({ type: 'profile', name });
     }
     private deploy() {
         const net = this.net;
-        if (!net.ws) { this.onRoom(); return; }
+        if (!net.ws) { this.openRoom(); return; }
         if (!this.gameReady) return;
         if (!net.local || !['CONNECTED', 'CONNECTION SLOW'].includes(net.status)) return;
         this.saveProfile();
@@ -175,9 +203,9 @@ export class UI {
             this.lastKill = -Infinity;
             this.killUntil = 0;
         }
+        this.navigation.go(this.navigation.route.screen === 'match' ? 'match' : 'lobby', this.net.room, !this.home);
+        this.visibility();
         const url = new URL(location.href);
-        url.searchParams.set('room', this.net.room);
-        history.replaceState(null, '', url);
         $<HTMLInputElement>('room-code').value = this.net.room;
         $('share-code').textContent = this.net.room;
         $('lobby-sharing').classList.remove('hidden');
@@ -192,10 +220,70 @@ export class UI {
             $('lan-links').innerHTML = addresses.lan.map(href => `<div>LAN <a href="${escapeHTML(href)}">${escapeHTML(href)}</a></div>`).join('');
         } catch { $('lan-links').textContent = ''; }
     }
-    choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send) {
-        this.net.send({ type: 'class', classId: id });
-        if (this.net.changingClass) this.updateLobby();
-    } }
+    openRoom() {
+        this.saveProfile();
+        this.navigation.go('lobby', this.joinConfig.room);
+        this.menu = true; this.paused = false; this.scoreOpen = false;
+        this.onNavigate(); this.visibility(); this.onRoom(); this.updateLobby();
+    }
+    leave() {
+        this.saveProfile();
+        this.navigation.go('home');
+        this.restoreRoute(this.navigation.route);
+        $('home-title').focus({ preventScroll: true });
+    }
+    private restoreRoute(route: Route) {
+        this.menu = true; this.paused = false; this.scoreOpen = false;
+        $('settings').classList.add('hidden'); $('scoreboard').classList.add('hidden');
+        if (route.screen === 'home') {
+            this.net.disconnect();
+            $<HTMLInputElement>('room-code').value = '';
+            $('lobby-sharing').classList.add('hidden');
+            $('home-join-form').classList.add('hidden');
+            $('home-join').setAttribute('aria-expanded', 'false');
+        } else if (!this.net.ws || this.net.room !== route.room) {
+            // Re-enter a historical room through its lobby; a live round will offer play.
+            this.navigation.go('lobby', route.room, true);
+            $<HTMLInputElement>('room-code').value = route.room;
+            this.onRoom();
+        } else if (route.screen === 'match' && this.net.round?.phase === 'playing' && this.gameReady) {
+            this.menu = false; this.paused = true;
+        } else this.navigation.go('lobby', route.room, true);
+        this.onNavigate(); this.visibility(); this.updateLobby();
+    }
+    showLobby(replace = false) {
+        if (this.home) return;
+        this.navigation.go('lobby', this.net.room || this.navigation.route.room, replace);
+        this.menu = true; this.paused = false; this.scoreOpen = false;
+        this.onNavigate(); this.visibility();
+    }
+    showMatch() {
+        if (this.home) return;
+        this.navigation.go('match', this.net.room);
+        this.menu = false; this.paused = true;
+        this.visibility();
+    }
+    syncPhase(phase: string) {
+        if (this.home) return;
+        if (phase === 'playing') this.showMatch();
+        else this.showLobby(this.navigation.route.screen === 'match');
+    }
+    choose(id: ClassId, send = true) {
+        this.selected = id; localStorage.setItem('arena-class', id);
+        document.querySelectorAll<HTMLElement>('[data-class], [data-home-class]').forEach(b => {
+            const selected = (b.dataset.class ?? b.dataset.homeClass) === id;
+            b.classList.toggle('selected', selected);
+            b.setAttribute('aria-pressed', String(selected));
+        });
+        const c = CLASSES[id];
+        $('home-class-name').textContent = c.name;
+        $('home-role').textContent = `${c.role} / ${WEAPONS[c.weapon].name}`;
+        $('home-class-index').textContent = `0${CLASS_IDS.indexOf(id) + 1} / 04`;
+        $('home-class-description').textContent = c.description;
+        $('home-character').setAttribute('aria-label', `${c.name} character with ${WEAPONS[c.weapon].name}`);
+        this.onClass(id);
+        if (send) { this.net.send({ type: 'class', classId: id }); if (this.net.changingClass) this.updateLobby(); }
+    }
     setTouchMode(touch: boolean) {
         this.touchMode = touch;
         document.documentElement.classList.toggle('touch-device', touch);
@@ -205,12 +293,17 @@ export class UI {
     }
     visibility() {
         $('menu').classList.toggle('hidden', !this.menu);
+        $('menu').classList.toggle('is-home', this.home);
+        $('home').classList.toggle('hidden', !this.home);
+        document.querySelector('.room-panel')!.classList.toggle('hidden', this.home);
+        $('leave-lobby').classList.toggle('hidden', this.home);
+        document.documentElement.classList.toggle('at-home', this.home);
         $('hud').classList.toggle('hidden', this.menu);
         $('pause').classList.toggle('hidden', !this.paused || this.menu);
         $('touch-controls').classList.toggle('hidden', !this.touchMode || this.menu || this.paused);
         document.documentElement.classList.toggle('touch-playing', this.touchMode && !this.menu && !this.paused);
     }
-    notice(text: string) { $('notice').textContent = text; this.noticeUntil = performance.now() + 3500; }
+    notice(text: string) { $('menu-notice').textContent = text; $('menu-notice').classList.toggle('hidden', !this.menu); $('notice').textContent = text; this.noticeUntil = performance.now() + 3500; }
     event(e: GameEvent, renderer: Renderer, now: number) {
         if (e.type === 'kill') {
             this.feeds.push({ event: e, until: now + 8500 });
@@ -270,6 +363,7 @@ export class UI {
         if (team && team !== this.team) { this.team = team; localStorage.setItem('arena-team', team); }
         if (selection && selection.classId !== this.selected) this.choose(selection.classId, false);
         this.lobby.update(this.team, this.gameReady);
+        if (performance.now() >= this.noticeUntil || !this.menu) $('menu-notice').classList.add('hidden');
     }
     update(now: number, renderer: Renderer, aiming: boolean, remotes = this.net.remotePlayers()) {
         const net = this.net, p = net.predicted, round = net.round, serverNow = net.serverNow;

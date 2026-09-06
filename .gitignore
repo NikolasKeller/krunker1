@@ -3,3 +3,4 @@ dist/
 .DS_Store
 artifacts/hud-preview/
 artifacts/lobby-preview/
+artifacts/home-preview/index.html
