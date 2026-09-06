@@ -1,0 +1,43 @@
+{
+  "baseRevision": "c52f2d1a4ca7e4530e59e298a94f4c83680547cc",
+  "unitTests": {
+    "passed": 243,
+    "failed": 0
+  },
+  "typecheckAndBuild": "passed",
+  "integration": "passed",
+  "railway": {
+    "node": "v22.23.2",
+    "vantage": "inside Railway, isolated candidate server over loopback; live service unchanged",
+    "passed": true,
+    "finalServerAndLoadBundlesMatchMeasuredHashes": true,
+    "bundleSha256": {
+      "server": "20bbc737cf12e4115962d40e58a6b10d030c5fcc259188ebbc6de66dfe9e4ee1",
+      "load": "ef3899dc35c3a6eacf64b7b8951efafc502dc0e399bedbf12beb6bcd5ec11110"
+    },
+    "candidateListenerClosed": true
+  },
+  "localMovementCases": 12,
+  "productionDeployed": false,
+  "browserLaunched": false,
+  "cdpUsed": false,
+  "localMovementMaxCorrectionMetres": 0,
+  "combatSessions": [
+    {
+      "report": "combat-350.json",
+      "hits": 240,
+      "attempts": 240,
+      "disagreements": 0,
+      "localCorrectionMetres": 0,
+      "passed": true
+    },
+    {
+      "report": "combat-one-second.json",
+      "hits": 240,
+      "attempts": 240,
+      "disagreements": 0,
+      "localCorrectionMetres": 0,
+      "passed": true
+    }
+  ]
+}

@@ -72,7 +72,10 @@ export class ShotFeedback {
             p.ammo = Math.max(0, p.ammo - 1);
         }
         this.pending.push({ seq: input.seq, life: p.life, shooter: p.id, created: performance.now(), hits: trace.hits, weapon: p.weapon, impacts });
-        if (this.pending.length > 600) { this.pending.shift(); this.unconfirmed++; }
+        if (this.pending.length > 600) {
+            const expired = this.pending.shift()!; this.unconfirmed++;
+            for (const h of expired.hits) this.onRetract(`${expired.life}:${expired.seq}:${h.victim}`);
+        }
         for (const hit of trace.hits) {
             this.onHit({ type: 'hit', ...hit, key: `${p.life}:${input.seq}:${hit.victim}`, shooter: p.id, from: origin, lethal: false });
             this.audio.hit?.(hit.zone === 'head', false);

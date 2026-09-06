@@ -29,6 +29,26 @@ test('rewind includes actual playback delay and upload time with a hard historic
     assert.equal(rewindTime(0, now, 0, 1e9), now - MAX_INTERPOLATION_DELAY_MS - 150);
 });
 
+test('late pong bursts cannot move the render clock or understate the rewind budget', t => {
+    t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: 10000 });
+    t.mock.method(performance, 'now', () => Date.now());
+    const net = new Network();
+    try {
+        const pong = (rtt: number, offset = 0) => (net as any).receive({ type: 'pong', time: Date.now() - rtt, serverTime: Date.now() - rtt + 175 + offset });
+        pong(350); assert.equal(net.offset, 0);
+        for (const rtt of [2350, 2100, 1850, 1600, 1350, 1100, 850, 600, 400, 350]) {
+            t.mock.timers.tick(1); pong(rtt);
+            assert.equal(net.ping, rtt, 'the HUD still reports actual latency');
+            assert.equal(net.offset, 0, 'queued downlink packets do not skew the clock');
+            const timing = net.shotTiming(net.serverNow - 2275);
+            assert.equal(rewindTime(timing.shotTime, Date.now() + 175, 350, timing.interpolationDelay), timing.shotTime);
+        }
+        t.mock.timers.tick(61000);
+        pong(500, 100);
+        assert.notEqual(net.offset, 0, 'the sample floor expires, allowing a changed route/clock to recalibrate');
+    } finally { net.disconnect(); }
+});
+
 test('a recent shot with a delayed render timestamp is not mistaken for a queued old shot', () => {
     const room = new Room('TIMING'); room.botCount = 0;
     const a = room.add('Shooter', 'triggerman', 'blue'), b = room.add('Target', 'triggerman', 'red'); room.start(0);

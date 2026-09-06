@@ -14,9 +14,9 @@ test('jitter buffer grows on late delivery and shrinks slowly with hysteresis af
     for (let time = 0; time < 2000; time += 50) interpolation.observe(time, time + 175);
     assert.equal(interpolation.reserve, 100); assert.equal(interpolation.delay(350), 275);
     interpolation.observe(2000, 2600);
-    assert.equal(interpolation.reserve, 500);
+    assert.equal(interpolation.reserve, 525);
     interpolation.observe(2050, 2601);
-    assert.equal(interpolation.reserve, 500, 'a quick arrival does not immediately shrink it');
+    assert.equal(interpolation.reserve, 525, 'a quick arrival does not immediately shrink it');
     for (let time = 2100; time <= 60000; time += 50) interpolation.observe(time, Math.max(2602, time + 175));
     assert.ok(interpolation.reserve <= 125 && interpolation.reserve >= 100);
 });
@@ -50,13 +50,16 @@ test('late and dropped snapshots advance smoothly, with capped extrapolation and
                 assert.ok(interpolation.playbackTime! - frames.at(-1)!.time >= MAX_EXTRAPOLATION_MS, 'never freeze while interpolation or extrapolation has runway');
             }
             assert.ok(advance >= -1e-6, `playback reversed at ${now}: ${advance}`);
-            assert.ok(Math.abs(state.hp - previous.hp) < 20, 'health is interpolated on the render clock');
+            assert.equal(state.hp, frames.at(-1)!.players.get(p.id)!.hp, 'health bypasses position playback');
         }
         previous = state;
     }
     assert.ok(smoothSteps > 630 && freezes <= 6, `${smoothSteps} advances, ${freezes} freezes`);
     assert.ok(maximum < .12, `maximum render step ${maximum}`);
     const latest = frames.at(-1)!.players.get(p.id)!;
+    // Continue rendering after disconnect. A long gap between render calls must
+    // also blend, rather than completing a correction in a single frame.
+    for (let now = 13000; now < 30000; now += 1000 / 60) interpolation.sample(frames, '', now, now, 350);
     const stopped = interpolation.sample(frames, '', 30000, 30000, 350)[0];
     assert.ok(latest.z - stopped.z <= 2 * MAX_EXTRAPOLATION_MS / 1000 + 1e-9);
     const again = interpolation.sample(frames, '', 40000, 40000, 350)[0];
@@ -82,7 +85,7 @@ test('nameplate position and health use exactly the body sample on every render 
             if (previousTag) assert.equal(tag, previousTag, 'render frames retain the DOM node');
             previousTag = tag;
             assert.equal(parseFloat(tag.querySelector<HTMLElement>('b')!.style.width), body[0].hp);
-            assert.ok(body[0].hp > 50 && body[0].hp < 100);
+            assert.equal(body[0].hp, 50, 'latest health is immediate even while position is interpolated');
         }
     } finally { env.restore(); }
 });

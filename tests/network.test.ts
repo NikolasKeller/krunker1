@@ -363,15 +363,18 @@ test('prediction advances independently of discarded uploads, with bounded local
 
 test('remote interpolation reserves two snapshots behind one-way delivery latency', t => {
     const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    t.mock.method(performance, 'now', () => Date.now());
     net.ping = 160;
-    const now = net.serverNow, p = { ...net.local!, id: 'remote' };
-    net.frames = [200, 150, 100].map(age => ({ time: now - age, players: new Map([[p.id, { ...p, x: (200 - age) / 100 }]]) }));
+    const now = net.serverNow, p = { ...net.local!, id: 'remote', x: 34, y: 0, z: 20 };
+    net.frames = [200, 150, 100].map(age => ({ time: now - age, players: new Map([[p.id, { ...p, z: 20 + (200 - age) / 100 }]]) }));
     assert.equal(net.interpolationDelay, 180);
-    assert.ok(Math.abs(net.remotePlayers()[0].x - .2) < 1e-9, 'sample is interpolated instead of clamping to the latest arrival');
+    assert.ok(Math.abs(net.remotePlayers()[0].z - 20.2) < 1e-9, 'sample is interpolated instead of clamping to the latest arrival');
     t.mock.timers.tick(16);
-    assert.ok(Math.abs(net.remotePlayers()[0].x - .36) < 1e-9, 'remote moves between snapshots');
+    assert.ok(Math.abs(net.remotePlayers()[0].z - 20.36) < 1e-9, 'remote moves between snapshots');
     t.mock.timers.tick(2000);
-    assert.equal(net.remotePlayers()[0].x, 1, 'a long outage holds the latest state instead of extrapolating through walls');
+    assert.ok(net.remotePlayers()[0].z - 20.36 < .5, 'a render pause cannot snap straight to authority');
+    for (let i = 0; i < 200; i++) { t.mock.timers.tick(16); net.remotePlayers(); }
+    assert.ok(Math.abs(net.remotePlayers()[0].z - 21) < .001, 'a disconnected stationary actor settles at its last state');
 });
 
 

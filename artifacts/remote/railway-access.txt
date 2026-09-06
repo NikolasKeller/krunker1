@@ -1,0 +1,3 @@
+Initial attempt: OAuth refresh denied by sandbox; Unauthorized.
+Later retry: railway status and SSH succeeded; Node v22.23.2.
+Live service had four players; all candidate load traffic used a separate temporary process/listener at nice priority 10. Both original load matrices passed there. Live rooms and deployment were unchanged.

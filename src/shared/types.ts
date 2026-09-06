@@ -2,9 +2,10 @@ export const TICK_RATE = 60;
 export const STEP = 1 / TICK_RATE;
 export const SNAPSHOT_RATE = 20;
 export const INTERPOLATION_MS = 100;
-// Combat history is deliberately shorter than the ten-second movement queue.
-export const MAX_REWIND_MS = 1500;
-export const MAX_INTERPOLATION_DELAY_MS = 1000;
+// A bad link can need 2.5 s of presentation delay plus upload/tick allowance.
+// Queued shots still expire after 1 s; history stays below the movement queue.
+export const MAX_REWIND_MS = 3000;
+export const MAX_INTERPOLATION_DELAY_MS = 2500;
 export const MAX_HUMANS = 10;
 export const MAX_BOTS = 7;
 export const MAX_PLAYERS = MAX_HUMANS + MAX_BOTS;

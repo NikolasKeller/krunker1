@@ -1,6 +1,7 @@
 import { MAX_INTERPOLATION_DELAY_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { correctedPosition, predictInput, PredictionHistory, preserveLocalMotion, smoothCorrection } from './prediction';
 import { RemoteInterpolation } from './interpolation';
+import { RemoteHealth } from './remote-health';
 import { clamp, lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
 import { WeaponPrediction } from './weapon-prediction';
@@ -28,6 +29,7 @@ export class Network {
     status = 'CREATE OR JOIN A LOBBY';
     ping = 0;
     offset = 0;
+    private clockSamples: { now: number; rtt: number }[] = [];
     seq = 0;
     players = new Map<string, PlayerState>();
     predicted?: PlayerState;
@@ -41,6 +43,7 @@ export class Network {
     get outgoing() { return this.inputs.outgoing; }
     set outgoing(value: Input[]) { this.inputs.outgoing = value; }
     readonly interpolation = new RemoteInterpolation();
+    readonly remoteHealth = new RemoteHealth();
     frames: {
         time: number;
         players: Map<string, PlayerState>;
@@ -134,6 +137,8 @@ export class Network {
         this.weapons.reset(); this.combatDelays = [];
         this.frames = [];
         this.interpolation.reset();
+        this.remoteHealth.reset();
+        this.clockSamples = [];
         this.predicted = undefined;
         this.inputs.clear();
         this.predictionHistory.clear();
@@ -248,7 +253,14 @@ export class Network {
             const rtt = Date.now() - m.time;
             this.ping = Math.round(rtt);
             const offset = m.serverTime - (m.time + rtt / 2);
-            this.offset = lerp(this.offset, offset, 0.2);
+            const now = performance.now();
+            this.clockSamples.push({ now, rtt });
+            while (this.clockSamples.length > 256 || now - this.clockSamples[0].now > 60000) this.clockSamples.shift();
+            const floor = Math.min(...this.clockSamples.map(s => s.rtt));
+            // A stalled downlink delays the pong, not the server clock. Using
+            // those asymmetric samples under-reported playback age by hundreds
+            // of ms and made the server clamp otherwise valid aimed shots.
+            if (rtt <= floor + 25) this.offset = lerp(this.offset, offset, 0.2);
         }
         if (m.type === 'error') {
             this.clearHandshake();
@@ -268,6 +280,7 @@ export class Network {
                 Object.assign(p, patch);
                 if (patch.id === this.id && this.predicted?.life === patch.life) Object.assign(this.predicted, patch);
             }
+            this.remoteHealth.resolve(m, this.players, this.id, performance.now());
             this.onCombat(m);
             this.onEvents(m.events);
         }
@@ -279,7 +292,7 @@ export class Network {
                 return;
             }
             this.receivedAt = Date.now();
-            this.interpolation.observe(m.time, this.receivedAt);
+            this.interpolation.observe(m.time, performance.now());
             this.lastSnapshot = m.n;
             if (m.host !== undefined) this.host = m.host;
             if (m.round) this.round = m.round;
@@ -297,6 +310,7 @@ export class Network {
             while (this.frames.length > 64)
                 this.frames.shift();
             const local = this.local;
+            this.remoteHealth.snapshot(this.players, local, m.time, performance.now());
             if (local) {
                 this.inputs.acknowledge(local.ack);
                 this.clearHandshake();
@@ -341,13 +355,13 @@ export class Network {
         }
     }
     remotePlayers(): PlayerState[] {
-        return this.interpolation.sample(this.frames, this.id, this.serverNow, Date.now(), this.ping).map(p => {
+        return this.interpolation.sample(this.frames, this.id, this.serverNow, performance.now(), this.ping).map(p => {
             const latest = this.players.get(p.id);
             // Position uses playback history; health and life transitions use the
             // latest authority. Never replay a dead opponent as alive.
             if (!latest) return p;
-            if (latest.life !== p.life) return { ...latest };
-            return { ...p, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd };
+            const state = latest.life !== p.life ? { ...latest } : { ...p, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd };
+            return this.remoteHealth.sample(state, performance.now());
         });
     }
 }

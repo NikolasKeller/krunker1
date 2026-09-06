@@ -16,6 +16,7 @@ import { assertVisibleWeapon } from './viewmodel-fixture';
 import { Viewmodel } from '../src/client/viewmodel';
 import { UI } from '../src/client/ui';
 import { installDOM } from './dom';
+import { uploadDelay } from './bad-link-session';
 import type { Renderer } from '../src/client/renderer';
 import type { Input } from '../src/shared/types';
 
@@ -25,6 +26,8 @@ import type { Input } from '../src/shared/types';
 const samples = Number(process.env.HIT_SAMPLES ?? 24);
 const shotInterval = Number(process.env.HIT_INTERVAL_MS ?? 700);
 const profiles = (process.env.HIT_RTTS ?? '0,100,350').split(',').map(Number);
+const linkProfile = process.env.HIT_LINK_PROFILE ?? 'legacy-stalls';
+const warmupMs = Number(process.env.HIT_WARMUP_MS ?? 12000);
 const reports: unknown[] = [];
 const percentile = (values: number[], p: number) => [...values].sort((a, b) => a - b)[Math.floor((values.length - 1) * p)] ?? 0;
 const stats = (values: number[]) => ({ p50: percentile(values, .5), p95: percentile(values, .95), max: Math.max(0, ...values) });
@@ -64,9 +67,15 @@ for (const rtt of profiles) {
         const lethal: Record<string, number> = {};
         let currentSeq = 0;
         // Optional hook is supplied by the candidate; baseline has no hit prediction.
-        (feedback as any).onHit = (e: any) => (ui as any).provisionalHit?.(e, renderer, performance.now());
+        (feedback as any).onHit = (e: any) => {
+            shooter.remoteHealth?.predict(e, shooter.players, performance.now());
+            (ui as any).provisionalHit?.(e, renderer, performance.now());
+        };
         (feedback as any).onConfirm = (key: string, e: any) => (ui as any).confirmHit(key, e);
-        (feedback as any).onRetract = (key: string) => (ui as any).retractHit(key, performance.now());
+        (feedback as any).onRetract = (key: string) => {
+            shooter.remoteHealth?.retract(key);
+            (ui as any).retractHit(key, performance.now());
+        };
         shooter.onEvents = events => {
             for (const e of events) {
                 if (e.type === 'shot' && e.shooter === shooter.id) {
@@ -165,7 +174,8 @@ for (const rtt of profiles) {
                 // A reproducible 350 ms downlink stall every 3 s grows the actual
                 // adaptive buffer. FIFO delivery models TCP head-of-line blocking.
                 const phase = now % 3000;
-                const jitter = rtt && phase >= 500 && phase < 600 ? 350 : 0;
+                const jitter = linkProfile === 'one-second-stalls' ? uploadDelay(now, false, false) - 175
+                    : rtt && phase >= 500 && phase < 600 ? 350 : 0;
                 lastDown = Math.max(lastDown, now + rtt / 2 + jitter);
                 downloads.push({ at: lastDown, run: () => {
                     const message = decodeServerMessage(event.data);
@@ -174,7 +184,7 @@ for (const rtt of profiles) {
                 } });
             };
         }
-        let accumulator = 0, previous = performance.now(), nextProbe = 0, nextShot = 12000, fired = 0, travel = 1;
+        let accumulator = 0, previous = performance.now(), nextProbe = 0, nextShot = warmupMs, fired = 0, travel = 1;
         loop = setInterval(() => {
             const time = performance.now(), ms = elapsed(); accumulator += (time - previous) / 1000; previous = time;
             for (const queue of deliveries) while (queue[0]?.at <= ms) queue.shift()!.run();
@@ -215,7 +225,14 @@ for (const rtt of profiles) {
                         const index = clock?.fire() ?? 0;
                         (feedback.fire as any)({ ...shooter.predicted!, bloom: clock?.bloom ?? shooter.predicted!.bloom }, wireInput({ ...input, life: shooter.predicted!.life }), index, clock?.aim ?? 1, origin, remotes, shooter.round!.mode, shooter.serverNow);
                         const predictedHit = document.getElementById('damage-numbers')!.children.length > beforeNumbers;
-                        (input as any).__predicted = { predictedHit, predictionMs: performance.now() - predictedAt };
+                        const predictionMs = performance.now() - predictedAt;
+                        if (predictedHit && shooter.remoteHealth) {
+                            ui.update(time, renderer, false, remotes);
+                            const bar = document.querySelector<HTMLElement>('.nameplate b');
+                            assert.ok(bar, 'the aimed target has a health bar');
+                            assert.ok(Math.abs(parseFloat(bar.style.width) - remote.hp / remote.maxHp * 100) < 1e-8, 'bar uses the updated firing-frame sample');
+                        }
+                        (input as any).__predicted = { predictedHit, predictionMs };
                         aimBySeq.set(input.seq, { ...(input as any).__predicted, lethalFixture: fired === samples, seq: input.seq, renderTime: shooter.interpolation.playbackTime, shotTime: input.shotTime, firedAt: Date.now(), renderedAt: shooter.serverNow, interpolationDelay: shooter.serverNow - input.shotTime, reserve: shooter.interpolation.reserve, cameraOrigin: origin, renderedTarget: { x: remote.x, y: remote.y, z: remote.z }, clientPing: shooter.ping });
                     }
                 }
@@ -235,10 +252,11 @@ for (const rtt of profiles) {
             await delay(700);
         }
         async function waitForShots() {
-            const deadline = performance.now() + 12000 + samples * shotInterval + Math.ceil(samples / 30) * 3000 + 15000;
+            const deadline = performance.now() + warmupMs + samples * shotInterval + Math.ceil(samples / 30) * 3000 + 15000;
             while (rows.length < samples && performance.now() < deadline) await delay(20);
         }
         const report = { shotInterval, resolutionToReceiptMs: stats(rows.map(r => r.receivedAt - r.resolvedAt)), resolutionToSocketMs: stats(rows.map(r => r.socketAt - r.resolvedAt)), inputToReceiptMs: stats(rows.map(r => r.receivedAt - r.firedAt)), prediction: (feedback as any).metrics ?? { supported: false }, hitSounds, provisionalHits: rows.filter(r => r.predictedHit).length, provisionalMs: stats(rows.filter(r => r.predictedHit).map(r => r.predictionMs)), weaponVisibleMs: stats(switches.map(r => r.delayMs)), switches, death: { ...lethal, resolutionToKillMs: lethal.killReceivedAt - lethal.resolvedAt, killToOpponentHiddenMs: lethal.opponentHiddenAt - lethal.killReceivedAt, killToFeedMs: lethal.feedVisibleAt - lethal.killReceivedAt }, rtt, samples, actualShots: rows.length, hits: rows.filter(r => r.hit).length, confirmedHits, victimHitEvents, resyncs, hitRate: rows.filter(r => r.hit).length / samples, probeRttMs: stats(rtts), timestampDifferenceMs: stats(rows.map(r => r.timestampDifferenceMs)), targetDifferenceMetres: stats(rows.map(r => r.targetDifferenceMetres)), maxCorrectionMetres: Math.max(...clients.map(n => n.maxCorrection)), maxSnapshotJumpMetres: Math.max(...clients.map(n => n.maxRenderedCorrection)), shots: rows };
+        Object.assign(report, { linkProfile, warmupMs, remote: shooter.interpolation.metrics });
         reports.push(report);
         console.log(JSON.stringify({ ...report, shots: undefined }));
         if (process.env.COMBAT_REPORT) await writeFile(process.env.COMBAT_REPORT, JSON.stringify(reports, null, 2) + '\n');

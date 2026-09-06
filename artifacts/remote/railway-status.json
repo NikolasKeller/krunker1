@@ -1,0 +1,71 @@
+{
+  "baseRevision": "c52f2d1a4ca7e4530e59e298a94f4c83680547cc",
+  "candidateSourceSha256": {
+    "src/client/aim-assist.ts": "73f706348c4cde1820177cfda7572ba8ade1fbf323172cde1da8bddaee206af3",
+    "src/client/audio.ts": "a3d662023bf96f66fc56840fe01a39f5900dd69546d1fd6e84b4dd1cade99db1",
+    "src/client/camera.ts": "a0750dbd76998de386c9e3e17c4b05ddbbc5620fb654aa17d10544b63de9842d",
+    "src/client/effects.ts": "91c04465b7eeef864e9248a8edd48edcdfeb2376165ff89c237cc1633eb4a726",
+    "src/client/frame-budget.ts": "33219e42f73aa7f7e30352a4e644ddb577bab0cadaafa7f699eea2362b603355",
+    "src/client/game.ts": "7c5f8f3a7dda581bfab3f9d30fa1c1249a61ece2c28abc84807f9a646138f6a9",
+    "src/client/input.ts": "371089486203e49c513408044f2c535fe7b6b3f877475bf35d7b0e50a3dc0acc",
+    "src/client/interpolation.ts": "ae02d29d784ef7321c03cabe0268937afb88c9d08584ee2e5217a48adb11787a",
+    "src/client/lobby-app.ts": "21c7a21b057f79bef302b591c17197fd842cbe33a71069752e1da2cb99be7cd3",
+    "src/client/lobby.ts": "66547ad6d0ac1cf3b2e3d63f5a41635b69ad10e31024fb2e92d06befc6143304",
+    "src/client/local-motion.ts": "cabd6e290fc5ccf702fd2b6bebe16e739baed423539601d5c0ec400f18e4997d",
+    "src/client/main.ts": "1d22e1e637f9b02037d2014ebf2c8106e3de76cf5153dbb8cc25478e2eccd9dd",
+    "src/client/map-renderer.ts": "8dbbd1543e4c3b73c0bdb0fd737cd96925140af5dcf267805fed606c6d879f58",
+    "src/client/models.ts": "cc249691dc57af37305cc20cf88a6fe0f97def5970887b23a2df33fa7a5f7287",
+    "src/client/network.ts": "3af0b76f81e15c0b3f2602799e616d33ec1ae1512be23dca0ff01354d9795cae",
+    "src/client/prediction.ts": "2822d9771a6d27f4d9e931359f49a15aeeb2cbf9d77de9ae7fc6e9693749c46a",
+    "src/client/remote-health.ts": "836c4a0bd97a5358f78f1b142fbf15e966095b6daff65e47db9dffe6c03c919e",
+    "src/client/renderer.ts": "bd435fc67860374fb81483151ee636fce5c7c5f729a38d5a9ecc746ceb5bef90",
+    "src/client/shot-clock.ts": "02b81105f8329824777448b51004ec76285fbad5f103dfbe303eba83ae1ea0e6",
+    "src/client/shot-feedback.ts": "f942fa95f64f78b0342ed2ef8ce31b9e602bcfa1208c108f0ec1f479298d7be4",
+    "src/client/startup.d.ts": "22f82eb1d8a2abd537b8806a3fb13c83b7bd07099b53626f48618c91a456f8c0",
+    "src/client/touch.ts": "d75557fce4e961358d1ddf528c0839a5f4e6645dcef04a4072de020837cd1a4a",
+    "src/client/ui.ts": "cee8703b3dab86bface20b90674feab19ea12078d47b7c858c411be24c026e93",
+    "src/client/viewmodel.ts": "74c9c472a3e7bc06360fa7a7f6c10ef2fc671859f3e317944b3f13cb9dbfcf31",
+    "src/client/weapon-prediction.ts": "04ac27b606c757649db3abef96df8c7e6e7bd2788adb3950661670cc3267f549",
+    "src/server/bots.ts": "f04e5cefd5478cc365fc6bc5787094e17103387af71807f149cdca85123221da",
+    "src/server/connection.ts": "a72ebe36e3aae1ad70959071962603023783c5bd38139f60fd82984ec48ce683",
+    "src/server/history.ts": "957161b5b355b1976e96429db57ebddaa4c5082baa65a6896279d9a3fadc6982",
+    "src/server/index.ts": "3fcf4c8b71d05b8ed8c00afd81c55fea0507e7094e65807585cffd659fd6919a",
+    "src/server/round.ts": "b5ace4a4509b3cccfcc54b8b9d98d816cb9a5fcd1552c0b57749c68c3d948809",
+    "src/server/simulation.ts": "eb8a7d6b151d100c12621e6ca5211e766179190b95def434d665631d43473400",
+    "src/server/static.ts": "90efa2e2fcf4b35ec7b0e7148129a4f93720a1e16c056ad14734afcae1fcfbf8",
+    "src/shared/collision.ts": "0ccafa7ade1ed7c71cf72243c95ce853ec86ff561401534f7d7ed8aa90884f36",
+    "src/shared/combat.ts": "1119eabf315ea8a6e6c79b1ce7d423841b5dc2ed5bc37a3b64afc0b0bd3ade89",
+    "src/shared/input-buffer.ts": "dd2e0c1112bf984e5d4c062cc24111d8baea610ca91a6a083425d9ee49e12a8c",
+    "src/shared/invite.ts": "9e9d460c5a918dec2e435441a006cbf67d3b4a749c2bc3f028dda93f83b491c3",
+    "src/shared/lobby.ts": "9ffe5b8fb45826f0719d1e17892b366e8f833cc800bd81d05b81deaf40aa0a93",
+    "src/shared/map.ts": "c2ab073e39f052c38d9a59611d9b7c0241dcfc1eb15130ea1aac6e39258b8b70",
+    "src/shared/math.ts": "756d1f0428547592ca9dd5cf145e1af4997b7f02cff5e502d1b87f8fe7f06023",
+    "src/shared/movement.ts": "97a5da8715bb5906965eed4c7b265d040f0f90f42b78412dc322bfa26b93d3f1",
+    "src/shared/protocol.ts": "779bbb414b1767e9f2ffab60fd8a6e5a941c9505e5a2e411e7ffb5441b792e16",
+    "src/shared/snapshot.ts": "b7ebe20741f47469dd36ecc6d8f2b676b5a8365371e051fd369f10f31e0a1b07",
+    "src/shared/types.ts": "93784b606bd2f590cb671c52cc2bb3ba8e7042a518d5fc802469f0254f41b7a9",
+    "src/shared/weapons.ts": "29d417d8f4e7a87fa9c7f4a4134867fad1ecd652ab54806613cef291b00856ac"
+  },
+  "bundleSha256": {
+    "server": "20bbc737cf12e4115962d40e58a6b10d030c5fcc259188ebbc6de66dfe9e4ee1",
+    "load": "ef3899dc35c3a6eacf64b7b8951efafc502dc0e399bedbf12beb6bcd5ec11110"
+  },
+  "vantage": "inside Railway, isolated candidate server over loopback; live service unchanged",
+  "node": "v22.23.2",
+  "done": true,
+  "passed": true,
+  "origin": "http://127.0.0.1:33163",
+  "liveRevision": "c52f2d1a4ca7e4530e59e298a94f4c83680547cc",
+  "results": [
+    {
+      "latency": 0,
+      "status": 0,
+      "backgroundPlayers": 4
+    },
+    {
+      "latency": 80,
+      "status": 0,
+      "backgroundPlayers": 4
+    }
+  ]
+}

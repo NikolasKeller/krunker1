@@ -57,8 +57,8 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     let pendingFireAim: Input | undefined;
     const welcomed = net.onWelcome;
     net.onWelcome = () => { shots.clear(); spawnReadyAt = 0; lastLife = -1; phase = ''; welcomed(); };
-    shots.onHit = e => ui.provisionalHit(e, renderer, performance.now());
-    shots.onRetract = key => ui.retractHit(key, performance.now());
+    shots.onHit = e => { net.remoteHealth.predict(e, net.players, performance.now()); ui.provisionalHit(e, renderer, performance.now()); };
+    shots.onRetract = key => { net.remoteHealth.retract(key); ui.retractHit(key, performance.now()); };
     shots.onConfirm = (key, e) => ui.confirmHit(key, e);
     net.onCombat = m => shots.resolve(m);
     net.weapons.onCorrection = slot => { controls.slot = slot; };
@@ -195,7 +195,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     }
     requestAnimationFrame(frame);
     // Read-only diagnostics for external browser verification; no server debug commands are exposed.
-    Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { combat: shots.metrics, combatReceiptMs: [...net.combatDelays], movement: net.movementMetrics, fps: renderer.fps, targetHz: budget.targetHz, pixelRatio: renderer.gl.getPixelRatio(), touch: controls.touchMode, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
+    Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { remote: net.interpolation.metrics, combat: shots.metrics, combatReceiptMs: [...net.combatDelays], movement: net.movementMetrics, fps: renderer.fps, targetHz: budget.targetHz, pixelRatio: renderer.gl.getPixelRatio(), touch: controls.touchMode, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
 
     return started;
 }
