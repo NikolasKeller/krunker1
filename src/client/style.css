@@ -560,12 +560,15 @@ select {
 }
 .class-cards {
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:11px
 }
 .class-card {
+  /* Grow with both label line boxes; retain clipping only for the rotated artwork. */
   position:relative;
-  height:141px;
+  height:auto;
+  min-width:0;
+  min-height:141px;
   border:1px solid #ffffff20;
   background:linear-gradient(135deg,#36424899,#1b272ccc);
   text-align:left;
@@ -618,12 +621,17 @@ select {
 }
 .class-card strong {
   display:block;
-  font:700 21px/1 var(--heading);
+  /* Squada One: ascent 861 + descent 196 / 1000 em. Allow leading as well. */
+  font:700 21px/1.2 var(--heading);
   letter-spacing:.5px;
-  white-space:nowrap
+  white-space:normal;
+  overflow-wrap:anywhere
 }
 .class-card small {
   display:block;
+  line-height:1.2;
+  white-space:normal;
+  overflow-wrap:anywhere;
   font-size:7px;
   color:#a4b3ae;
   letter-spacing:1.2px;
@@ -1396,7 +1404,7 @@ td small {
     right:calc(3.3% + 325px)
   }
   .class-card {
-    height:162px
+    min-height:162px
   }
   .card-weapon {
     height:83px
@@ -1488,7 +1496,7 @@ td small {
     bottom:8%
   }
   .class-card {
-    height:121px;
+    min-height:121px;
     padding:10px 12px
   }
   .card-weapon {
@@ -1611,7 +1619,7 @@ td small {
     bottom:7%
   }
   .class-card {
-    height:108px;
+    min-height:108px;
     padding:10px 6px
   }
   .class-card strong {
@@ -1716,8 +1724,8 @@ td small {
 /* The lobby stays usable with a full ten-player roster on short laptop screens. */
 .room-panel { width:370px; top:110px; bottom:62px; display:flex; flex-direction:column; }
 .room-panel .panel-heading { flex-shrink:0; padding:13px 18px; }
-.room-panel .map-thumb { height:75px; min-height:75px; padding:8px 18px; }
-.room-panel .map-thumb strong { font-size:26px; margin:5px 0 2px; }
+.room-panel .map-thumb { height:auto; min-height:75px; flex-shrink:0; padding:8px 18px; }
+.room-panel .map-thumb strong { font-size:26px; line-height:1.2; margin:5px 0 2px; }
 .room-options { overflow-y:auto; min-height:0; scrollbar-width:thin; padding-bottom:12px; }
 .lobby-actions { flex-shrink:0; padding:10px 18px 0; border-top:1px solid #ffffff18; background:#192429; }
 .lobby-actions .deploy-button { font-size:21px; padding:10px 14px; }
@@ -1764,7 +1772,7 @@ td small {
   .class-detail h1 { font-size:44px; margin:12px 0; }
   .class-detail p { margin:8px 0; }
   .class-stats,.class-health { display:none; }
-  .class-card { height:110px; }
+  .class-card { min-height:110px; }
   .card-weapon { height:50px; }
 }
 @media (max-width:760px) {
@@ -1893,7 +1901,7 @@ button.team-heading:hover:enabled { background:#30434a; }
 .room-sidebar .picker-heading { font-size:11px; margin-bottom:8px; }
 .room-sidebar .picker-heading small { font-size:9px; }
 .room-sidebar .class-cards { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
-.room-sidebar .class-card { height:67px; padding:12px 8px 8px; }
+.room-sidebar .class-card { min-height:67px; padding:12px 8px 8px; }
 .room-sidebar .class-card strong { position:relative; font-size:17px; margin-top:12px; }
 .room-sidebar .class-card small { position:relative; font-size:9px; letter-spacing:.7px; margin-top:4px; }
 .room-sidebar .card-number { left:8px; top:6px; font-size:10px; }
@@ -2078,7 +2086,7 @@ html, body { overscroll-behavior:none; }
   .touch-device .room-sidebar .room-options { overflow-y:auto; padding:10px; }
   .touch-device .room-sidebar .class-picker { margin:12px 0 0; }
   .touch-device .room-sidebar .class-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .touch-device .room-sidebar .class-card { height:65px; }
+  .touch-device .room-sidebar .class-card { min-height:65px; }
   .touch-device .room-sidebar .picker-heading small { display:none; }
   .touch-device .menu-footer { display:none; }
   .touch-device .lobby-sharing { padding:6px; }
@@ -2122,24 +2130,25 @@ html, body { overscroll-behavior:none; }
 .home-character-caption h2 { font:400 clamp(36px,4.5vw,68px)/1 var(--heading); margin:5px 0 0; letter-spacing:1px; }
 .home-stage-cross { margin-left:auto; color:var(--lime); font-size:36px; font-weight:400; }
 .home-controls { min-height:0; overflow-y:auto; scrollbar-width:thin; padding:12px 4px 8px; display:flex; flex-direction:column; justify-content:safe center; gap:22px; }
+.home-controls > * { flex-shrink:0; }
 .home-intro h1 { margin:12px 0; font:400 clamp(48px,5.2vw,80px)/.94 var(--heading); letter-spacing:1px; }
 .home-intro p { margin:0; color:#aebbb8; font-size:16px; }
 .home-profile { display:block; margin:0; font-size:11px; letter-spacing:1.7px; }
 .home-profile>span { display:flex; justify-content:space-between; align-items:center; }
 .home-profile small { font-size:9px; color:var(--muted); letter-spacing:1px; }
-.home-profile input { margin:9px 0 0; height:49px; background:#222d32; border:1px solid #ffffff24; border-left:3px solid var(--lime); color:#f5f3e9; font:400 23px var(--heading); padding:10px 14px; width:100%; }
+.home-profile input { margin:9px 0 0; height:auto; min-height:49px; background:#222d32; border:1px solid #ffffff24; border-left:3px solid var(--lime); color:#f5f3e9; font:400 23px/1.2 var(--heading); padding:10px 14px; width:100%; }
 .home-loadout .picker-heading { margin:0 0 9px; font-size:11px; letter-spacing:1.7px; }
 .home-loadout .picker-heading small { font-size:9px; color:var(--muted); }
 .home-loadout .class-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
-.home-loadout .class-card { height:104px; padding:12px 8px 9px; background:linear-gradient(145deg,#2b373c,#1b252b); border:1px solid #ffffff24; text-align:left; min-width:0; }
+.home-loadout .class-card { min-height:104px; padding:12px 8px 9px; background:linear-gradient(145deg,#2b373c,#1b252b); border:1px solid #ffffff24; text-align:left; min-width:0; }
 .home-loadout .class-card.selected { border-color:var(--lime); background:linear-gradient(145deg,#414d32,#253129); }
 .home-loadout .class-card:hover { background:#38463c; }
 .home-loadout .card-number { top:7px; left:8px; font-size:10px; }
 .home-loadout .card-check { right:8px; top:6px; font-size:11px; }
 .home-loadout .card-weapon { height:41px; padding:11px 0 2px; color:var(--class-color); }
 .home-loadout .card-weapon svg { width:100%; height:100%; }
-.home-loadout .class-card strong { font-size:17px; display:block; margin:7px 0 3px; white-space:nowrap; }
-.home-loadout .class-card small { display:block; font-size:8px; letter-spacing:.5px; color:#b2beba; white-space:nowrap; }
+.home-loadout .class-card strong { font-size:17px; display:block; margin:7px 0 3px; }
+.home-loadout .class-card small { display:block; font-size:8px; letter-spacing:.5px; color:#b2beba; }
 #home-class-description { margin:10px 0 0; min-height:32px; font-size:13px; line-height:1.3; color:#aebbb8; }
 .home-actions { display:grid; gap:10px; }
 .home-actions>.deploy-button, .home-actions>.secondary-button { width:100%; display:flex; align-items:center; justify-content:space-between; min-height:58px; margin:0; padding:12px 20px; font:400 28px/1 var(--heading); letter-spacing:1px; text-transform:uppercase; }
@@ -2160,7 +2169,7 @@ html, body { overscroll-behavior:none; }
 @media (min-width:1500px) and (min-height:850px) {
   .home-screen { inset:130px 7% 70px; gap:7%; grid-template-columns:minmax(0,1.35fr) minmax(460px,1fr); }
   .home-controls { gap:28px; }
-  .home-loadout .class-card { height:124px; }
+  .home-loadout .class-card { min-height:124px; }
   .home-loadout .card-weapon { height:54px; }
   .home-loadout .class-card strong { font-size:21px; }
 }
@@ -2168,8 +2177,8 @@ html, body { overscroll-behavior:none; }
   .home-screen { top:108px; bottom:46px; gap:4%; }
   .home-controls { gap:12px; padding-top:6px; padding-bottom:6px; }
   .home-intro h1 { font-size:54px; margin:8px 0; }
-  .home-profile input { height:44px; margin-top:6px; }
-  .home-loadout .class-card { height:90px; }
+  .home-profile input { min-height:44px; margin-top:6px; }
+  .home-loadout .class-card { min-height:90px; }
   .home-actions>.deploy-button, .home-actions>.secondary-button { min-height:52px; }
 }
 @media (max-width:900px), (max-height:600px) {
@@ -2180,7 +2189,7 @@ html, body { overscroll-behavior:none; }
   .home-character-caption { gap:10px; }
   .home-character-caption h2 { font-size:36px; }
   #home-role { font-size:9px; letter-spacing:1px; }
-  .home-loadout .class-card { height:86px; }
+  .home-loadout .class-card { min-height:86px; }
   .home-loadout .class-card strong { font-size:15px; }
   .home-loadout .card-weapon { height:32px; }
 }
@@ -2195,10 +2204,10 @@ html, body { overscroll-behavior:none; }
   .home-stage-heading .eyebrow { font-size:9px; }
   .home-controls { padding:0 4px 4px; gap:10px; }
   .home-intro { display:none; }
-  .home-profile input { height:44px; min-height:44px; margin-top:5px; font-size:20px; }
+  .home-profile input { min-height:44px; margin-top:5px; font-size:20px; }
   .home-profile { font-size:10px; }
   .home-loadout .picker-heading { margin-bottom:5px; font-size:10px; }
-  .home-loadout .class-card { height:70px; padding:7px; }
+  .home-loadout .class-card { min-height:70px; padding:7px; }
   .home-loadout .card-number { top:4px; left:6px; font-size:8px; }
   .home-loadout .card-check { top:3px; right:6px; }
   .home-loadout .card-weapon { height:28px; padding:6px 0 0; }

@@ -35,7 +35,8 @@
     "preview:home": "tsx tests/home-preview.ts",
     "test:combat:ws": "tsx tests/combat-latency.ts",
     "preview:mobile": "tsx tests/mobile-preview.ts",
-    "test:ammo:latency": "tsx tests/ammo-latency.ts"
+    "test:ammo:latency": "tsx tests/ammo-latency.ts",
+    "preview:text-layout": "tsx tests/text-layout-preview.ts"
   },
   "dependencies": {
     "three": "0.185.1",
