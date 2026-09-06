@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BOXES, RAMPS } from '../shared/map';
+import { BOXES, DETAIL_BOXES, RAMPS } from '../shared/map';
 import { batchMeshes, box, material } from './models';
 function sign(scene: THREE.Object3D, text: string, x: number, y: number, z: number, width: number, height: number, rotation = 0, bg = '#263c3c', fg = '#eae3ce') {
     const canvas = document.createElement('canvas');
@@ -59,7 +59,6 @@ export function buildMap(scene: THREE.Scene) {
             }
         }
         if (b.kind === 'building') {
-            box(staticGroup, b.x, b.y + b.h / 2 + 0.12, b.z, b.w + 0.35, 0.24, b.d + 0.35, 0xb4b1a9);
             box(staticGroup, b.x, b.y - b.h / 2 + 0.3, b.z, b.w + 0.05, 0.6, b.d + 0.05, 0x656563);
             if (b.w > 5) {
                 // Exposed blockwork breaks up broad plaster faces without image assets.
@@ -128,8 +127,6 @@ export function buildMap(scene: THREE.Scene) {
             for (let y = .4; y < 3.4; y += .35) box(staticGroup, b.x, y, face + side * .075, 3.15, .04, .03, 0x30383c);
             box(staticGroup, b.x, 3.55, face, 3.7, .18, .4, 0x656563);
         }
-        box(staticGroup, b.x + 3, b.h + .4, b.z - 2, 2.2, .8, 1.8, 0x656563);
-        box(staticGroup, b.x + 3, b.h + .85, b.z - 2, 2.4, .12, 2, 0x969795);
         for (let n = 0; n < 4; n++) box(staticGroup, b.x + 2.3 + n * .45, b.h + .92, b.z - 2, .08, .03, 1.6, 0x30383c);
     }
     for (const r of RAMPS) {
@@ -164,11 +161,8 @@ export function buildMap(scene: THREE.Scene) {
         box(staticGroup, x * 4.5, 4.015, -8, 0.13, 0.03, 6, 0xe4b450);
     }
     // Small architectural accents stay geometric, just like the reference maps.
-    for (const [x, z] of [[-32, 18], [32, -18], [-28, -34], [28, 34]]) {
-        box(staticGroup, x, 2.5, z, 0.15, 5, 0.15, 0x65726e);
-        box(staticGroup, x + 0.5, 4.95, z, 1.1, 0.15, 0.15, 0x65726e);
-        box(staticGroup, x + 1, 4.83, z, 0.5, 0.13, 0.3, 0xe9e2c3);
-    }
+    for (const b of DETAIL_BOXES)
+        box(staticGroup, b.x, b.y, b.z, b.w, b.h, b.d, b.color);
     for (let i = 0; i < 16; i++) {
         const x = (i % 8 - 3.5) * 15, z = i < 8 ? -48 : 49, h = 5 + (i * 7 % 9);
         box(staticGroup, x, h / 2, z, 10, h, 9, [0x797b7c, 0x9b8173, 0x969795, 0x687580][i % 4]);

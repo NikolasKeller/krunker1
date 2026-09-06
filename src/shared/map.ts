@@ -50,6 +50,21 @@ export const BOXES: MapBox[] = [
     { x: 31, y: 1.15, z: 27, w: 3, h: 2.3, d: 3, color: 0xaf8049, kind: 'crate' },
     { x: -31, y: 1.15, z: -28, w: 3, h: 2.3, d: 3, color: 0xaf8049, kind: 'crate' },
 ];
+// Solid architectural props use the same dimensions for rendering, movement and hitscan.
+export const LAMP_POSITIONS = [[-32, 18], [32, -18], [-28, -34], [28, 34]];
+export const DETAIL_BOXES: MapBox[] = [
+    ...BOXES.filter(b => b.kind === 'building').map(b => ({ x: b.x, y: b.y + b.h / 2 + .12, z: b.z, w: b.w + .35, h: .24, d: b.d + .35, color: 0xb4b1a9 })),
+    ...BOXES.filter(b => b.kind === 'building' && b.w > 5).flatMap(b => [
+        { x: b.x + 3, y: b.h + .4, z: b.z - 2, w: 2.2, h: .8, d: 1.8, color: 0x656563 },
+        { x: b.x + 3, y: b.h + .85, z: b.z - 2, w: 2.4, h: .12, d: 2, color: 0x969795 },
+    ]),
+    ...LAMP_POSITIONS.flatMap(([x, z]) => [
+        { x, y: 2.5, z, w: .15, h: 5, d: .15, color: 0x65726e },
+        { x: x + .5, y: 4.95, z, w: 1.1, h: .15, d: .15, color: 0x65726e },
+        { x: x + 1, y: 4.83, z, w: .5, h: .13, d: .3, color: 0xe9e2c3 },
+    ]),
+];
+export const SOLID_BOXES = [...BOXES, ...DETAIL_BOXES];
 export const RAMPS: Ramp[] = [
     { x: -10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: 1, color: 0x9d9587 },
     { x: 10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: -1, color: 0x9d9587 },

@@ -7,7 +7,6 @@ export class Viewmodel {
     camera = new THREE.PerspectiveCamera(65, 1, 0.01, 10);
     rig = new THREE.Group();
     gun = new THREE.Group();
-    leftArm = new THREE.Group();
     rightArm = new THREE.Group();
     weapon: WeaponId = 'sniper';
     kick = 0;
@@ -22,9 +21,7 @@ export class Viewmodel {
         this.scene.add(this.rig);
         this.rig.scale.setScalar(.84);
         const arm = (group: THREE.Group, x: number, z: number) => { box(group, x, -0.2, z, 0.18, 0.18, 0.8, 0x565a58); box(group, x, -0.16, z - 0.48, 0.17, 0.17, 0.25, 0xd8aa82); batchMeshes(group); this.rig.add(group); };
-        arm(this.leftArm, -0.20, -0.33);
         arm(this.rightArm, 0.16, 0.34);
-        this.leftArm.rotation.z = -0.15;
         this.rightArm.rotation.z = 0.12;
         this.flash = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.45, 5), new THREE.MeshBasicMaterial({ color: 0xffe09b, transparent: true, opacity: 0.9, depthTest: false }));
         this.flash.rotation.x = -Math.PI / 2;
@@ -32,7 +29,16 @@ export class Viewmodel {
         this.setWeapon('sniper');
     }
     setWeapon(id: WeaponId) { this.rig.remove(this.gun); this.gun = makeGun(id); this.rig.add(this.gun); this.weapon = id; this.kick = 0.08; this.flash.position.set(0, 0.045, id === 'sniper' ? -1.38 : id === 'shotgun' ? -1.18 : id === 'pistol' ? -0.5 : -1.01); }
-    fire() { this.kick = 1; this.flashTime = 0.045; }
+    muzzlePosition(camera: THREE.PerspectiveCamera) {
+        this.rig.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+        const muzzle = this.flash.getWorldPosition(new THREE.Vector3());
+        // Match the viewmodel's separate projection to the world camera so the
+        // tracer begins at the visible muzzle during hip fire, ADS and reload.
+        const ratio = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+        muzzle.x *= ratio; muzzle.y *= ratio;
+        return muzzle.applyMatrix4(camera.matrixWorld);
+    }
+    fire() { this.kick = 1; this.flashTime = 0.075; this.flash.visible = this.weapon !== 'knife'; }
     update(dt: number, time: number, speed: number, aiming: boolean, reloadEnd: number, now: number, slide: number) {
         this.aim = THREE.MathUtils.clamp(this.aim + (aiming ? 1 : -1) * dt * 1000 / (WEAPONS[this.weapon].scopeTime || 100), 0, 1);
         this.kick = Math.max(0, this.kick - dt * 5);
@@ -43,8 +49,6 @@ export class Viewmodel {
         const wave = reload > 0 ? Math.sin(reload * Math.PI) : 0, bob = Math.sin(time * 13) * Math.min(speed / 10, 1.7) * 0.018 * (1 - this.aim);
         this.rig.position.set(0.46 * (1 - this.aim), -0.40 - this.aim * 0.03 + bob - wave * 0.30, -1.10 + this.aim * 0.12 + this.kick * 0.1);
         this.rig.rotation.set(this.kick * 0.12 - wave * 0.42, Math.sin(time * 1.7) * 0.004 + wave * 0.13 + (this.weapon === 'sniper' ? .10 * (1 - this.aim) : 0), Math.cos(time * 6.5) * Math.min(speed / 10, 1) * 0.012 - wave * 0.45 - (slide > 0 ? 0.13 : 0));
-        this.leftArm.position.y = -wave * 0.23;
-        this.leftArm.position.z = -Math.sin(reload * Math.PI * 2) * 0.18;
         this.gun.rotation.x = this.weapon === 'knife' ? -this.kick * 0.8 : 0;
         if (this.weapon === 'sniper')
             this.rig.position.y -= this.aim * 0.23;

@@ -20,7 +20,15 @@ export class Effects {
         this.scene.add(m);
         this.items.push({ object: m, life: 0.35 + Math.random() * 0.2, max: 0.6, velocity: new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 3, (Math.random() - 0.5) * 4), dispose: false });
     } }
-    impact(p: Vec3, from: Vec3) { this.particles(p, false, 3); const m = new THREE.Mesh(this.particleGeo, material(0x665a49)); m.position.set(p.x, p.y, p.z); m.position.add(new THREE.Vector3(from.x - p.x, from.y - p.y, from.z - p.z).normalize().multiplyScalar(0.025)); m.scale.setScalar(1.4); this.scene.add(m); this.items.push({ object: m, life: 5, max: 5, dispose: false }); }
+    impact(p: Vec3, from: Vec3, sparks = true) { if (sparks) this.particles(p, false, 3); const m = new THREE.Mesh(this.particleGeo, material(0x665a49)); m.position.set(p.x, p.y, p.z); m.position.add(new THREE.Vector3(from.x - p.x, from.y - p.y, from.z - p.z).normalize().multiplyScalar(0.025)); m.scale.setScalar(1.4); this.scene.add(m); this.items.push({ object: m, life: 5, max: 5, dispose: false }); return m; }
+    correctImpact(object: THREE.Object3D, p: Vec3, from: Vec3) {
+        object.position.set(p.x, p.y, p.z).add(new THREE.Vector3(from.x - p.x, from.y - p.y, from.z - p.z).normalize().multiplyScalar(.025));
+    }
+    shell(p: Vec3, yaw: number) {
+        const m = new THREE.Mesh(this.particleGeo, material(0xb99b59));
+        m.scale.set(.45, .45, 1.1); m.position.set(p.x, p.y, p.z); this.scene.add(m);
+        this.items.push({ object: m, life: .55, max: .55, velocity: new THREE.Vector3(Math.cos(yaw) * 2, 1.3, -Math.sin(yaw) * 2), dispose: false });
+    }
     update(dt: number) { for (let i = this.items.length - 1; i >= 0; i--) {
         const e = this.items[i];
         e.life -= dt;

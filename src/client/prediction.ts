@@ -1,3 +1,4 @@
+import { clipPlayerMotion } from '../shared/collision';
 import { move, moveState } from '../shared/movement';
 import { CLASSES } from '../shared/weapons';
 import type { Input, MoveState, PlayerState, Vec3 } from '../shared/types';
@@ -51,7 +52,7 @@ export function previewInput(p: PlayerState | undefined, i: Input, playing: bool
     const next = { ...p };
     predictInput(next, i, playing);
     const t = Math.max(0, Math.min(1, fraction));
-    return { ...p, x: p.x + (next.x - p.x) * t, y: p.y + (next.y - p.y) * t, z: p.z + (next.z - p.z) * t };
+    return { ...p, ...clipPlayerMotion(p, { x: p.x + (next.x - p.x) * t, y: p.y + (next.y - p.y) * t, z: p.z + (next.z - p.z) * t }, p.slide > 0 ? 1.26 : undefined) };
 }
 export function predictInput(p: PlayerState, i: Input, playing: boolean) {
     if (!p.alive || !playing || (i.life !== undefined && i.life !== p.life))
@@ -65,4 +66,8 @@ export function reconcile(authoritative: PlayerState, pending: Input[], playing:
     for (const input of remaining)
         predictInput(predicted, input, playing);
     return { predicted, remaining };
+}
+
+export function correctedPosition(p: PlayerState, correction: Vec3) {
+    return clipPlayerMotion(p, { x: p.x + correction.x, y: p.y + correction.y, z: p.z + correction.z }, p.slide > 0 ? 1.26 : undefined);
 }

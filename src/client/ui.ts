@@ -27,6 +27,7 @@ export class UI {
         until: number;
     }[] = [];
     private numbers: { node: HTMLElement; until: number }[] = [];
+    private nameplates = new Map<string, { node: HTMLElement; name: HTMLElement; bar: HTMLElement }>();
     private lastKill = -Infinity;
     private multiKill = 0;
     private lastKillLife = -1;
@@ -259,7 +260,7 @@ export class UI {
         if (team && team !== this.team) { this.team = team; localStorage.setItem('arena-team', team); }
         this.lobby.update(this.team);
     }
-    update(now: number, renderer: Renderer, aiming: boolean) {
+    update(now: number, renderer: Renderer, aiming: boolean, remotes = this.net.remotePlayers()) {
         const net = this.net, p = net.predicted, round = net.round, serverNow = net.serverNow;
         $('hitmarker').style.opacity = now < this.hitUntil ? '1' : '0';
         $('damage-vignette').style.opacity = String(Math.max(0, (this.hurtUntil - now) / 450) * 0.65);
@@ -275,6 +276,9 @@ export class UI {
             const spread = WEAPONS[p.weapon].spread + p.bloom;
             $('crosshair').style.setProperty('--gap', `${5 + spread * 200 + Math.min(8, Math.hypot(p.vx, p.vz) * 0.45)}px`);
         }
+        // Nameplates share the body's render sample and cadence; the slower
+        // scoreboard/ammo HUD refresh must not throttle their position or health.
+        this.updateNameplates(p, remotes, renderer, round?.mode);
         if (now - this.lastDraw < 90)
             return;
         this.lastDraw = now;
@@ -340,16 +344,38 @@ export class UI {
             $('death-card').classList.toggle('hidden', p.alive || round.phase !== 'playing');
             $('respawn-time').textContent = Math.max(0, (p.respawnAt - serverNow) / 1000).toFixed(1);
             this.minimap(p, players);
-            const tags = net.remotePlayers().filter(q => q.alive && distance(p, q) < 34).map(q => { const from = { x: p.x, y: p.y + 1.62, z: p.z }, to = { x: q.x, y: q.y + 1.8, z: q.z }, dist = distance(from, to), d = { x: (to.x - from.x) / dist, y: (to.y - from.y) / dist, z: (to.z - from.z) / dist }; if (worldHit(from, d, dist) < dist - 0.1)
-                return ''; const projected = renderer.project({ ...to, y: to.y + 0.4 }); if (!projected.visible)
-                return ''; return `<div class="nameplate ${round.mode === 'tdm' && q.team === p.team ? 'friendly' : ''}" style="left:${projected.x}px;top:${projected.y}px"><span>${escapeHTML(q.name)}</span><i><b style="width:${q.hp / q.maxHp * 100}%"></b></i></div>`; });
-            $('nameplates').innerHTML = tags.join('');
         }
         if (round.phase !== this.lastPhase) {
             this.lastPhase = round.phase;
             this.scoreLabel = '';
         }
         void this.scoreLabel;
+    }
+    private updateNameplates(local: PlayerState | undefined, remotes: PlayerState[], renderer: Renderer, mode: string | undefined) {
+        const visible = new Set<string>();
+        if (local) for (const q of remotes) {
+            if (!q.alive || distance(local, q) >= 34) continue;
+            const from = { x: local.x, y: local.y + 1.62, z: local.z };
+            const to = { x: q.x, y: q.y + (q.slide > 0 ? 1.22 : 1.8), z: q.z };
+            const dist = distance(from, to);
+            const d = { x: (to.x - from.x) / dist, y: (to.y - from.y) / dist, z: (to.z - from.z) / dist };
+            if (worldHit(from, d, dist) < dist - .1) continue;
+            const point = renderer.project({ ...to, y: to.y + .4 });
+            if (!point.visible) continue;
+            visible.add(q.id);
+            let tag = this.nameplates.get(q.id);
+            if (!tag) {
+                const node = document.createElement('div'), name = document.createElement('span');
+                const track = document.createElement('i'), bar = document.createElement('b');
+                node.className = 'nameplate'; track.append(bar); node.append(name, track);
+                $('nameplates').append(node); tag = { node, name, bar }; this.nameplates.set(q.id, tag);
+            }
+            if (tag.name.textContent !== q.name) tag.name.textContent = q.name;
+            tag.node.classList.toggle('friendly', mode === 'tdm' && q.team === local.team);
+            tag.node.style.left = `${point.x}px`; tag.node.style.top = `${point.y}px`;
+            tag.bar.style.width = `${q.hp / q.maxHp * 100}%`;
+        }
+        for (const [id, tag] of this.nameplates) if (!visible.has(id)) { tag.node.remove(); this.nameplates.delete(id); }
     }
     private minimap(p: PlayerState, players: PlayerState[]) {
         if (!this.minimapEnabled) return;

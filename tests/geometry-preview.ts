@@ -60,13 +60,17 @@ const character = makeCharacter('triggerman', 0xc66d58); character.group.positio
 const camera = new THREE.PerspectiveCamera(90, width / height, .06, 220);
 camera.position.set(34, 1.62, 16); orientCamera(camera, .22, .02);
 render(scene, camera);
-const viewmodel = new Viewmodel(); viewmodel.resize(width, height); viewmodel.update(1, 0, 0, false, 0, 0, 0);
-render(viewmodel.scene, viewmodel.camera);
 function crc32(data: Buffer) { let crc = 0xffffffff; for (const b of data) { crc ^= b; for (let k = 0; k < 8; k++) crc = crc >>> 1 ^ (crc & 1 ? 0xedb88320 : 0); } return (crc ^ 0xffffffff) >>> 0; }
 function chunk(type: string, data: Buffer) { const name = Buffer.from(type), size = Buffer.alloc(4), crc = Buffer.alloc(4); size.writeUInt32BE(data.length); crc.writeUInt32BE(crc32(Buffer.concat([name, data]))); return Buffer.concat([size, name, data, crc]); }
 const header = Buffer.alloc(13); header.writeUInt32BE(width); header.writeUInt32BE(height, 4); header[8] = 8; header[9] = 6;
+async function save(path: string) {
 const scan = Buffer.alloc((width * 4 + 1) * height);
 for (let y = 0; y < height; y++) rgba.copy(scan, y * (width * 4 + 1) + 1, y * width * 4, (y + 1) * width * 4);
 await mkdir('artifacts', { recursive: true });
-await writeFile('artifacts/geometry-preview.png', Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(scan)), chunk('IEND', Buffer.alloc(0))]));
-console.log('Saved artifacts/geometry-preview.png (software geometry only, not a browser screenshot).');
+await writeFile(path, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(scan)), chunk('IEND', Buffer.alloc(0))]));
+}
+await save('artifacts/arena-preview.png');
+const viewmodel = new Viewmodel(); viewmodel.resize(width, height); viewmodel.update(1, 0, 0, false, 0, 0, 0);
+render(viewmodel.scene, viewmodel.camera);
+await save('artifacts/geometry-preview.png');
+console.log('Saved arena-preview.png and geometry-preview.png (software geometry only, not browser screenshots).');

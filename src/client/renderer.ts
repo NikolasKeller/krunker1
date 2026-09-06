@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { correctedPosition } from './prediction';
 import { orientCamera } from './camera';
 import { buildMap } from './map-renderer';
 import { animateCharacter, makeCharacter, makeGun, releaseCharacter, type Character } from './models';
@@ -70,6 +71,12 @@ export class Renderer {
     private resize() { this.width = innerWidth; this.height = innerHeight; this.gl.setSize(this.width, this.height); this.camera.aspect = this.width / this.height; this.camera.updateProjectionMatrix(); this.viewmodel.resize(this.width, this.height); }
     setClass(id: ClassId) { if (id === this.selected)
         return; this.selected = id; this.previewScene.remove(this.preview.group); releaseCharacter(this.preview); this.preview = makeCharacter(id, id === 'hunter' ? 0xb9bda2 : id === 'triggerman' ? 0x768c68 : id === 'vince' ? 0xaa6f54 : 0x619398); this.preview.group.rotation.y = -2.15; this.previewScene.add(this.preview.group); }
+    shotMuzzle(local: PlayerState, look: { yaw: number; pitch: number }, correction: Vec3) {
+        const camera = this.camera.clone(), view = correctedPosition(local, correction);
+        camera.position.set(view.x, view.y + this.eye, view.z);
+        orientCamera(camera, look.yaw, look.pitch);
+        return this.viewmodel.muzzlePosition(camera);
+    }
     damage() { this.damageKick = 0.2; }
     project(p: Vec3) { const v = new THREE.Vector3(p.x, p.y, p.z).project(this.camera); return { x: (v.x * 0.5 + 0.5) * this.width, y: (-v.y * 0.5 + 0.5) * this.height, visible: v.z < 1 && v.z > 0 }; }
     render(dt: number, time: number, local: PlayerState | undefined, remotes: PlayerState[], look: {
@@ -137,7 +144,8 @@ export class Renderer {
             const crouch = eyeHeight(local);
             this.eye = THREE.MathUtils.damp(this.eye, crouch, 18, dt);
             const bob = local.grounded ? Math.sin(time * 14) * Math.min(speed / 10, 1.5) * 0.022 : 0;
-            this.camera.position.set(local.x + correction.x, local.y + correction.y + this.eye + bob, local.z + correction.z);
+            const view = correctedPosition(local, correction);
+            this.camera.position.set(view.x, view.y + this.eye + bob, view.z);
             orientCamera(this.camera, look.yaw, look.pitch + Math.sin(time * 72) * this.damageKick * 0.07, Math.cos(time * 61) * this.damageKick * 0.08 + (local.slide > 0 ? -0.035 : 0));
             const scoped = aiming && local.weapon === 'sniper';
             this.camera.fov = THREE.MathUtils.damp(this.camera.fov, scoped ? 32 : aiming ? 73 : 90 + Math.min(8, Math.max(0, speed - 10) * 0.65), scoped ? 18 : 12, dt);

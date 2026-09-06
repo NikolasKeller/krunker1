@@ -1,4 +1,7 @@
 // Export the real UI DOM/CSS for the external browser verifier. This script never launches a browser.
+import { build } from 'esbuild';
+import { WEAPONS, CLASSES } from '../src/shared/weapons';
+import type { WeaponId, ClassId } from '../src/shared/types';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { UI } from '../src/client/ui';
 import type { Network } from '../src/client/network';
@@ -14,14 +17,22 @@ for (const match of css.matchAll(/url\('(?<path>\/fonts\/[^']+)'\)/g)) {
     const bytes = await readFile(new URL(`../public${match.groups!.path}`, import.meta.url));
     css = css.replace(match[0], `url('data:font/ttf;base64,${bytes.toString('base64')}')`);
 }
-const geometry = (await readFile(new URL('../artifacts/geometry-preview.png', import.meta.url))).toString('base64');
-for (const state of ['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill'] as const) {
+const geometry = (await readFile(new URL('../artifacts/arena-preview.png', import.meta.url))).toString('base64');
+const bundle = await build({ entryPoints: ['tests/viewmodel-preview.ts'], bundle: true, format: 'iife', write: false, minify: true });
+const script = bundle.outputFiles[0].text.replaceAll('</script', '<\\/script');
+const fixtures = [
+    ...['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill'].map(state => ({ state, name: state, weapon: 'sniper' as WeaponId, pose: 'hip' })),
+    ...(Object.keys(WEAPONS) as WeaponId[]).flatMap(weapon => ['hip', 'aim', 'reload'].map(pose => ({ state: 'ffa', name: `${weapon}-${pose}`, weapon, pose }))),
+];
+for (const { state, name, weapon, pose } of fixtures) {
     const { dom, restore } = installDOM('https://furo.example');
     try {
         Object.defineProperty(dom.window, 'innerWidth', { value: 1024 });
         Object.defineProperty(dom.window, 'innerHeight', { value: 614 });
         const room = new Room('PROOF');
-        const a = room.add('You', 'hunter', 'blue').state;
+        const classId = (Object.keys(CLASSES) as ClassId[]).find(id => CLASSES[id].weapon === weapon) ?? 'triggerman';
+        const a = room.add('You', classId, 'blue').state;
+        a.weapon = weapon; a.ammo = WEAPONS[weapon].magazine;
         const b = room.add('davidGE3', 'hunter', 'red').state;
         room.round.mode = state === 'ffa' ? 'ffa' : 'tdm';
         room.round.phase = state === 'lobby' ? 'lobby' : 'playing';
@@ -54,12 +65,13 @@ for (const state of ['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill']
         // Serialize input properties too, so the static fixture retains the actual lobby form state.
         for (const field of document.querySelectorAll('input')) field.setAttribute('value', field.value);
         for (const field of document.querySelectorAll('select')) for (const option of field.options) option.toggleAttribute('selected', option.selected);
-        const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Furo HUD review: ${state}</title><style>${css}
+        const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Furo HUD review: ${name}</title><style>${css}
 body { background:#cdbfbe url(data:image/png;base64,${geometry}) center/cover no-repeat; }
 #damage-numbers>span { animation-play-state:paused; animation-delay:-.15s; }
-</style><body>${document.body.innerHTML}</body></html>`;
-        await writeFile(new URL(`${state}.html`, out), html);
+</style><body data-weapon="${weapon}" data-pose="${pose}">${document.body.innerHTML}${state === 'lobby' ? '' : `<script>${script}</script>`}</body></html>`;
+        await writeFile(new URL(`${name}.html`, out), html);
     } finally { restore(); }
 }
-console.log('Exported artifacts/hud-preview/{lobby,ffa,tdm,body-hit,headshot,multikill}.html');
+await writeFile(new URL('index.html', out), `<!doctype html><title>Viewmodel review</title><style>body{font:18px system-ui;background:#202829;color:white}a{color:#ffe5a2}li{margin:12px}</style><h1>HUD and viewmodel review</h1><p>Every weapon in hip, aiming and reload poses. Sniper aim freezes before full scope. Right arm retained.</p><ul>${fixtures.map(f => `<li><a href="${f.name}.html">${f.name}</a></li>`).join('')}</ul>`);
+console.log('Exported 24 HUD/viewmodel fixtures and artifacts/hud-preview/index.html.');
 console.log('Real UI markup, CSS and embedded font; frozen feedback over a software geometry preview. No browser screenshots taken.');

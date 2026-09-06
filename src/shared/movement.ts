@@ -1,6 +1,6 @@
 import type { Input, MoveState } from './types';
 import { STEP } from './types';
-import { BOXES, RAMPS, MAP_SIZE, rampHeight } from './map';
+import { SOLID_BOXES as BOXES, RAMPS, MAP_SIZE, rampHeight } from './map';
 import { clamp } from './math';
 export const RADIUS = 0.38, HEIGHT = 1.88, EYE = 1.62;
 export const BASE_SPEED = 10.8, MAX_SPEED = 28, GRAVITY = 24, JUMP_SPEED = 8.6;
@@ -86,28 +86,42 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
         p.vz *= MAX_SPEED / speed;
     }
     p.vy -= GRAVITY * dt;
+    // Bound displacement in all three axes, independently of tick duration and
+    // slide/hop boosts. Forces and input edges still run exactly once per tick.
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy), Math.abs(p.vz)) * dt / 0.1));
+    for (let step = 0; step < steps; step++) resolveMovement(p, dt / steps);
+}
+function rampFloor(r: typeof RAMPS[number], x: number, z: number) {
+    if (Math.abs(x - r.x) >= r.w / 2 + RADIUS || Math.abs(z - r.z) >= r.d / 2 + RADIUS) return null;
+    return rampHeight(r, clamp(x + (r.axis === 'x' ? r.sign * RADIUS : 0), r.x - r.w / 2, r.x + r.w / 2),
+        clamp(z + (r.axis === 'z' ? r.sign * RADIUS : 0), r.z - r.d / 2, r.z + r.d / 2));
+}
+function resolveMovement(p: MoveState, dt: number) {
     const oldY = p.y, bodyH = p.slide > 0 ? 1.26 : HEIGHT;
     for (const axis of ['x', 'z'] as const) {
         const velocity = axis === 'x' ? 'vx' : 'vz';
+        const start = p[axis];
         p[axis] += p[velocity] * dt;
         for (const b of BOXES) {
-            if (p.y >= b.y + b.h / 2 - 0.035 || p.y + bodyH <= b.y - b.h / 2 + 0.02)
+            if (p.y >= b.y + b.h / 2 - 1e-9 || p.y + bodyH <= b.y - b.h / 2 + 1e-9)
                 continue;
             if (Math.abs(p.x - b.x) < b.w / 2 + RADIUS && Math.abs(p.z - b.z) < b.d / 2 + RADIUS) {
                 const top = b.y + b.h / 2;
-                if (top - p.y <= 0.34 && p.grounded) {
+                if (top - p.y <= 0.34 && p.grounded && !BOXES.some(ceiling =>
+                    Math.abs(p.x - ceiling.x) < ceiling.w / 2 + RADIUS && Math.abs(p.z - ceiling.z) < ceiling.d / 2 + RADIUS &&
+                    ceiling.y - ceiling.h / 2 >= p.y + bodyH - 1e-9 && ceiling.y - ceiling.h / 2 < top + bodyH)) {
                     p.y = top;
                     continue;
                 }
                 const center = axis === 'x' ? b.x : b.z, half = axis === 'x' ? b.w / 2 : b.d / 2;
-                p[axis] = center + (p[axis] < center ? -1 : 1) * (half + RADIUS);
+                p[axis] = center + (start < center ? -1 : 1) * (half + RADIUS);
                 p[velocity] = 0;
             }
         }
         for (const r of RAMPS) {
-            const h = rampHeight(r, p.x, p.z);
+            const h = rampFloor(r, p.x, p.z);
             if (h !== null && h > p.y + 0.62 && p.y < r.h) {
-                p[axis] -= p[velocity] * dt;
+                p[axis] = start;
                 p[velocity] = 0;
             }
         }
@@ -116,9 +130,9 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
     p.grounded = false;
     let floor = 0;
     for (const b of BOXES) {
-        if (Math.abs(p.x - b.x) < b.w / 2 + RADIUS * 0.65 && Math.abs(p.z - b.z) < b.d / 2 + RADIUS * 0.65) {
+        if (Math.abs(p.x - b.x) < b.w / 2 + RADIUS && Math.abs(p.z - b.z) < b.d / 2 + RADIUS) {
             const top = b.y + b.h / 2;
-            if (oldY >= top - 0.06 && p.y <= top && p.vy <= 0)
+            if (oldY >= top - 1e-9 && p.y <= top && p.vy <= 0)
                 floor = Math.max(floor, top);
             const bottom = b.y - b.h / 2;
             if (p.vy > 0 && oldY + bodyH <= bottom && p.y + bodyH >= bottom) {
@@ -128,7 +142,7 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
         }
     }
     for (const r of RAMPS) {
-        const h = rampHeight(r, p.x, p.z);
+        const h = rampFloor(r, p.x, p.z);
         if (h !== null && h <= oldY + 0.65)
             floor = Math.max(floor, h);
     }

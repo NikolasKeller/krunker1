@@ -1,6 +1,7 @@
-import { INTERPOLATION_MS, MAX_REWIND_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
+import { type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { predictInput, PredictionHistory, smoothCorrection } from './prediction';
-import { angleLerp, clamp, lerp } from '../shared/math';
+import { RemoteInterpolation } from './interpolation';
+import { lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
 import { InputBuffer } from '../shared/input-buffer';
 export const JOIN_RETRY_MS = 2000;
@@ -33,6 +34,7 @@ export class Network {
     set pending(value: Input[]) { this.inputs.pending = value; }
     get outgoing() { return this.inputs.outgoing; }
     set outgoing(value: Input[]) { this.inputs.outgoing = value; }
+    readonly interpolation = new RemoteInterpolation();
     frames: {
         time: number;
         players: Map<string, PlayerState>;
@@ -119,6 +121,7 @@ export class Network {
         this.lastSyncAt = 0;
         this.players.clear();
         this.frames = [];
+        this.interpolation.reset();
         this.predicted = undefined;
         this.inputs.clear();
         this.predictionHistory.clear();
@@ -177,10 +180,7 @@ export class Network {
     send(message: ClientMessage) { if (this.ws?.readyState === WebSocket.OPEN)
         this.ws.send(encodeClientMessage(message)); }
     get serverNow() { return Date.now() + this.offset; }
-    // The jitter reserve starts behind the latest arriving snapshot, which is
-    // already approximately half an RTT old. A fixed 100 ms server-time delay
-    // underflows even at 80 ms one-way latency with 50 ms snapshot spacing.
-    get interpolationDelay() { return Math.min(MAX_REWIND_MS, INTERPOLATION_MS + this.ping / 2); }
+    get interpolationDelay() { return this.interpolation.delay(this.ping); }
     get local() { return this.players.get(this.id); }
     input(input: Input) {
         if (!this.predicted) return;
@@ -228,6 +228,7 @@ export class Network {
                 return;
             }
             this.receivedAt = Date.now();
+            this.interpolation.observe(m.time, this.receivedAt);
             this.lastSnapshot = m.n;
             if (m.host !== undefined) this.host = m.host;
             if (m.round) this.round = m.round;
@@ -242,7 +243,7 @@ export class Network {
             for (const id of m.removed)
                 this.players.delete(id);
             this.frames.push({ time: m.time, players: new Map([...this.players].map(([id, p]) => [id, { ...p }])) });
-            while (this.frames.length > 32)
+            while (this.frames.length > 64)
                 this.frames.shift();
             const local = this.local;
             if (local) {
@@ -276,18 +277,6 @@ export class Network {
         }
     }
     remotePlayers(): PlayerState[] {
-        const time = this.serverNow - this.interpolationDelay;
-        let a = this.frames[0], b = a;
-        if (!a)
-            return [];
-        for (const f of this.frames) {
-            b = f;
-            if (f.time >= time)
-                break;
-            a = f;
-        }
-        const t = clamp((time - a.time) / (b.time - a.time || 1), 0, 1);
-        return [...b.players.values()].filter(p => p.id !== this.id).map(q => { const p = a.players.get(q.id); if (!p || p.life !== q.life)
-            return q; return { ...q, x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t), z: lerp(p.z, q.z, t), yaw: angleLerp(p.yaw, q.yaw, t), pitch: lerp(p.pitch, q.pitch, t) }; });
+        return this.interpolation.sample(this.frames, this.id, this.serverNow, Date.now(), this.ping);
     }
 }

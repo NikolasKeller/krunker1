@@ -66,3 +66,10 @@ export function shotDirections(w: WeaponId, yaw: number, pitch: number, spread: 
     const rng = random(seed);
     return Array.from({ length: WEAPONS[w].pellets }, () => { const theta = rng() * Math.PI * 2, r = Math.sqrt(rng()) * spread; return direction(yaw + Math.cos(theta) * r, pitch + Math.sin(theta) * r); });
 }
+
+// Both simulations use the input identity as the spread seed. Server wall-clock
+// time is unknowable at prediction time and used to give the visuals another ray.
+export function shotRays(w: WeaponId, yaw: number, pitch: number, speed: number, bloom: number, aim: number, index: number, seq: number, life: number) {
+    const recoil = recoilFor(w, index);
+    return shotDirections(w, yaw + recoil[1], pitch + recoil[0] * .25, spreadFor(w, speed, bloom, aim), seq * 137 + life * 104729);
+}

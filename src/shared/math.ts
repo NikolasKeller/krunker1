@@ -1,4 +1,4 @@
-import { BOXES, RAMPS } from './map';
+import { SOLID_BOXES, RAMPS } from './map';
 import type { Vec3, PlayerState } from './types';
 export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -50,7 +50,7 @@ export function rayRamp(o: Vec3, d: Vec3, r: typeof RAMPS[number]): number | nul
 }
 export function worldHit(o: Vec3, d: Vec3, range = 150): number {
     let best = range;
-    for (const b of BOXES) {
+    for (const b of SOLID_BOXES) {
         const t = rayBox(o, d, { x: b.x - b.w / 2, y: b.y - b.h / 2, z: b.z - b.d / 2 }, { x: b.x + b.w / 2, y: b.y + b.h / 2, z: b.z + b.d / 2 });
         if (t !== null && t < best)
             best = t;

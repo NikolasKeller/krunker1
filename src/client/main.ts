@@ -1,13 +1,15 @@
 import './style.css';
 import { Controls } from './input';
 import { Network } from './network';
+import { ShotFeedback } from './shot-feedback';
 import { previewInput } from './prediction';
 import { Renderer } from './renderer';
 import { AudioEngine } from './audio';
 import { UI } from './ui';
 import { LOBBY_UPDATE_MS } from './lobby';
-import { STEP, type WeaponId } from '../shared/types';
-import { CLASSES, recoilFor, WEAPONS } from '../shared/weapons';
+import { wireInput } from '../shared/protocol';
+import { STEP, type Input, type WeaponId } from '../shared/types';
+import { WEAPONS } from '../shared/weapons';
 import { clamp, distance } from '../shared/math';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const net = new Network(), audio = new AudioEngine(), controls = new Controls(canvas), ui = new UI(net);
@@ -19,6 +21,7 @@ catch (error) {
     document.getElementById('ui')!.innerHTML = '<div style="padding:40px;background:#17252b;color:white;font:20px Arial;pointer-events:auto">WebGL could not start. Enable hardware acceleration in your browser and reload.</div>';
     throw error;
 }
+const shots = new ShotFeedback(renderer.effects, renderer.viewmodel, audio);
 renderer.setClass(ui.selected);
 renderer.setQuality(localStorage.getItem('arena-quality') ?? 'balanced');
 let playing = false, nextShot = 0, shotIndex = 0, lastShot = 0, lastLife = -1, lastWeapon: WeaponId = 'sniper', previousReload = 0, lastStep = 0, lastTime = performance.now(), accumulator = 0;
@@ -53,7 +56,8 @@ controls.onPause = () => { if (!controls.locked && playing && !ui.menu) {
 net.onNotice = text => ui.notice(text);
 net.onChat = message => ui.chat(message);
 let phase = '';
-net.onWelcome = () => { nextShot = 0; lastLife = -1; phase = ''; void ui.welcomed(); };
+let pendingFireAim: Pick<Input, 'seq' | 'yaw' | 'pitch' | 'shotTime'> | undefined;
+net.onWelcome = () => { shots.clear(); nextShot = 0; lastLife = -1; phase = ''; void ui.welcomed(); };
 net.onEvents = events => {
     for (const e of events) {
         ui.event(e, renderer, performance.now());
@@ -62,12 +66,11 @@ net.onEvents = events => {
             const dist = net.predicted ? distance(e.origin, net.predicted) : 0;
             if (!own && dist < 75)
                 audio.shot(e.weapon, dist);
-            if (!ui.menu) {
+            if (own) shots.confirm(e);
+            else if (!ui.menu && e.weapon !== 'knife') {
                 for (const end of e.ends) {
-                    const from = own ? { x: renderer.camera.position.x, y: renderer.camera.position.y - 0.16, z: renderer.camera.position.z } : e.origin;
-                    renderer.effects.tracer(from, end, own);
-                    if (e.weapon !== 'knife')
-                        renderer.effects.impact(end, e.origin);
+                    renderer.effects.tracer(e.origin, end);
+                    renderer.effects.impact(end, e.origin);
                 }
             }
         }
@@ -84,12 +87,15 @@ net.onEvents = events => {
 };
 if (ui.joinConfig.room) net.connect(ui.joinConfig);
 function sampleInput(seq: number) {
-    const input = controls.sample(seq, net.serverNow - net.interpolationDelay);
+    const input = controls.sample(seq, net.interpolation.playbackTime ?? net.serverNow - net.interpolationDelay);
+    // A shot shown between physics ticks keeps its original aim on the next
+    // command even though the camera recoil has already responded this frame.
+    if (pendingFireAim?.seq === seq) Object.assign(input, pendingFireAim);
     if (!playing || ui.menu || net.round?.phase !== 'playing') {
         input.forward = 0; input.strafe = 0; input.jump = false;
         input.fire = false; input.slide = false; input.aim = false; input.reload = false;
     }
-    return input;
+    return wireInput(input);
 }
 function frame(time: number) {
     const dt = Math.min(0.05, (time - lastTime) / 1000);
@@ -108,6 +114,8 @@ function frame(time: number) {
     }
     if (p && p.life !== lastLife) {
         lastLife = p.life;
+        shots.clear();
+        pendingFireAim = undefined;
         controls.yaw = p.yaw;
         controls.pitch = p.pitch;
         controls.slot = 1;
@@ -123,11 +131,14 @@ function frame(time: number) {
     if (p?.reloadEnd && p.reloadEnd !== previousReload)
         audio.reload();
     previousReload = p?.reloadEnd ?? 0;
+    let fireInput = sampleInput(net.seq + 1);
     while (accumulator >= STEP) {
         accumulator -= STEP;
         if (!net.predicted)
             continue;
-        net.input(sampleInput(++net.seq));
+        fireInput = sampleInput(++net.seq);
+        net.input(fireInput);
+        if (pendingFireAim?.seq === fireInput.seq) pendingFireAim = undefined;
     }
     if (p && playing && controls.locked && !controls.typing && !ui.menu && p.alive && net.round?.phase === 'playing') {
         if (controls.fire && now >= nextShot && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
@@ -136,13 +147,12 @@ function frame(time: number) {
             if (now - lastShot > 450)
                 shotIndex = 0;
             lastShot = now;
-            const recoil = recoilFor(p.weapon, shotIndex++);
-            controls.pitch = clamp(controls.pitch + recoil[0], -1.54, 1.54);
-            controls.yaw += recoil[1];
-            renderer.viewmodel.fire();
-            audio.shot(p.weapon);
-            if (p.weapon !== 'knife')
-                p.ammo = Math.max(0, p.ammo - 1);
+            const recoil = shots.fire(p, fireInput, shotIndex++, renderer.viewmodel.aim, renderer.shotMuzzle(p, fireInput, net.correction));
+            if (recoil) {
+                if (fireInput.seq > net.seq) pendingFireAim = { seq: fireInput.seq, yaw: fireInput.yaw, pitch: fireInput.pitch, shotTime: fireInput.shotTime };
+                controls.pitch = clamp(controls.pitch + recoil[0], -1.54, 1.54);
+                controls.yaw += recoil[1];
+            }
         }
         if (p.grounded && Math.hypot(p.vx, p.vz) > 3 && time - lastStep > 280 && p.slide <= 0) {
             lastStep = time;
@@ -152,8 +162,9 @@ function frame(time: number) {
     net.smoothCorrection(dt);
     const rendered = previewInput(net.predicted, sampleInput(net.seq + 1), playing, accumulator / STEP);
     const aim = controls.locked && controls.aim && !!p?.alive && p.reloadEnd <= now;
-    renderer.render(dt, time / 1000, rendered, net.remotePlayers(), controls, net.correction, ui.menu, aim, now, net.round?.mode ?? 'ffa');
-    ui.update(time, renderer, aim);
+    const remotes = net.remotePlayers();
+    renderer.render(dt, time / 1000, rendered, remotes, controls, net.correction, ui.menu, aim, now, net.round?.mode ?? 'ffa');
+    ui.update(time, renderer, aim, remotes);
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

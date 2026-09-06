@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { CLASS_IDS, CLASSES, damageFor, recoilFor, shotDirections, spreadFor, WEAPONS } from '../shared/weapons';
+import { CLASS_IDS, CLASSES, damageFor, shotRays, WEAPONS } from '../shared/weapons';
 import { STEP, MAX_PLAYERS, COUNTDOWN_MS, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import { SPAWNS } from '../shared/map';
 import { eyeHeight, move, moveState, neutralInput, validInput } from '../shared/movement';
@@ -243,9 +243,7 @@ export class Room {
         if (p.weapon !== 'knife')
             p.ammo--;
         const origin = { x: p.x, y: p.y + eyeHeight(p), z: p.z };
-        const spread = spreadFor(p.weapon, Math.hypot(p.vx, p.vz), p.bloom, a.aimTime);
-        const recoil = recoilFor(p.weapon, a.recoilIndex++);
-        const dirs = shotDirections(p.weapon, p.yaw + recoil[1], p.pitch + recoil[0] * 0.25, spread, i.seq * 137 + Math.round(now));
+        const dirs = shotRays(p.weapon, p.yaw, p.pitch, Math.hypot(p.vx, p.vz), p.bloom, a.aimTime, a.recoilIndex++, i.seq, p.life);
         p.bloom = Math.min(w.maxBloom, p.bloom + w.bloom);
         const hits = new Map<string, {
             damage: number;
