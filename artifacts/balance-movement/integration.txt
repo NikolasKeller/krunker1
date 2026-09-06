@@ -1,0 +1,30 @@
+
+> krunker-local-arena@1.0.0 test:integration
+> tsx tests/integration.ts
+
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"4ec764e8"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"d4ed0c5d"}
+{"event":"ws.message","connectionId":"4ec764e8","type":"join","bytes":75}
+{"event":"ws.joined","connectionId":"4ec764e8","room":"QA","player":"874fc46e"}
+{"event":"ws.message","connectionId":"d4ed0c5d","type":"join","bytes":74}
+{"event":"ws.joined","connectionId":"d4ed0c5d","room":"QA","player":"9ece8a00"}
+PASS: two real WebSocket clients see authoritative movement
+PASS: hunter fires and damages another real client (100 damage)
+PASS: headshot, killfeed, score, timed respawn without immunity
+PASS: triggerman fires and damages another real client (42 damage)
+PASS: vince fires and damages another real client (165 damage)
+PASS: runngun fires and damages another real client (30 damage)
+PASS: hitscan rewind hits the target at the historical visible position
+PASS: malformed speed input rejected
+PASS: score limit, results, lobby return, ready countdown and score reset
+{"event":"ws.close","connectionId":"d4ed0c5d","code":1005,"reason":"","durationMs":18201,"receivedMessages":710}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"b51903d5"}
+{"event":"ws.message","connectionId":"b51903d5","type":"join","bytes":133}
+{"event":"ws.joined","connectionId":"b51903d5","room":"QA","player":"9ece8a00"}
+PASS: reconnect restores existing identity without duplicate players
+METRICS {"ok":true,"tickRate":60,"tickMs":0.169,"peakTickMs":0.581,"tickP95Ms":0.414,"tickP99Ms":0.541,"totalTickMs":228.46326199999558,"overBudgetTicks":0,"ticks":1101,"bytesOut":139243,"players":2,"rooms":1,"transport":{"snapshots":733,"skippedSnapshots":0,"maxSnapshotSendGapMs":53,"maxSendCallbackMs":0.796,"maxBufferedBytes":0,"maxMessageBytes":2576,"maxInputMessageBytes":199,"maxInputArrivalGapMs":21,"maxInputQueue":2},"configuredTickRate":60,"connections":2,"queuedBytes":0,"deltaSnapshots":363,"meanDeltaBytes":171,"meanFullBytes":1395}
+{"event":"ws.close","connectionId":"b51903d5","code":1006,"reason":"","durationMs":39,"receivedMessages":1}
+{"event":"ws.close","connectionId":"4ec764e8","code":1006,"reason":"","durationMs":18341,"receivedMessages":714}

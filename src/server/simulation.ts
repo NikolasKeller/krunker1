@@ -1,4 +1,4 @@
-import { CombatClock, traceShot } from '../shared/combat';
+import { canDamage, CombatClock, traceShot } from '../shared/combat';
 import { randomUUID } from 'node:crypto';
 import { CLASS_IDS, CLASSES, shotRays, WEAPONS } from '../shared/weapons';
 import { STEP, MAX_PLAYERS, COUNTDOWN_MS, MAX_REWIND_MS, type ServerMessage, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
@@ -130,6 +130,7 @@ export class Room {
     remove(id: string) { this.shotRejections.delete(id); this.players.delete(id); if (this.host === id)
         this.host = [...this.players.values()].find(p => !p.state.bot && p.connected)?.state.id ?? ''; }
     spawn(a: Actor, now: number) {
+        if (a.botBrain) a.botBrain = brain();
         this.shotRejections.delete(a.state.id);
         a.lastShotRejection = undefined;
         const p = a.state, c = CLASSES[p.classId];
@@ -311,13 +312,17 @@ export class Room {
         const time = a.botBrain ? now : rewindTime(i.shotTime, now, a.rtt, i.interpolationDelay);
         const targets = [...this.players.values()].flatMap(other => {
             const q = other.state;
-            if (q.id === p.id || !other.connected || !q.alive || (this.round.mode === 'tdm' && q.team === p.team)) return [];
+            if (q.id === p.id || !other.connected || !q.alive) return [];
             const rewound = a.botBrain ? q : this.history.rewind(q.id, time) ?? q;
             // A client can already be drawing the new life while playback still
             // predates it. Never erase its hitbox or reuse an obsolete life pose.
             return [rewound.alive && rewound.life === q.life ? rewound : q];
         });
-        const { ends, hits } = traceShot(p.weapon, origin, dirs, targets);
+        const trace = traceShot(p.weapon, origin, dirs, targets);
+        // Resolve every hitbox on the shot's timeline before deciding damage.
+        // Teams are live authority, never the historical pose's team. Teammates
+        // absorb pellets silently, including a switch while a command is queued.
+        const ends = trace.ends, hits = trace.hits.filter(hit => canDamage(p, this.players.get(hit.victim)!.state, this.round.mode));
         this.events.push({ type: 'shot', shooter: p.id, weapon: p.weapon, origin, ends, seq: i.seq });
         for (const hit of hits) {
             const q = this.players.get(hit.victim)!.state;

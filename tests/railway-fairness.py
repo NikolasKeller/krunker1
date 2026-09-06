@@ -15,8 +15,9 @@ root = pathlib.Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--collect', action='store_true')
 parser.add_argument('--resume-probes', action='store_true', help='Resume failed probes, retaining successful checks only when their bundle hashes match')
+parser.add_argument('--output', default='artifacts/fairness', help='Directory for this candidate verification report')
 args = parser.parse_args()
-artifacts = root / 'artifacts/fairness'
+artifacts = root / args.output
 artifacts.mkdir(parents=True, exist_ok=True)
 
 

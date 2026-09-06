@@ -388,7 +388,7 @@ export class Network {
             // Position uses playback history; health and life transitions use the
             // latest authority. Never replay a dead opponent as alive.
             if (!latest) return p;
-            const state = latest.life !== p.life ? { ...latest } : { ...p, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd };
+            const state = latest.life !== p.life ? { ...latest } : { ...p, team: latest.team, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd };
             return this.remoteHealth.sample(state, performance.now());
         });
     }

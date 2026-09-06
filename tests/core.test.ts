@@ -45,7 +45,8 @@ test('weapon damage preserves the former Hunter ratios at 100 HP', () => {
     assert.equal(damageFor('smg', 'head', 10), 45);
 });
 test('shotgun close-range pellets are lethal and fall off sharply', () => {
-    assert.equal(damageFor('shotgun', 'body', 4) * 8, 320);
+    assert.equal(damageFor('shotgun', 'body', 4) * 8, 416);
+    assert.ok(damageFor('shotgun', 'body', 4) * 2 >= 100, 'two close body pellets are decisive');
     assert.ok(damageFor('shotgun', 'body', 26) * 8 < 25);
     assert.equal(damageFor('shotgun', 'body', 40), 0);
 });

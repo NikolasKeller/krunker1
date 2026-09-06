@@ -1,0 +1,447 @@
+
+> krunker-local-arena@1.0.0 test
+> tsx --test tests/*.test.ts
+
+✔ last round immediately starts predicted and authoritative reload, with no repeated fire request (12.35525ms)
+✔ switch cancels an automatic reload and preserves the shared draw delay (3.120125ms)
+✔ manual reload still starts a partial magazine, cannot fire during reload, and rejects quietly (0.690875ms)
+✔ lobby, countdown, results, death and old-life inputs cannot start an automatic reload (0.899666ms)
+✔ two minutes of four-second blackout movement at 60 Hz (hidden) (848.516417ms)
+✔ two minutes of four-second blackout movement at 144 Hz (hidden) (1222.93275ms)
+✔ two minutes of four-second blackout movement at 60 Hz (blocked) (918.37275ms)
+✔ two minutes of four-second blackout movement at 144 Hz (blocked) (1019.011875ms)
+✔ two minutes of four-second blackout movement at 60 Hz (upload-only) (535.751958ms)
+✔ two minutes of four-second blackout movement at 144 Hz (upload-only) (725.38475ms)
+✔ two minutes of measured-quantile movement at 60 Hz (hidden) (455.995375ms)
+✔ two minutes of measured-quantile movement at 144 Hz (hidden) (609.216125ms)
+✔ two minutes of measured-quantile movement at 60 Hz (blocked) (402.971584ms)
+✔ two minutes of measured-quantile movement at 144 Hz (blocked) (491.481375ms)
+✔ two minutes of measured-quantile movement at 60 Hz (upload-only) (315.679292ms)
+✔ two minutes of measured-quantile movement at 144 Hz (upload-only) (476.910208ms)
+✔ easy: cover hides movement, reacquisition requires a new reaction, and memory expires (40.425375ms)
+✔ easy: never-seen opponents cannot affect patrol and teammates are not acquired (0.748209ms)
+✔ normal: cover hides movement, reacquisition requires a new reaction, and memory expires (1.316ms)
+✔ normal: never-seen opponents cannot affect patrol and teammates are not acquired (1.33975ms)
+✔ hard: cover hides movement, reacquisition requires a new reaction, and memory expires (2.005625ms)
+✔ hard: never-seen opponents cannot affect patrol and teammates are not acquired (0.510417ms)
+✔ bot respawn clears target reaction and hidden-position memory (0.232542ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"76066677"}
+{"event":"ws.message","connectionId":"76066677","type":"join","bytes":85}
+{"event":"ws.joined","connectionId":"76066677","room":"CHATMTQ5ZQJP","player":"cf043400"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"7dacbda0"}
+{"event":"ws.message","connectionId":"7dacbda0","type":"join","bytes":85}
+{"event":"ws.joined","connectionId":"7dacbda0","room":"CHATMTQ5ZQJP","player":"53b802bc"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"1498e08b"}
+{"event":"ws.message","connectionId":"1498e08b","type":"join","bytes":88}
+{"event":"ws.joined","connectionId":"1498e08b","room":"OTHERMTQ5ZQJP","player":"5247b629"}
+{"event":"ws.close","connectionId":"1498e08b","code":1006,"reason":"","durationMs":888,"receivedMessages":1}
+{"event":"ws.close","connectionId":"7dacbda0","code":1006,"reason":"","durationMs":899,"receivedMessages":1}
+{"event":"ws.close","connectionId":"76066677","code":1006,"reason":"","durationMs":946,"receivedMessages":4}
+✔ real sockets broadcast authenticated chat only inside the room, with length and rate limits (969.314917ms)
+✔ maximum-speed movement cannot cross a thin collider in one tick (entry-side regression) (1.157292ms)
+✔ straight walking at a real building contact never ejects the player across the other face (9.775666ms)
+✔ walking into the yard crate stops instead of ejecting sideways into the speed-test lane (3.339542ms)
+✔ every solid map box blocks maximum-speed air, slide and hop approaches on both axes and several angles (139.685ms)
+✔ solid lamp posts block movement and camera corrections cannot cross a building or ramp (3.323917ms)
+✔ assembled wall joints, door faces, boundary corners and ramp sides stay solid during slide hops (179.087625ms)
+✔ authority, live prediction, discarded-input replay and fractional previews share collision (22.654042ms)
+✔ underpass remains open and the deck stops upward and high-speed downward motion (3.400666ms)
+✔ predicted hit is immediate, stays cosmetic, and exact confirmation never replays feedback (8.932625ms)
+✔ misses, rejections, wrong victim and head/body differences are counted; old-life results cannot consume a new prediction (1.418708ms)
+✔ shared traces respect nearest target, walls, protection, teams, sliding and pellet aggregation (0.480208ms)
+✔ sniper: command clock preserves predicted rays, cadence and draw timing through burst delivery (7.194042ms)
+✔ rifle: command clock preserves predicted rays, cadence and draw timing through burst delivery (4.030917ms)
+✔ shotgun: command clock preserves predicted rays, cadence and draw timing through burst delivery (5.541708ms)
+✔ smg: command clock preserves predicted rays, cadence and draw timing through burst delivery (6.802292ms)
+✔ pistol: command clock preserves predicted rays, cadence and draw timing through burst delivery (4.825292ms)
+✔ knife: command clock preserves predicted rays, cadence and draw timing through burst delivery (1.566708ms)
+✔ switch timing cannot be bypassed with sequence gaps, repeated slot keys, or legacy flags (1.326666ms)
+✔ combat input wire extension is lossless, bounded and rejects invalid flags (0.634875ms)
+✔ weapon HUD/viewmodel update in the first frame at every render phase; older authority cannot undo a pending selection (995.79075ms)
+✔ confirmed death bypasses delayed playback and HUD cadence without changing the interpolated position (75.711375ms)
+✔ retracting provisional HUD feedback never changes a newer marker or creates a kill (45.218375ms)
+✔ reload blocks predicted fire through old snapshots and releases only on authoritative completion or switch (0.645583ms)
+✔ ray box handles forward hits, behind-origin misses, parallel axes and inside origin (1.044125ms)
+✔ head, torso, legs and sliding hitboxes match their vertical bounds (0.449625ms)
+✔ ramps block bullets through their solid volume without blocking above the slope (0.421375ms)
+✔ world collision blocks the sightline through a building (0.346833ms)
+✔ weapon damage preserves the former Hunter ratios at 100 HP (0.225834ms)
+✔ shotgun close-range pellets are lethal and fall off sharply (0.134417ms)
+✔ spread increases with speed and firing, decreases with ADS, and is deterministic by seed (2.883625ms)
+✔ recoil pattern cycles, differs by weapon and stays bounded (0.11325ms)
+✔ input validation rejects NaN, impossible speed, wrong buttons and invalid sequences (0.207333ms)
+✔ movement is deterministic for prediction replay and achieves arcade running speed (5.603625ms)
+✔ jump launches promptly, has no midair second jump, and lands without fall damage state (3.16625ms)
+✔ timed landing slide and bunny hop preserve and increase speed (0.641ms)
+✔ late jump is slower than precisely timed hop and holding jump does not auto-jump (4.008167ms)
+✔ movement clamps velocity and prevents walking through walls (3.87ms)
+✔ ramps are walkable to the elevated central platform (11.168334ms)
+✔ spawns never overlap a solid obstacle (0.199916ms)
+✔ rewind interpolates between history frames and clamps outside history (0.666375ms)
+✔ rewind cannot blend a dead player into a new life (0.102666ms)
+✔ client timestamps cannot force future or unbounded rewinds (0.049875ms)
+✔ round transitions from lobby through time/score limits into results (5.013917ms)
+✔ team round winner uses team kills and handles a tie (0.123125ms)
+✔ server ignores movement results and rejects invalid or replayed input sequences (0.647083ms)
+✔ input flooding cannot simulate more than the tick budget (0.258083ms)
+✔ server fire cadence and reload duration are authoritative (9.868459ms)
+✔ server validates headshots, spawn protection, friendly fire and wall occlusion (1.118375ms)
+✔ respawn resets health, ammo and momentum without immunity (0.095958ms)
+✔ bots fill requested slots and paths route around buildings (1.240625ms)
+✔ prediction reconciles from an older acknowledgement and replays only pending inputs (9.185875ms)
+✔ a class change applies immediately without healing (0.172458ms)
+✔ the bridge underpass connects the side lanes without a dead end (0.625625ms)
+✔ switching rooms clears stale input sequences; a resumed snapshot restores its acknowledgement (63.796375ms)
+✔ bot navigation reaches the raised deck through a ramp while retaining the underpass (1.574834ms)
+✔ ten teammates spawn at distinct safe locations instead of stacking (4.076958ms)
+✔ bot ramp waypoints can actually be followed by shared movement (8.068291ms)
+✔ delayed inputs from a previous life are acknowledged without moving or firing after respawn (0.355958ms)
+✔ jittered 20 Hz input packets recover without accumulating a server backlog (10.937958ms)
+✔ dropped input sequence gaps recover while movement remains limited by server time (0.141833ms)
+✔ a stalled TCP stream replays every retained movement step within its banked tick budget (0.410583ms)
+✔ respawn acknowledges received inputs discarded with the previous life (0.072875ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"7fc83ee6"}
+{"event":"ws.message","connectionId":"7fc83ee6","type":"join","bytes":93}
+{"event":"ws.joined","connectionId":"7fc83ee6","room":"RFLRA","player":"6c4b1f20"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"0a19db62"}
+{"event":"ws.message","connectionId":"0a19db62","type":"join","bytes":78}
+{"event":"ws.joined","connectionId":"0a19db62","room":"RFLRA","player":"000cca2c"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"e98108cf"}
+{"event":"ws.close","connectionId":"0a19db62","code":1005,"reason":"","durationMs":364,"receivedMessages":8}
+{"event":"ws.message","connectionId":"e98108cf","type":"join","bytes":137}
+{"event":"ws.joined","connectionId":"e98108cf","room":"RFLRA","player":"000cca2c"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"4c6b9415"}
+{"event":"ws.message","connectionId":"4c6b9415","type":"join","bytes":137}
+{"event":"ws.joined","connectionId":"4c6b9415","room":"RFLRA","player":"000cca2c"}
+{"event":"ws.close","connectionId":"e98108cf","code":4000,"reason":"Session resumed","durationMs":26,"receivedMessages":2}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"981f5639"}
+{"event":"ws.message","connectionId":"981f5639","type":"join","bytes":137}
+{"event":"ws.joined","connectionId":"981f5639","room":"RFLRA","player":"000cca2c"}
+{"event":"ws.close","connectionId":"4c6b9415","code":4000,"reason":"Session resumed","durationMs":14,"receivedMessages":1}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"16d9f237"}
+{"event":"ws.close","connectionId":"981f5639","code":1005,"reason":"","durationMs":25,"receivedMessages":2}
+{"event":"ws.message","connectionId":"16d9f237","type":"join","bytes":137}
+{"event":"ws.joined","connectionId":"16d9f237","room":"RFLRA","player":"000cca2c"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"8ce366b4"}
+{"event":"ws.message","connectionId":"8ce366b4","type":"join","bytes":80}
+{"event":"ws.joined","connectionId":"8ce366b4","room":"RFLRA","player":"a0b9e5d4"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"3fa4a1de"}
+{"event":"ws.close","connectionId":"8ce366b4","code":1005,"reason":"","durationMs":20,"receivedMessages":2}
+{"event":"ws.message","connectionId":"3fa4a1de","type":"join","bytes":87}
+{"event":"ws.joined","connectionId":"3fa4a1de","room":"AMGWC","player":"370a2104"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"9a26ed33"}
+{"event":"ws.close","connectionId":"3fa4a1de","code":1005,"reason":"","durationMs":13,"receivedMessages":2}
+{"event":"ws.message","connectionId":"9a26ed33","type":"join","bytes":140}
+{"event":"ws.joined","connectionId":"9a26ed33","room":"RFLRA","player":"a0b9e5d4"}
+{"event":"ws.close","connectionId":"9a26ed33","code":1006,"reason":"","durationMs":23,"receivedMessages":2}
+{"event":"ws.close","connectionId":"16d9f237","code":1006,"reason":"","durationMs":73,"receivedMessages":2}
+{"event":"ws.close","connectionId":"7fc83ee6","code":1006,"reason":"","durationMs":539,"receivedMessages":5}
+✔ join → ready → play → damage → death → respawn → class → team → rematch → reconnect → takeover → late join stays damageable (558.063292ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"036f3768"}
+{"event":"ws.message","connectionId":"036f3768","type":"join","bytes":90}
+{"event":"ws.joined","connectionId":"036f3768","room":"CFLNC","player":"d5784931"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"135ea156"}
+{"event":"ws.message","connectionId":"135ea156","type":"join","bytes":80}
+{"event":"ws.joined","connectionId":"135ea156","room":"CFLNC","player":"ba07e522"}
+{"event":"ws.close","connectionId":"135ea156","code":1006,"reason":"","durationMs":1050,"receivedMessages":2}
+{"event":"ws.close","connectionId":"036f3768","code":1006,"reason":"","durationMs":1104,"receivedMessages":21}
+✔ real WebSockets apply team/class requests in either order in lobby and live play (1112.86275ms)
+✔ a freshly spawned player takes server damage without firing or waiting for immunity (6.659083ms)
+✔ an obsolete rewound life cannot remove the current player hitbox (0.505458ms)
+✔ class/team changes cannot heal, refill ammo, shorten death or bypass a shot cooldown (3.324333ms)
+✔ a stale life position never transfers damage to a new life at another position (0.686458ms)
+✔ human: tdm other team damage and feedback (4.522125ms)
+✔ human: tdm same team damage and feedback (0.976333ms)
+✔ human: ffa other team damage and feedback (0.586042ms)
+✔ human: ffa same team damage and feedback (0.431208ms)
+✔ bot: tdm other team damage and feedback (1.253125ms)
+✔ bot: tdm same team damage and feedback (0.351458ms)
+✔ bot: ffa other team damage and feedback (0.348708ms)
+✔ bot: ffa same team damage and feedback (0.416875ms)
+✔ teammate hitboxes still rewind and stop a shot before an enemy behind them (0.759417ms)
+✔ rendered team eligibility follows current authority while positions use history (2.085166ms)
+✔ queued shots use teams at validation, in both switch directions (3.550667ms)
+✔ rewound team metadata cannot override live team eligibility or enemy registration (0.336208ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"21d6b379"}
+{"event":"ws.message","connectionId":"21d6b379","type":"join","bytes":87}
+{"event":"ws.joined","connectionId":"21d6b379","room":"EGKXE","player":"bbaef705"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"5b2d0c3c"}
+{"event":"ws.message","connectionId":"5b2d0c3c","type":"join","bytes":77}
+{"event":"ws.joined","connectionId":"5b2d0c3c","room":"EGKXE","player":"e213e728"}
+{"event":"ws.close","connectionId":"5b2d0c3c","code":1006,"reason":"","durationMs":190,"receivedMessages":2}
+{"event":"ws.close","connectionId":"21d6b379","code":1006,"reason":"","durationMs":212,"receivedMessages":2}
+✔ an authoritative headshot travels over the live binary socket into the shooter HUD only (749.927416ms)
+✔ health, empty magazine, reload lifecycle and authoritative team scores reach the HUD (508.541916ms)
+✔ decoded combat events show damage, headshot bonus, multi-kills and coloured chronological feed (247.391375ms)
+✔ an aimed authoritative TDM headshot reaches combat feedback and increments the correct team score (113.594416ms)
+✔ other players hitting and killing do not show personal combat feedback (74.084042ms)
+✔ TDM never shows a personal elimination target, including after kill feedback expires and mode changes (106.8335ms)
+✔ the minimap defaults off, skips canvas work, and can be enabled persistently in settings (149.488417ms)
+✔ chat markup and Enter wiring are removed; focused form fields still suppress gameplay (78.319583ms)
+✔ a four-second upload silence never applies physics without advancing the acknowledgement (3.307666ms)
+✔ four seconds of movement replay exactly; expired shots cannot fire during recovery (11.039542ms)
+✔ banked movement is capped, reset on spawn and cannot manufacture simulation time (6.101709ms)
+✔ jitter buffer grows on late delivery and shrinks slowly with hysteresis after calm traffic (37.630084ms)
+✔ late and dropped snapshots advance smoothly, with capped extrapolation and blended recovery (64.103708ms)
+✔ nameplate position and health use exactly the body sample on every render frame (238.672083ms)
+✔ extrapolation stops at solids, respawns reset blending, and removals discard tracks (1.040209ms)
+✔ public and proxy hosts never advertise container interfaces (11.907458ms)
+✔ local physical interfaces supply a shareable LAN invite, with the Vite port in development (1.648875ms)
+✔ public lobby display and copy use the working browser origin even if an old server advertises LAN (243.862666ms)
+✔ lineup counts include bots, while readiness counts only human votes (6.0555ms)
+✔ team assignment authorizes self or host, validates targets and cancels readiness only on a change (0.323958ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"b1e01108"}
+{"event":"ws.message","connectionId":"b1e01108","type":"join","bytes":86}
+{"event":"ws.joined","connectionId":"b1e01108","room":"MPJSX","player":"321accac"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"c4d7a97e"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"71128eec"}
+{"event":"ws.message","connectionId":"c4d7a97e","type":"join","bytes":77}
+{"event":"ws.joined","connectionId":"c4d7a97e","room":"MPJSX","player":"64981f15"}
+{"event":"ws.message","connectionId":"71128eec","type":"join","bytes":82}
+{"event":"ws.joined","connectionId":"71128eec","room":"MPJSX","player":"1af3bba8"}
+{"event":"ws.close","connectionId":"71128eec","code":1005,"reason":"","durationMs":449,"receivedMessages":3}
+{"event":"ws.close","connectionId":"b1e01108","code":1005,"reason":"","durationMs":543,"receivedMessages":7}
+{"event":"ws.close","connectionId":"c4d7a97e","code":1006,"reason":"","durationMs":562,"receivedMessages":9}
+✔ three real clients share team moves, permissions, classes, bots, readiness and departures (629.447917ms)
+✔ all connected humans must be ready; bots and disconnected humans do not vote (1.614333ms)
+✔ all-ready countdown preserves its deadline and starts exactly one round (0.514667ms)
+✔ unready cancels an automatic countdown and ready starts a fresh full countdown (0.151416ms)
+✔ new unready arrival cancels an automatic countdown; leaving resumes it (0.201792ms)
+✔ start early includes unready humans but cancels if everyone leaves (0.222625ms)
+✔ settings reset readiness and cancel even a forced countdown (0.110542ms)
+✔ results return to the same lobby with fresh readiness, and rematches reset scores (0.464667ms)
+✔ while gameplay loads, classes and room controls work but ready and host start wait for the first game frame (208.18375ms)
+✔ idle lobby polls produce no DOM mutations and preserve every control and text target (65.48475ms)
+✔ callsign focus, draft and caret survive ready, roster, team and countdown updates (28.935667ms)
+✔ create and ready buttons work without gameplay initialization, and Space remains available to buttons (30.871ms)
+✔ results and unchanged countdown seconds retain nodes without mutations (39.707ms)
+✔ a slow established connection keeps lobby actions available and reports the actual status (34.709375ms)
+✔ bot selectors are visible outside collapsed settings and send zero and every difficulty (26.148708ms)
+✔ team cards retain identity across moves and FFA, with visible class, self, host, bot and ready states (46.505917ms)
+✔ team click and host move controls use distinct targets and class changes retain a host-assigned team (50.203417ms)
+✔ 60 Hz: every render phase responds to movement and aim in one frame with full transport windows (65.698958ms)
+✔ 144 Hz: every render phase responds to movement and aim in one frame with full transport windows (32.068833ms)
+✔ 240 Hz: every render phase responds to movement and aim in one frame with full transport windows (35.749833ms)
+✔ cosmetic disagreements preserve position/velocity and local view while applying health and ammunition (0.739125ms)
+✔ necessary corrections drift at no more than one centimetre per 60 Hz frame and converge (0.66425ms)
+✔ local firing cadence is independent of ping offset jumps and works through a four-second silence (0.7355ms)
+Map geometry: 77 objects, 53 solid boxes; tolerance 0.0001 m
+✔ every rendered map object fits its real collider in world space, including attached details and roofs (41.673084ms)
+✔ the audit rejects unsupported rotated trim, upper walls, unowned props and roofs over empty ground (46.742333ms)
+✔ production batching preserves every audited triangle and textured sign in world space (115.679666ms)
+✔ all six facade signs remain visible in front of their buildings and containers (14.407042ms)
+Walking prediction: 9600 identical positions across all building faces and classes
+✔ recorded walking inputs produce identical client, server and replay positions at every building face (201.273667ms)
+✔ desktop production loop at 0 ms RTT: first-frame ammo/reload and correct startup (160.790416ms)
+✔ desktop production loop at 350 ms RTT: first-frame ammo/reload and correct startup (51.417834ms)
+✔ touch invite production loop at 0 ms RTT: first-frame ammo/reload and correct startup (45.525375ms)
+✔ touch invite production loop at 350 ms RTT: first-frame ammo/reload and correct startup (42.655792ms)
+✔ all map faces, corners and ramp junctions at maximum run/slide/hop speed conserve collision energy (1066.544625ms)
+✔ ramp side contact cannot turn a held/buffered hop into another launch (0.271167ms)
+✔ 1s blocked socket: prediction advances at 144 FPS and recovery never snaps the camera (115.946375ms)
+✔ 1s hidden TCP queue: prediction advances at 144 FPS and recovery never snaps the camera (42.603542ms)
+✔ 1s upload only: prediction advances at 144 FPS and recovery never snaps the camera (20.154959ms)
+✔ 2s blocked socket: prediction advances at 144 FPS and recovery never snaps the camera (84.876834ms)
+✔ 2s hidden TCP queue: prediction advances at 144 FPS and recovery never snaps the camera (56.129291ms)
+✔ 2s upload only: prediction advances at 144 FPS and recovery never snaps the camera (50.185625ms)
+✔ a key press is visible before the next physics or send tick without mutating prediction (6.722667ms)
+✔ a delayed upgrade sends join only after open and retries until welcome AND the player snapshot arrive (6.273375ms)
+✔ an open socket with pongs but no assignment reconnects even without a close event (2.262334ms)
+✔ a stalled upgrade is bounded and repeated failed handshakes retain reconnect backoff (0.697ms)
+✔ unavailable session storage cannot prevent joining, welcome callbacks, or in-memory session resumption (1.278542ms)
+✔ a dead connection resumes its room and session only after sustained silence and backoff (0.703333ms)
+✔ 1000ms per connection stage reaches play and survives repeated stalls on the same socket (0.990042ms)
+✔ 2000ms per connection stage reaches play and survives repeated stalls on the same socket (0.531667ms)
+✔ 3000ms per connection stage reaches play and survives repeated stalls on the same socket (0.511416ms)
+✔ 4000ms per connection stage reaches play and survives repeated stalls on the same socket (0.920458ms)
+✔ late snapshots report a slow connection, request state, and never replace a responsive socket (0.97575ms)
+✔ handshake and reconnect retries use bounded exponential backoff with jitter (0.336917ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"8fa4c462"}
+{"event":"ws.message","connectionId":"8fa4c462","type":"ping","bytes":36}
+{"event":"ws.message","connectionId":"8fa4c462","type":"join","bytes":87}
+{"event":"ws.joined","connectionId":"8fa4c462","room":"W8RUR","player":"5931aec1"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"b0696405"}
+{"event":"ws.message","connectionId":"b0696405","type":"join","bytes":92}
+{"event":"ws.joined","connectionId":"b0696405","room":"W8RUR","player":"45966c64"}
+{"event":"ws.message","connectionId":"b0696405","type":"join","bytes":92}
+{"event":"ws.close","connectionId":"b0696405","code":1006,"reason":"","durationMs":5057,"receivedMessages":7}
+{"event":"ws.close","connectionId":"8fa4c462","code":1006,"reason":"","durationMs":7881,"receivedMessages":8}
+✔ real delayed WebSocket handshakes recover a lost join and lost assignment without duplicate rooms or players (8710.803416ms)
+✔ inputs remain ordered and bounded while the socket is blocked, and serialize at 20 Hz (5.244ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"94cba1d7"}
+{"event":"ws.message","connectionId":"94cba1d7","type":"join","bytes":87}
+{"event":"ws.joined","connectionId":"94cba1d7","room":"DMZFR","player":"55fdd88d"}
+{"event":"ws.close","connectionId":"94cba1d7","code":1006,"reason":"","durationMs":4,"receivedMessages":1}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"e97c3fd5"}
+{"event":"ws.message","connectionId":"e97c3fd5","type":"join","bytes":87}
+{"event":"ws.joined","connectionId":"e97c3fd5","room":"4GKHX","player":"f68f34bf"}
+{"event":"ws.close","connectionId":"e97c3fd5","code":1006,"reason":"","durationMs":2,"receivedMessages":1}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"c2d6d096"}
+{"event":"ws.message","connectionId":"c2d6d096","type":"join","bytes":87}
+{"event":"ws.joined","connectionId":"c2d6d096","room":"X8KHZ","player":"330e89cd"}
+{"event":"ws.close","connectionId":"c2d6d096","code":1006,"reason":"","durationMs":1,"receivedMessages":1}
+✔ cached arena-v1 clients retain JSON and arena-v2/v3 clients retain binary snapshots (8.664041ms)
+✔ acknowledgements bound inputs hidden in a kernel or proxy even when bufferedAmount is zero (6.351667ms)
+✔ prediction advances independently of discarded uploads, with bounded local replay history (13.559417ms)
+✔ remote interpolation reserves two snapshots behind one-way delivery latency (9.584291ms)
+✔ a respawn does not reopen the transmission window for still-unacknowledged packets (2.120208ms)
+✔ partial acknowledgement credit cannot deadlock an ordered recovery backlog (1.635333ms)
+✔ same-life snapshots cannot change local aim or turn cosmetic drift into movement (2.391375ms)
+✔ binary input preserves sequence/life, button edges and the exact prediction floats (11.345583ms)
+✔ binary full/delta snapshots reconstruct every player field and preserve long-running acknowledgements (5.641125ms)
+✔ all gameplay events use compact binary frames and retain identity, scoring and hit data (1.548625ms)
+✔ local snapshot precision preserves movement along a crate contact face (0.580791ms)
+✔ several predicted decrements accumulate in the current sample; confirmations never double-count (2.224875ms)
+✔ snapshot ACK retires covered predictions; a late confirmation cannot subtract them again (0.495833ms)
+✔ rejected and differently sized hits ease to authority; new damage remains immediate during reconciliation (0.366666ms)
+✔ other players damage bypasses playback, prediction can empty the bar but only authority kills (0.246958ms)
+✔ expired predictions retract quietly; respawn, removal and session reset discard old health debt (0.24925ms)
+✔ real shot feedback changes the health-bar DOM and yellow number in the firing frame without resampling motion (201.394625ms)
+✔ stable, 60 Hz: jittered/late/dropped states never jump and the buffer recovers (104.015541ms)
+✔ stable, 144 Hz: jittered/late/dropped states never jump and the buffer recovers (203.929667ms)
+✔ matched-quantiles, 60 Hz: jittered/late/dropped states never jump and the buffer recovers (115.309833ms)
+✔ matched-quantiles, 144 Hz: jittered/late/dropped states never jump and the buffer recovers (175.529583ms)
+✔ one-second-stalls, 60 Hz: jittered/late/dropped states never jump and the buffer recovers (80.257375ms)
+✔ one-second-stalls, 144 Hz: jittered/late/dropped states never jump and the buffer recovers (118.068ms)
+✔ four-second-blackout, 60 Hz: jittered/late/dropped states never jump and the buffer recovers (83.3465ms)
+✔ four-second-blackout, 144 Hz: jittered/late/dropped states never jump and the buffer recovers (113.389292ms)
+✔ ordinary batched movement stays on the exact historical segment used by lag compensation (0.508542ms)
+✔ one-second silence extrapolates; distance/time caps stop a disconnect, including animation (6.372542ms)
+✔ catch-up bursts, clock shifts and collisions cannot relocate an already visible player (19.403292ms)
+✔ new lives spawn once, then stay on the bounded path while old-life history plays out (1.400125ms)
+Static map: 7 meshes, 15958 triangles
+16 remote characters: 96 meshes
+✔ map geometry builds without WebGL, merges correctly, and has walkable visible ramps (89.515042ms)
+✔ all weapon models and animated class silhouettes have finite, nonempty geometry (6.086875ms)
+✔ mouse camera direction matches authoritative hitscan at every pitch and yaw (0.619833ms)
+✔ a full room uses at most six meshes per remote character with preserved vertex colours (3.126917ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"448a60c6"}
+{"event":"ws.message","connectionId":"448a60c6","type":"join","bytes":86}
+{"event":"ws.joined","connectionId":"448a60c6","room":"9PCKH","player":"426df228"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"fdb2510b"}
+{"event":"ws.message","connectionId":"fdb2510b","type":"join","bytes":78}
+{"event":"ws.joined","connectionId":"fdb2510b","room":"9PCKH","player":"7ce46365"}
+{"event":"ws.close","connectionId":"fdb2510b","code":1006,"reason":"","durationMs":1843,"receivedMessages":13}
+{"event":"ws.close","connectionId":"448a60c6","code":1006,"reason":"","durationMs":1896,"receivedMessages":16}
+✔ host bot settings replicate through invites, countdown, matches and rematches (1915.955458ms)
+✔ difficulty changes actual bot reaction time, aim error and navigation speed (2.013916ms)
+✔ lobby: team is visible immediately and survives stale, intermediate and acknowledged snapshots (168.586792ms)
+✔ lobby: class is visible immediately and survives stale, intermediate and acknowledged snapshots (53.947458ms)
+✔ lobby: team-class is visible immediately and survives stale, intermediate and acknowledged snapshots (73.019292ms)
+✔ lobby: class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (69.232417ms)
+✔ lobby: class-class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (82.911625ms)
+✔ playing: team is visible immediately and survives stale, intermediate and acknowledged snapshots (53.824916ms)
+✔ playing: class is visible immediately and survives stale, intermediate and acknowledged snapshots (49.622667ms)
+✔ playing: team-class is visible immediately and survives stale, intermediate and acknowledged snapshots (52.256375ms)
+✔ playing: class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (41.988125ms)
+✔ playing: class-class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (60.544375ms)
+✔ pending class presentation never masks incoming server damage or death (0.475959ms)
+✔ class cycling retains depleted ammo through selection acknowledgements; rejected selections roll back (12.730666ms)
+✔ sniper: fire input creates visuals in the same frame, before any server message (11.2475ms)
+✔ rifle: fire input creates visuals in the same frame, before any server message (1.267292ms)
+✔ shotgun: fire input creates visuals in the same frame, before any server message (2.572833ms)
+✔ smg: fire input creates visuals in the same frame, before any server message (0.935958ms)
+✔ pistol: fire input creates visuals in the same frame, before any server message (1.597125ms)
+✔ knife: fire input creates visuals in the same frame, before any server message (1.21525ms)
+✔ all viewmodels retain only the right arm through hip, aim and reload poses (1.077ms)
+✔ shot timing survives binary batching without changing the movement floats (2.846458ms)
+✔ rewind includes actual playback delay and upload time with a hard historical ceiling (0.271708ms)
+✔ late pong bursts cannot move the render clock or understate the rewind budget (3.31775ms)
+✔ a recent shot with a delayed render timestamp is not mistaken for a queued old shot (2.892958ms)
+✔ four-second-old fire expires explicitly while its movement is still acknowledged (0.819541ms)
+✔ a claimed fresh shot cannot select a target beyond the retained historical ceiling (0.289875ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"8557562f"}
+{"event":"ws.message","connectionId":"8557562f","type":"join","bytes":93}
+{"event":"ws.joined","connectionId":"8557562f","room":"LV2ML","player":"8a7b44b7"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"5a5e6dd7"}
+{"event":"ws.message","connectionId":"5a5e6dd7","type":"join","bytes":84}
+{"event":"ws.joined","connectionId":"5a5e6dd7","room":"LV2ML","player":"3d8c99c7"}
+{"event":"ws.close","connectionId":"5a5e6dd7","code":1006,"reason":"","durationMs":4148,"receivedMessages":4}
+{"event":"ws.close","connectionId":"8557562f","code":1006,"reason":"","durationMs":4167,"receivedMessages":6}
+✔ a real four-second upload stall reports expired fire to its sender and accepts fresh fire after recovery (4181.869958ms)
+✔ production first paint and lobby exclude the renderer and physics WASM (1291.58725ms)
+✔ startup orchestration: delayed game (196.887334ms)
+✔ startup orchestration: failed chunk (47.361375ms)
+✔ startup orchestration: failed first frame (38.766375ms)
+✔ initial HTML shows a branded loading indicator without executing any JavaScript or loading CSS/fonts (149.251584ms)
+✔ room context, completed stages and fade follow actual lobby/game readiness (17.812459ms)
+✔ failed entry module shows reload without needing the app bundle (15.013916ms)
+✔ failed stylesheet shows reload without needing the app bundle (14.5105ms)
+✔ WebGL failure after lobby paint reopens the same screen with the existing explanation (8.770292ms)
+✔ initialisation exceptions, rejected imports and stalled downloads have a finite failure path (25.802042ms)
+✔ production assets negotiate precompressed bytes, WASM MIME, immutable caching and revalidation (153.072583ms)
+✔ joystick has a radial dead zone, smooth analogue magnitude and circular clamping (3.666667ms)
+✔ analogue magnitude reaches shared physics; desktop full-speed and diagonals retain their speed (4.931375ms)
+✔ moving, looking, firing and jumping track independent pointers across control boundaries (0.325166ms)
+✔ touch starts without pointer lock, keyboard still works, and mouse switches a hybrid back to pointer lock (66.600834ms)
+✔ DOM pointer path supports two-thumb movement + fire + look, pitch clamping, aim toggle and cancellation (15.814333ms)
+✔ portrait start cannot activate movement and orientation change releases every held contact (6.96875ms)
+✔ aim assist has bounded drag-only magnetism; ignores friends, cover and dead targets (1.610042ms)
+✔ mobile performance governor reduces resolution before a stable 30 Hz fallback; desktop is unaffected (0.2965ms)
+✔ independent states tolerate missing, reordered and duplicated packets without rollback (0.962583ms)
+✔ identical TCP traces permit both a large UDP gain and no gain (14.197417ms)
+✔ an outage still stalls the unreliable channel (1.81925ms)
+✔ arrival metrics count only applied states and retain a trailing total outage (0.104292ms)
+✔ sniper/hip: visible weapon geometry and right arm remain in the viewmodel scene (6.593041ms)
+✔ sniper/aim: visible weapon geometry and right arm remain in the viewmodel scene (3.836041ms)
+✔ sniper/reload: visible weapon geometry and right arm remain in the viewmodel scene (0.879334ms)
+✔ rifle/hip: visible weapon geometry and right arm remain in the viewmodel scene (0.996375ms)
+✔ rifle/aim: visible weapon geometry and right arm remain in the viewmodel scene (0.487584ms)
+✔ rifle/reload: visible weapon geometry and right arm remain in the viewmodel scene (0.39825ms)
+✔ shotgun/hip: visible weapon geometry and right arm remain in the viewmodel scene (0.629667ms)
+✔ shotgun/aim: visible weapon geometry and right arm remain in the viewmodel scene (0.382334ms)
+✔ shotgun/reload: visible weapon geometry and right arm remain in the viewmodel scene (0.41325ms)
+✔ smg/hip: visible weapon geometry and right arm remain in the viewmodel scene (0.858209ms)
+✔ smg/aim: visible weapon geometry and right arm remain in the viewmodel scene (0.388459ms)
+✔ smg/reload: visible weapon geometry and right arm remain in the viewmodel scene (0.35625ms)
+✔ pistol/hip: visible weapon geometry and right arm remain in the viewmodel scene (0.306542ms)
+✔ pistol/aim: visible weapon geometry and right arm remain in the viewmodel scene (0.251417ms)
+✔ pistol/reload: visible weapon geometry and right arm remain in the viewmodel scene (0.256792ms)
+✔ knife/hip: visible weapon geometry and right arm remain in the viewmodel scene (0.229167ms)
+✔ knife/aim: visible weapon geometry and right arm remain in the viewmodel scene (0.225833ms)
+✔ knife/reload: visible weapon geometry and right arm remain in the viewmodel scene (0.195625ms)
+✔ visibility regression check rejects a missing, hidden or offscreen weapon even with a right arm present (1.269625ms)
+✔ every generated HUD preview supplies a canvas and boots a visible weapon scene (3865.470958ms)
+✔ sniper: measured first-hit-to-kill timing at the shared 100 HP cap (1.048875ms)
+✔ rifle: measured first-hit-to-kill timing at the shared 100 HP cap (0.109791ms)
+✔ shotgun: measured first-hit-to-kill timing at the shared 100 HP cap (0.084125ms)
+✔ smg: measured first-hit-to-kill timing at the shared 100 HP cap (0.065709ms)
+✔ pistol: measured first-hit-to-kill timing at the shared 100 HP cap (0.079584ms)
+✔ knife: measured first-hit-to-kill timing at the shared 100 HP cap (0.064125ms)
+✔ every class starts and caps at 100 HP (0.057667ms)
+ℹ tests 289
+ℹ suites 0
+ℹ pass 289
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12217.642709

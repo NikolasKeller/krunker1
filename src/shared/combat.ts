@@ -60,3 +60,7 @@ export function traceShot(weapon: WeaponId, origin: Vec3, dirs: Vec3[], targets:
 export function visibleTargets(shooter: PlayerState, players: PlayerState[], mode: Mode, _now: number) {
     return players.filter(q => q.id !== shooter.id && q.alive && (mode !== 'tdm' || q.team !== shooter.team));
 }
+
+export function canDamage(shooter: Pick<PlayerState, 'team'>, victim: Pick<PlayerState, 'team'>, mode: Mode) {
+    return mode !== 'tdm' || shooter.team !== victim.team;
+}

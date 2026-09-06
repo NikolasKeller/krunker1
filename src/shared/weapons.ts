@@ -26,11 +26,11 @@ export interface WeaponStats {
 export const PLAYER_MAX_HP = 100;
 
 // Preserve the former 60-HP Hunter damage ratios at the common 100-HP cap.
-// Cadence, reload, falloff, spread and head/leg multipliers are unchanged.
+// Shotgun close damage/falloff are tuned separately for its short-range role.
 export const WEAPONS: Record<WeaponId, WeaponStats> = {
     sniper: { name: 'TRIANGLE .50', damage: 184, head: 1.5, legs: 0.55, interval: 1150, reload: 1900, magazine: 3, range: 150, falloff: 120, pellets: 1, spread: 0.028, moving: 0.014, bloom: 0.01, maxBloom: 0.03, recovery: 0.05, aimSpread: 0.018, scopeTime: 180, recoil: [[0.022, 0.004], [0.024, -0.006], [0.021, 0.002]] },
     rifle: { name: 'ASSAULT RIFLE', damage: 42, head: 1.5, legs: 0.8, interval: 120, reload: 1700, magazine: 30, range: 110, falloff: 38, pellets: 1, spread: 0.0025, moving: 0.009, bloom: 0.0018, maxBloom: 0.023, recovery: 0.032, aimSpread: 0.38, scopeTime: 120, recoil: [[0.009, -0.001], [0.011, 0.003], [0.013, 0.004], [0.012, -0.006], [0.013, -0.005], [0.011, 0.007]] },
-    shotgun: { name: 'DOUBLE BARREL', damage: 40, head: 1.35, legs: 0.8, interval: 800, reload: 1550, magazine: 2, range: 32, falloff: 7, pellets: 8, spread: 0.073, moving: 0.014, bloom: 0.016, maxBloom: 0.03, recovery: 0.06, aimSpread: 0.8, scopeTime: 100, recoil: [[0.03, -0.006], [0.038, 0.008]] },
+    shotgun: { name: 'DOUBLE BARREL', damage: 52, head: 1.35, legs: 0.8, interval: 800, reload: 1550, magazine: 2, range: 22, falloff: 5, pellets: 8, spread: 0.073, moving: 0.014, bloom: 0.016, maxBloom: 0.03, recovery: 0.06, aimSpread: 0.8, scopeTime: 100, recoil: [[0.03, -0.006], [0.038, 0.008]] },
     smg: { name: 'COMPACT SMG', damage: 30, head: 1.5, legs: 0.8, interval: 72, reload: 1400, magazine: 34, range: 80, falloff: 22, pellets: 1, spread: 0.009, moving: 0.016, bloom: 0.0028, maxBloom: 0.039, recovery: 0.046, aimSpread: 0.5, scopeTime: 100, recoil: [[0.007, 0.004], [0.008, -0.003], [0.009, 0.006], [0.011, -0.008], [0.009, 0.006]] },
     pistol: { name: 'SIDEARM', damage: 40, head: 1.6, legs: 0.8, interval: 240, reload: 1200, magazine: 10, range: 80, falloff: 28, pellets: 1, spread: 0.006, moving: 0.012, bloom: 0.003, maxBloom: 0.02, recovery: 0.04, aimSpread: 0.4, scopeTime: 100, recoil: [[0.012, 0.002], [0.014, -0.003]] },
     knife: { name: 'COMBAT KNIFE', damage: 109, head: 1, legs: 1, interval: 450, reload: 0, magazine: 1, range: 2.8, falloff: 3, pellets: 1, spread: 0, moving: 0, bloom: 0, maxBloom: 0, recovery: 1, aimSpread: 1, scopeTime: 0, recoil: [[0, 0]] },

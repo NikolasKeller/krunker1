@@ -1,0 +1,796 @@
+{
+  "samples": 300,
+  "method": "100 HP. Seeded paired open-arena server rifle bot duels, start at 18 m, bot moves normally; moving target strafes +/-4 m at 6 m/s. Bot TTK starts on exposure; failures censored at 20 s and separately counted. Shotgun: torso-centred hip fire with production spread/recoil/cadence/reload, first shot at t=0, failures censored at 120 s. Stationary target, shooter speed held for spread. Out-of-range targets cannot die. Weapon table assumes every pellet hits and excludes reload.",
+  "bots": [
+    {
+      "difficulty": "easy",
+      "target": "stationary",
+      "trials": 300,
+      "shots": 2250,
+      "hits": 797,
+      "accuracyPercent": 35.422222222222224,
+      "headshotsPercentOfHits": 21.580928481806776,
+      "meanEncounterTtkMs": 1427.2222222222235,
+      "meanFirstShotToKillMs": 877.222222222222,
+      "meanFirstShotMs": 550,
+      "timeouts": 0
+    },
+    {
+      "difficulty": "easy",
+      "target": "moving",
+      "trials": 300,
+      "shots": 2491,
+      "hits": 785,
+      "accuracyPercent": 31.51344841429145,
+      "headshotsPercentOfHits": 23.694267515923567,
+      "meanEncounterTtkMs": 1523.9444444444437,
+      "meanFirstShotToKillMs": 973.9444444444435,
+      "meanFirstShotMs": 550,
+      "timeouts": 0
+    },
+    {
+      "difficulty": "normal",
+      "target": "stationary",
+      "trials": 300,
+      "shots": 1776,
+      "hits": 812,
+      "accuracyPercent": 45.72072072072072,
+      "headshotsPercentOfHits": 19.21182266009852,
+      "meanEncounterTtkMs": 1022.6666666666671,
+      "meanFirstShotToKillMs": 655.9999999999994,
+      "meanFirstShotMs": 366.66666666666805,
+      "timeouts": 0
+    },
+    {
+      "difficulty": "normal",
+      "target": "moving",
+      "trials": 300,
+      "shots": 2212,
+      "hits": 814,
+      "accuracyPercent": 36.79927667269439,
+      "headshotsPercentOfHits": 18.304668304668304,
+      "meanEncounterTtkMs": 1216.444444444443,
+      "meanFirstShotToKillMs": 849.7777777777762,
+      "meanFirstShotMs": 366.66666666666805,
+      "timeouts": 0
+    },
+    {
+      "difficulty": "hard",
+      "target": "stationary",
+      "trials": 300,
+      "shots": 1836,
+      "hits": 856,
+      "accuracyPercent": 46.62309368191721,
+      "headshotsPercentOfHits": 7.359813084112149,
+      "meanEncounterTtkMs": 932.6666666666663,
+      "meanFirstShotToKillMs": 682.6666666666667,
+      "meanFirstShotMs": 250,
+      "timeouts": 0
+    },
+    {
+      "difficulty": "hard",
+      "target": "moving",
+      "trials": 300,
+      "shots": 1948,
+      "hits": 847,
+      "accuracyPercent": 43.48049281314169,
+      "headshotsPercentOfHits": 9.799291617473434,
+      "meanEncounterTtkMs": 982.4444444444442,
+      "meanFirstShotToKillMs": 732.4444444444439,
+      "meanFirstShotMs": 250,
+      "timeouts": 0
+    }
+  ],
+  "shotgun": [
+    {
+      "distance": 2,
+      "speed": 0,
+      "trials": 300,
+      "meanFirstShotDamage": 320,
+      "oneShotPercent": 100,
+      "meanTtkMs": 0,
+      "meanShots": 1,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 2,
+      "speed": 28,
+      "trials": 300,
+      "meanFirstShotDamage": 320,
+      "oneShotPercent": 100,
+      "meanTtkMs": 0,
+      "meanShots": 1,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 5,
+      "speed": 0,
+      "trials": 300,
+      "meanFirstShotDamage": 325.1333333333333,
+      "oneShotPercent": 100,
+      "meanTtkMs": 0,
+      "meanShots": 1,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 5,
+      "speed": 28,
+      "trials": 300,
+      "meanFirstShotDamage": 317.12,
+      "oneShotPercent": 100,
+      "meanTtkMs": 0,
+      "meanShots": 1,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 8,
+      "speed": 0,
+      "trials": 300,
+      "meanFirstShotDamage": 250.90333333333334,
+      "oneShotPercent": 100,
+      "meanTtkMs": 0,
+      "meanShots": 1,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 8,
+      "speed": 28,
+      "trials": 300,
+      "meanFirstShotDamage": 184.04333333333332,
+      "oneShotPercent": 92,
+      "meanTtkMs": 64,
+      "meanShots": 1.08,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 12,
+      "speed": 0,
+      "trials": 300,
+      "meanFirstShotDamage": 106.83666666666667,
+      "oneShotPercent": 55.00000000000001,
+      "meanTtkMs": 385.8333333333333,
+      "meanShots": 1.4666666666666666,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 12,
+      "speed": 28,
+      "trials": 300,
+      "meanFirstShotDamage": 67.59,
+      "oneShotPercent": 16.666666666666664,
+      "meanTtkMs": 1065.8333333333333,
+      "meanShots": 2.1166666666666667,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 25,
+      "speed": 0,
+      "trials": 300,
+      "meanFirstShotDamage": 3.8066666666666666,
+      "oneShotPercent": 0,
+      "meanTtkMs": 32181.055555555537,
+      "meanShots": 28.506666666666668,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 25,
+      "speed": 28,
+      "trials": 300,
+      "meanFirstShotDamage": 2.1133333333333333,
+      "oneShotPercent": 0,
+      "meanTtkMs": 56799.61111111111,
+      "meanShots": 49.42666666666667,
+      "timeouts": 0,
+      "outOfRange": false
+    },
+    {
+      "distance": 33,
+      "speed": 0,
+      "trials": 300,
+      "meanFirstShotDamage": 0,
+      "oneShotPercent": 0,
+      "meanTtkMs": null,
+      "meanShots": null,
+      "timeouts": 0,
+      "outOfRange": true
+    },
+    {
+      "distance": 33,
+      "speed": 28,
+      "trials": 300,
+      "meanFirstShotDamage": 0,
+      "oneShotPercent": 0,
+      "meanTtkMs": null,
+      "meanShots": null,
+      "timeouts": 0,
+      "outOfRange": true
+    }
+  ],
+  "weapons": [
+    {
+      "weapon": "sniper",
+      "distance": 2,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 184,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "head",
+          "damage": 276,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "legs",
+          "damage": 101,
+          "shots": 1,
+          "ttkMs": 0
+        }
+      ]
+    },
+    {
+      "weapon": "sniper",
+      "distance": 12,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 184,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "head",
+          "damage": 276,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "legs",
+          "damage": 101,
+          "shots": 1,
+          "ttkMs": 0
+        }
+      ]
+    },
+    {
+      "weapon": "sniper",
+      "distance": 25,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 184,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "head",
+          "damage": 276,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "legs",
+          "damage": 101,
+          "shots": 1,
+          "ttkMs": 0
+        }
+      ]
+    },
+    {
+      "weapon": "sniper",
+      "distance": 50,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 184,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "head",
+          "damage": 276,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "legs",
+          "damage": 101,
+          "shots": 1,
+          "ttkMs": 0
+        }
+      ]
+    },
+    {
+      "weapon": "rifle",
+      "distance": 2,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 42,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        },
+        {
+          "zone": "head",
+          "damage": 63,
+          "shots": 2,
+          "ttkMs": 133.33333333333334
+        },
+        {
+          "zone": "legs",
+          "damage": 34,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        }
+      ]
+    },
+    {
+      "weapon": "rifle",
+      "distance": 12,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 42,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        },
+        {
+          "zone": "head",
+          "damage": 63,
+          "shots": 2,
+          "ttkMs": 133.33333333333334
+        },
+        {
+          "zone": "legs",
+          "damage": 34,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        }
+      ]
+    },
+    {
+      "weapon": "rifle",
+      "distance": 25,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 42,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        },
+        {
+          "zone": "head",
+          "damage": 63,
+          "shots": 2,
+          "ttkMs": 133.33333333333334
+        },
+        {
+          "zone": "legs",
+          "damage": 34,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        }
+      ]
+    },
+    {
+      "weapon": "rifle",
+      "distance": 50,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 39,
+          "shots": 3,
+          "ttkMs": 266.6666666666667
+        },
+        {
+          "zone": "head",
+          "damage": 58,
+          "shots": 2,
+          "ttkMs": 133.33333333333334
+        },
+        {
+          "zone": "legs",
+          "damage": 31,
+          "shots": 4,
+          "ttkMs": 400
+        }
+      ]
+    },
+    {
+      "weapon": "shotgun",
+      "distance": 2,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 320,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "head",
+          "damage": 432,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "legs",
+          "damage": 256,
+          "shots": 1,
+          "ttkMs": 0
+        }
+      ]
+    },
+    {
+      "weapon": "shotgun",
+      "distance": 12,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 208,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "head",
+          "damage": 280,
+          "shots": 1,
+          "ttkMs": 0
+        },
+        {
+          "zone": "legs",
+          "damage": 160,
+          "shots": 1,
+          "ttkMs": 0
+        }
+      ]
+    },
+    {
+      "weapon": "shotgun",
+      "distance": 25,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 24,
+          "shots": 5,
+          "ttkMs": 3200
+        },
+        {
+          "zone": "head",
+          "damage": 32,
+          "shots": 4,
+          "ttkMs": 2400
+        },
+        {
+          "zone": "legs",
+          "damage": 24,
+          "shots": 5,
+          "ttkMs": 3200
+        }
+      ]
+    },
+    {
+      "weapon": "shotgun",
+      "distance": 50,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "head",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "legs",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        }
+      ]
+    },
+    {
+      "weapon": "smg",
+      "distance": 2,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 30,
+          "shots": 4,
+          "ttkMs": 250
+        },
+        {
+          "zone": "head",
+          "damage": 45,
+          "shots": 3,
+          "ttkMs": 166.66666666666666
+        },
+        {
+          "zone": "legs",
+          "damage": 24,
+          "shots": 5,
+          "ttkMs": 333.3333333333333
+        }
+      ]
+    },
+    {
+      "weapon": "smg",
+      "distance": 12,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 30,
+          "shots": 4,
+          "ttkMs": 250
+        },
+        {
+          "zone": "head",
+          "damage": 45,
+          "shots": 3,
+          "ttkMs": 166.66666666666666
+        },
+        {
+          "zone": "legs",
+          "damage": 24,
+          "shots": 5,
+          "ttkMs": 333.3333333333333
+        }
+      ]
+    },
+    {
+      "weapon": "smg",
+      "distance": 25,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 29,
+          "shots": 4,
+          "ttkMs": 250
+        },
+        {
+          "zone": "head",
+          "damage": 44,
+          "shots": 3,
+          "ttkMs": 166.66666666666666
+        },
+        {
+          "zone": "legs",
+          "damage": 23,
+          "shots": 5,
+          "ttkMs": 333.3333333333333
+        }
+      ]
+    },
+    {
+      "weapon": "smg",
+      "distance": 50,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 23,
+          "shots": 5,
+          "ttkMs": 333.3333333333333
+        },
+        {
+          "zone": "head",
+          "damage": 34,
+          "shots": 3,
+          "ttkMs": 166.66666666666666
+        },
+        {
+          "zone": "legs",
+          "damage": 18,
+          "shots": 6,
+          "ttkMs": 416.6666666666667
+        }
+      ]
+    },
+    {
+      "weapon": "pistol",
+      "distance": 2,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 40,
+          "shots": 3,
+          "ttkMs": 500
+        },
+        {
+          "zone": "head",
+          "damage": 64,
+          "shots": 2,
+          "ttkMs": 250
+        },
+        {
+          "zone": "legs",
+          "damage": 32,
+          "shots": 4,
+          "ttkMs": 750
+        }
+      ]
+    },
+    {
+      "weapon": "pistol",
+      "distance": 12,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 40,
+          "shots": 3,
+          "ttkMs": 500
+        },
+        {
+          "zone": "head",
+          "damage": 64,
+          "shots": 2,
+          "ttkMs": 250
+        },
+        {
+          "zone": "legs",
+          "damage": 32,
+          "shots": 4,
+          "ttkMs": 750
+        }
+      ]
+    },
+    {
+      "weapon": "pistol",
+      "distance": 25,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 40,
+          "shots": 3,
+          "ttkMs": 500
+        },
+        {
+          "zone": "head",
+          "damage": 64,
+          "shots": 2,
+          "ttkMs": 250
+        },
+        {
+          "zone": "legs",
+          "damage": 32,
+          "shots": 4,
+          "ttkMs": 750
+        }
+      ]
+    },
+    {
+      "weapon": "pistol",
+      "distance": 50,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 32,
+          "shots": 4,
+          "ttkMs": 750
+        },
+        {
+          "zone": "head",
+          "damage": 50,
+          "shots": 2,
+          "ttkMs": 250
+        },
+        {
+          "zone": "legs",
+          "damage": 25,
+          "shots": 4,
+          "ttkMs": 750
+        }
+      ]
+    },
+    {
+      "weapon": "knife",
+      "distance": 2,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 55,
+          "shots": 2,
+          "ttkMs": 450
+        },
+        {
+          "zone": "head",
+          "damage": 55,
+          "shots": 2,
+          "ttkMs": 450
+        },
+        {
+          "zone": "legs",
+          "damage": 55,
+          "shots": 2,
+          "ttkMs": 450
+        }
+      ]
+    },
+    {
+      "weapon": "knife",
+      "distance": 12,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "head",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "legs",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        }
+      ]
+    },
+    {
+      "weapon": "knife",
+      "distance": 25,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "head",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "legs",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        }
+      ]
+    },
+    {
+      "weapon": "knife",
+      "distance": 50,
+      "zones": [
+        {
+          "zone": "body",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "head",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        },
+        {
+          "zone": "legs",
+          "damage": 0,
+          "shots": null,
+          "ttkMs": null
+        }
+      ]
+    }
+  ]
+}

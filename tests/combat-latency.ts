@@ -6,6 +6,7 @@ import { createGameServer } from '../src/server/index';
 import { Network } from '../src/client/network';
 import { correctedPosition } from '../src/client/prediction';
 import { neutralInput, moveState, eyeHeight } from '../src/shared/movement';
+import { WEAPONS } from '../src/shared/weapons';
 import { decodeClientMessage, decodeServerMessage, wireInput } from '../src/shared/protocol';
 import { distance, direction, hitPlayer, worldHit } from '../src/shared/math';
 import { Scene } from 'three';
@@ -106,7 +107,11 @@ for (const rtt of profiles) {
             // Place the fixture before the new-life snapshot. Teleporting an
             // existing client would leave a cosmetic camera correction offset.
             Object.assign(actor.state, moveState(-28, 0, -2));
-            Object.assign(target.state, moveState(-34, 0, -2), { hp: 10000, maxHp: 10000 });
+            // The common-HP pass raised rifle damage: a fixed 10,000 HP fixture
+            // dies at shot 239 of 240. Reserve enough health for every possible
+            // headshot; only the designated final resolution should be lethal.
+            const hp = samples * Math.ceil(WEAPONS.rifle.damage * WEAPONS.rifle.head) + 1;
+            Object.assign(target.state, moveState(-34, 0, -2), { hp, maxHp: hp });
         };
         shooter.send({ type: 'ready', ready: true }); runner.send({ type: 'ready', ready: true });
         await wait(() => clients.every(n => n.round?.phase === 'playing'));
@@ -133,6 +138,8 @@ for (const rtt of profiles) {
             const aim = aimBySeq.get(input.seq); assert.ok(aim, 'every shot has a client render sample');
             active = { ...aim, shotTime: input.shotTime, receivedInterpolationDelay: (input as Input & { interpolationDelay?: number }).interpolationDelay, processedAt: now, serverRtt: a.rtt };
             const before = room.events.length;
+            assert.ok(target.state.alive, 'registration target must survive until the designated final shot');
+            active.targetHpBefore = target.state.hp;
             // Change health only for the designated final resolution. Doing it
             // at input time lets the preceding in-flight shot kill the fixture.
             if (aim.lethalFixture) target.state.hp = 1;
@@ -244,7 +251,6 @@ for (const rtt of profiles) {
         await waitForShots();
         await wait(() => confirmedHits === rows.filter(r => r.hit).length && victimHitEvents === confirmedHits && lethal.opponentHiddenAt);
         for (const slot of [2, 3, 1, 2, 1, 3] as const) {
-            const { WEAPONS } = await import('../src/shared/weapons');
             const weapon = slot === 1 ? 'rifle' : slot === 2 ? 'pistol' : 'knife';
             switchPending = { slot, weapon, name: WEAPONS[weapon].name, pressedAt: Date.now() };
             document.body.dispatchEvent(new window.KeyboardEvent('keydown', { code: `Digit${slot}`, bubbles: true }));

@@ -3,7 +3,7 @@ import type { CombatMessage, GameEvent, Input, Mode, PlayerState, Vec3, WeaponId
 import { shotRays, recoilFor, WEAPONS } from '../shared/weapons';
 import { eyeHeight } from '../shared/movement';
 import { worldHit } from '../shared/math';
-import { traceShot, visibleTargets, type RayHit } from '../shared/combat';
+import { canDamage, traceShot, type RayHit } from '../shared/combat';
 import type { Effects } from './effects';
 
 export type ProvisionalHit = Extract<GameEvent, { type: 'hit' }> & { key: string };
@@ -52,7 +52,8 @@ export class ShotFeedback {
         if (!input.fire) return;
         const w = WEAPONS[p.weapon], origin = { x: p.x, y: p.y + eyeHeight(p), z: p.z };
         const dirs = shotRays(p.weapon, input.yaw, input.pitch, Math.hypot(p.vx, p.vz), p.bloom, aimProgress, index, input.seq, p.life);
-        const trace = traceShot(p.weapon, origin, dirs, visibleTargets(p, remotes, mode, now));
+        const trace = traceShot(p.weapon, origin, dirs, remotes.filter(q => q.id !== p.id && q.alive));
+        trace.hits = trace.hits.filter(hit => canDamage(p, remotes.find(q => q.id === hit.victim)!, mode));
         const impacts: Object3D[] = [];
         if (p.weapon !== 'knife') {
             // The eye determines the aim ray; the tracer starts at the rendered

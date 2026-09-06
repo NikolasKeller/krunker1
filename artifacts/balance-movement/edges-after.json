@@ -1,0 +1,13 @@
+{
+  "cases": 7200,
+  "ticks": 131184,
+  "velocityViolations": 0,
+  "displacementViolations": 0,
+  "penetrations": 0,
+  "maxUnexpectedRise": 0,
+  "sideRise": 0,
+  "airborneRampRise": 0.010000000000000009,
+  "stepHeight": 0.3,
+  "stepX": -1.4143333333333337,
+  "failures": []
+}

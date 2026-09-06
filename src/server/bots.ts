@@ -66,14 +66,23 @@ export interface BotBrain {
     last: Vec3;
     stuck: number;
     roam: number;
+    lastSeen?: { id: string; position: Vec3; until: number };
 }
 export function brain(): BotBrain { return { target: '', seenAt: 0, nextThink: 0, path: [], waypoint: 0, strafe: 1, yawError: 0, pitchError: 0, last: { x: 0, y: 0, z: 0 }, stuck: 0, roam: 0 }; }
 export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerState>, mode: string, difficulty: Difficulty, now: number): Input {
-    const input = neutralInput(p.ack + 1), tune = { easy: { reaction: 520, error: 0.07, speed: 0.62 }, normal: { reaction: 340, error: 0.042, speed: 0.8 }, hard: { reaction: 220, error: 0.023, speed: 0.95 } }[difficulty];
+    const input = neutralInput(p.ack + 1), tune = {
+        easy: { reaction: 520, error: 0.07, speed: 0.62, yaw: .16, pitch: .15, height: 1.1, push: .65 },
+        normal: { reaction: 420, error: 0.044, speed: 0.8, yaw: .15, pitch: .14, height: 1.05, push: .62 },
+        hard: { reaction: 220, error: 0.023, speed: 0.95, yaw: .16, pitch: .15, height: 1.1, push: .65 },
+    }[difficulty];
     const enemies = [...players].filter(q => q.id !== p.id && q.alive && (mode === 'ffa' || q.team !== p.team));
     const origin = { x: p.x, y: p.y + 1.55, z: p.z };
     const visible = enemies.filter(q => { const target = { x: q.x, y: q.y + 1.05, z: q.z }, dist = distance(origin, target); const d = { x: (target.x - origin.x) / dist, y: (target.y - origin.y) / dist, z: (target.z - origin.z) / dist }; return dist < 65 && worldHit(origin, d, dist) >= dist - 0.3; }).sort((a, c) => distance(p, a) - distance(p, c));
     const enemy = visible[0];
+    if (enemy) b.lastSeen = { id: enemy.id, position: { x: enemy.x, y: enemy.y, z: enemy.z }, until: now + 2000 };
+    else if (b.lastSeen && (now >= b.lastSeen.until || !enemies.some(q => q.id === b.lastSeen!.id))) {
+        b.lastSeen = undefined; b.path = []; b.nextThink = 0;
+    }
     if (enemy?.id !== b.target) {
         b.target = enemy?.id ?? '';
         b.seenAt = now;
@@ -83,19 +92,19 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
         b.strafe = Math.random() < 0.5 ? -1 : 1;
         b.yawError = (Math.random() - 0.5) * tune.error * 2;
         b.pitchError = (Math.random() - 0.5) * tune.error;
-        const nearest = [...enemies].sort((a, c) => distance(p, a) - distance(p, c))[0];
         if (distance(p, b.last) < 0.5)
             b.stuck++;
         else
             b.stuck = 0;
         b.last = { x: p.x, y: p.y, z: p.z };
-        let destination: Vec3 = nearest ?? SPAWNS[b.roam % SPAWNS.length];
+        // Pursue only observed positions. Hidden players cannot steer navigation.
+        let destination: Vec3 = enemy ?? b.lastSeen?.position ?? SPAWNS[b.roam % SPAWNS.length];
         // Low-health/reloading bots break line of sight behind a nearby cover corner.
         if (enemy && (p.hp < 35 || p.reloadEnd > now)) {
             const corners = BOXES.filter(c => c.kind === 'crate' || c.kind === 'cover').flatMap(c => [-1, 1].map(s => ({ x: c.x + s * (c.w / 2 + 1.5), y: 0, z: c.z + (c.z - enemy.z > 0 ? 1 : -1) * (c.d / 2 + 1.5) })));
             destination = corners.sort((a, c) => distance(p, a) - distance(p, c))[0] ?? destination;
         }
-        if (b.stuck > 2 || !nearest) {
+        if (b.stuck > 2 || (!enemy && !b.lastSeen)) {
             b.roam = (b.roam + 1) % SPAWNS.length;
             destination = SPAWNS[b.roam];
         }
@@ -106,7 +115,7 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
     if (enemy) {
         const dx = enemy.x - p.x, dz = enemy.z - p.z, dist = Math.hypot(dx, dz);
         aimYaw = Math.atan2(-dx, -dz) + b.yawError;
-        aimPitch = Math.atan2(enemy.y + 1.1 - origin.y, dist) + b.pitchError;
+        aimPitch = Math.atan2(enemy.y + tune.height * (enemy.slide > 0 ? .68 : 1) - origin.y, dist) + b.pitchError;
         input.fire = now - b.seenAt > tune.reaction && Math.abs(Math.atan2(Math.sin(aimYaw - p.yaw), Math.cos(aimYaw - p.yaw))) < 0.16;
         input.aim = dist > 12;
     }
@@ -124,11 +133,11 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
     if (enemy && p.reloadEnd <= now && p.hp >= 35) {
         const dist = distance(p, enemy);
         const preferred = p.weapon === 'shotgun' ? 6 : p.weapon === 'sniper' ? 26 : 15;
-        input.forward = dist > preferred ? 0.65 : dist < preferred - 4 ? -0.35 : 0;
+        input.forward = dist > preferred ? tune.push : dist < preferred - 4 ? -0.35 : 0;
         input.strafe = b.strafe * 0.5;
     }
-    input.yaw = angleLerp(p.yaw, aimYaw, 0.16);
-    input.pitch = p.pitch + (aimPitch - p.pitch) * 0.15;
+    input.yaw = angleLerp(p.yaw, aimYaw, tune.yaw);
+    input.pitch = p.pitch + (aimPitch - p.pitch) * tune.pitch;
     input.jump = b.stuck > 1 && Math.floor(now / 650) % 2 === 0;
     input.reload = p.ammo === 0 || (!enemy && p.ammo < WEAPONS[p.weapon].magazine * 0.5);
     input.shotTime = now;

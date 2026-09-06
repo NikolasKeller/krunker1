@@ -80,7 +80,7 @@ test('difficulty changes actual bot reaction time, aim error and navigation spee
         botInput(bot, b, [bot, enemy], 'tdm', level, 1000);
         assert.equal(b.target, enemy.id, 'the same unobstructed target is visible');
         const early = botInput(bot, b, [bot, enemy], 'tdm', level, 1250);
-        const later = botInput(bot, b, [bot, enemy], 'tdm', level, 1400);
+        const later = botInput(bot, b, [bot, enemy], 'tdm', level, 1450);
         const roam = { ...brain(), nextThink: Infinity, path: [{ x: 34, y: 0, z: 0 }] };
         const movement = botInput(bot, roam, [], 'tdm', level, 1000);
         return { early: early.fire, later: later.fire, error: Math.abs(b.yawError), speed: Math.hypot(movement.forward, movement.strafe) };

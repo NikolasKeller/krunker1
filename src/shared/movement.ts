@@ -91,15 +91,19 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
     // Bound displacement in all three axes, independently of tick duration and
     // slide/hop boosts. Forces and input edges still run exactly once per tick.
     const steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy), Math.abs(p.vz)) * dt / 0.1));
-    for (let step = 0; step < steps; step++) resolveMovement(p, dt / steps);
+    const maxStepY = p.y + .34;
+    for (let step = 0; step < steps; step++) resolveMovement(p, dt / steps, maxStepY);
 }
 function rampFloor(r: typeof RAMPS[number], x: number, z: number) {
     if (Math.abs(x - r.x) >= r.w / 2 + RADIUS || Math.abs(z - r.z) >= r.d / 2 + RADIUS) return null;
     return rampHeight(r, clamp(x + (r.axis === 'x' ? r.sign * RADIUS : 0), r.x - r.w / 2, r.x + r.w / 2),
         clamp(z + (r.axis === 'z' ? r.sign * RADIUS : 0), r.z - r.d / 2, r.z + r.d / 2));
 }
-function resolveMovement(p: MoveState, dt: number) {
-    const oldY = p.y, bodyH = p.slide > 0 ? 1.26 : HEIGHT;
+function resolveMovement(p: MoveState, dt: number, maxStepY: number) {
+    const bodyH = p.slide > 0 ? 1.26 : HEIGHT;
+    const headroom = (top: number) => !BOXES.some(b =>
+        Math.abs(p.x - b.x) < b.w / 2 + RADIUS - 1e-9 && Math.abs(p.z - b.z) < b.d / 2 + RADIUS - 1e-9 &&
+        b.y + b.h / 2 > p.y + bodyH + 1e-9 && b.y - b.h / 2 < top + bodyH - 1e-9);
     for (const axis of ['x', 'z'] as const) {
         const velocity = axis === 'x' ? 'vx' : 'vz';
         const start = p[axis];
@@ -113,9 +117,7 @@ function resolveMovement(p: MoveState, dt: number) {
             // width. Use the same contact tolerance as the vertical faces.
             if (Math.abs(p.x - b.x) < b.w / 2 + RADIUS - 1e-9 && Math.abs(p.z - b.z) < b.d / 2 + RADIUS - 1e-9) {
                 const top = b.y + b.h / 2;
-                if (top - p.y <= 0.34 && p.grounded && !BOXES.some(ceiling =>
-                    Math.abs(p.x - ceiling.x) < ceiling.w / 2 + RADIUS && Math.abs(p.z - ceiling.z) < ceiling.d / 2 + RADIUS &&
-                    ceiling.y - ceiling.h / 2 >= p.y + bodyH - 1e-9 && ceiling.y - ceiling.h / 2 < top + bodyH)) {
+                if (top <= maxStepY && p.grounded && p.vy <= 0 && headroom(top)) {
                     p.y = top;
                     continue;
                 }
@@ -126,12 +128,20 @@ function resolveMovement(p: MoveState, dt: number) {
         }
         for (const r of RAMPS) {
             const h = rampFloor(r, p.x, p.z);
-            if (h !== null && h > p.y + 0.62 && p.y < r.h) {
-                p[axis] = start;
-                p[velocity] = 0;
+            if (h !== null && h > p.y + 1e-9) {
+                const slope = r.sign * r.h / (r.axis === 'x' ? r.w : r.d);
+                const climb = axis === r.axis ? Math.max(0, (p[axis] - start) * slope) : 0;
+                // Only grounded travel along the slope can raise the feet, by
+                // exactly the height of that travel. Side faces are walls, and
+                // an airborne player never gets snapped onto an uphill floor.
+                if (p.grounded && p.vy <= 0 && h - p.y <= climb + 1e-9 && headroom(h)) p.y = h;
+                else { p[axis] = start; p[velocity] = 0; }
             }
         }
     }
+    // Step/slope travel established a new support height. Using the pre-step Y
+    // here let gravity bury the feet, then the next substep ejected another axis.
+    const oldY = p.y;
     p.y += p.vy * dt;
     p.grounded = false;
     let floor = 0;
@@ -149,7 +159,7 @@ function resolveMovement(p: MoveState, dt: number) {
     }
     for (const r of RAMPS) {
         const h = rampFloor(r, p.x, p.z);
-        if (h !== null && h <= oldY + 0.65)
+        if (h !== null && h <= oldY + 1e-9 && p.vy <= 0)
             floor = Math.max(floor, h);
     }
     if (p.y <= floor) {
