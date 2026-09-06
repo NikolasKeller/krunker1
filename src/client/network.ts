@@ -1,5 +1,5 @@
 import { type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
-import { predictInput, PredictionHistory, smoothCorrection } from './prediction';
+import { correctedPosition, predictInput, PredictionHistory, preserveLocalMotion, smoothCorrection } from './prediction';
 import { RemoteInterpolation } from './interpolation';
 import { lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
@@ -49,6 +49,11 @@ export class Network {
     reconciliations = 0;
     maxCorrection = 0;
     correctionDistances: number[] = [];
+    rawCorrectionDistances: number[] = [];
+    maxRawCorrection = 0;
+    movementMeasuredAt = 0;
+    renderedCorrectionDistances: number[] = [];
+    maxRenderedCorrection = 0;
     maxFrameCorrection = 0;
     private retry = 0;
     private generation = 0;
@@ -126,6 +131,9 @@ export class Network {
         this.inputs.clear();
         this.predictionHistory.clear();
         this.correction = { x: 0, y: 0, z: 0 };
+        this.correctionDistances = []; this.rawCorrectionDistances = []; this.renderedCorrectionDistances = [];
+        this.reconciliations = this.maxCorrection = this.maxRawCorrection = this.maxRenderedCorrection = this.maxFrameCorrection = 0;
+        this.movementMeasuredAt = performance.now();
         this.lastSnapshot = 0;
         const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`, WIRE_PROTOCOL);
         ws.binaryType = 'arraybuffer';
@@ -193,6 +201,19 @@ export class Network {
         this.maxFrameCorrection = Math.max(this.maxFrameCorrection, distance);
         return distance;
     }
+    get movementMetrics() {
+        const distribution = (values: number[]) => {
+            const sorted = [...values].sort((a, b) => a - b);
+            return { p50: sorted[Math.floor((sorted.length - 1) * .5)] ?? 0, p95: sorted[Math.floor((sorted.length - 1) * .95)] ?? 0 };
+        };
+        const seconds = (performance.now() - this.movementMeasuredAt) / 1000;
+        return { seconds, retainedSamples: this.correctionDistances.length, percentileWindowSeconds: 1200,
+            rawMetres: { ...distribution(this.rawCorrectionDistances), max: this.maxRawCorrection },
+            appliedMetres: { ...distribution(this.correctionDistances), max: this.maxCorrection },
+            renderedSnapshotMetres: { ...distribution(this.renderedCorrectionDistances), max: this.maxRenderedCorrection },
+            visibleThresholdMetres: .01, correctionsPerSecond: this.reconciliations / Math.max(seconds, .001),
+            maxFrameCorrectionMetres: this.maxFrameCorrection, droppedInputs: this.inputs.dropped };
+    }
     flush() { if (this.ws) this.inputs.flush(this.ws); }
     private receive(m: ServerMessage) {
         this.lastMessageAt = Date.now();
@@ -252,20 +273,32 @@ export class Network {
                 this.status = 'CONNECTED';
                 this.retry = 0;
                 const old = this.predicted;
+                const oldView = old && correctedPosition(old, this.correction);
                 this.pending = this.pending.filter(i => i.seq > local.ack);
                 this.seq = Math.max(this.seq, local.ack);
                 this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
                 if (old && old.life === local.life && old.alive === local.alive) {
+                    if (!this.movementMeasuredAt) this.movementMeasuredAt = performance.now();
+                    const raw = Math.hypot(old.x - this.predicted.x, old.y - this.predicted.y, old.z - this.predicted.z);
+                    this.maxRawCorrection = Math.max(this.maxRawCorrection, raw);
+                    this.rawCorrectionDistances.push(raw);
+                    if (this.rawCorrectionDistances.length > 24000) this.rawCorrectionDistances.shift();
+                    preserveLocalMotion(old, this.predicted);
                     const dx = old.x - this.predicted.x, dy = old.y - this.predicted.y, dz = old.z - this.predicted.z;
                     const error = Math.hypot(dx, dy, dz);
                     this.maxCorrection = Math.max(this.maxCorrection, error);
                     this.correctionDistances.push(error);
-                    if (this.correctionDistances.length > 1200) this.correctionDistances.shift();
+                    if (this.correctionDistances.length > 24000) this.correctionDistances.shift();
                     if (error > 0.01)
                         this.reconciliations++;
                     this.correction.x += dx;
                     this.correction.y += dy;
                     this.correction.z += dz;
+                    const view = correctedPosition(this.predicted, this.correction);
+                    const rendered = Math.hypot(oldView!.x - view.x, oldView!.y - view.y, oldView!.z - view.z);
+                    this.maxRenderedCorrection = Math.max(this.maxRenderedCorrection, rendered);
+                    this.renderedCorrectionDistances.push(rendered);
+                    if (this.renderedCorrectionDistances.length > 24000) this.renderedCorrectionDistances.shift();
                 }
                 else {
                     this.pending = [];

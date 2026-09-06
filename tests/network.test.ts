@@ -267,7 +267,7 @@ test('real delayed WebSocket handshakes recover a lost join and lost assignment 
     }
 });
 
-test('inputs coalesce independently of rendering and remain bounded while the socket is blocked', t => {
+test('inputs remain ordered and bounded while the socket is blocked, and serialize at 20 Hz', t => {
     const { net, ws } = setup(t); ws.open(); assignment(ws)();
     for (let seq = 1; seq <= 3; seq++) net.input(neutralInput(seq));
     assert.equal(ws.sent.filter(m => m.type === 'input').length, 0, 'rendering does not send packets');
@@ -276,17 +276,24 @@ test('inputs coalesce independently of rendering and remain bounded while the so
     assert.ok(batch?.type === 'input');
     assert.deepEqual(batch.inputs.map(i => i.seq), [1, 2, 3]);
     ws.bufferedAmount = 100;
-    for (let seq = 4; seq <= 1000; seq++) {
-        net.input({ ...neutralInput(seq), forward: seq < 995 ? 1 : 0, strafe: seq >= 998 ? -1 : 0, jump: seq === 999 });
+    for (let seq = 4; seq <= 243; seq++) {
+        net.input({ ...neutralInput(seq), forward: seq < 238 ? 1 : 0, strafe: seq >= 241 ? -1 : 0, jump: seq === 242 });
         net.inputs.flush(ws, 1000 + seq * INPUT_SEND_MS);
     }
     assert.equal(ws.sent.filter(m => m.type === 'input').length, 1, 'blocked transport does not queue sends');
     assert.ok(net.pending.length <= MAX_PENDING_INPUTS);
-    assert.equal(net.outgoing.length, MAX_INPUT_BATCH);
-    ws.bufferedAmount = 0; net.inputs.flush(ws, 100000);
+    assert.equal(net.outgoing.length, 240, 'all four seconds of unsent movement survive');
+    ws.bufferedAmount = 0;
+    for (let packet = 0; packet < 20; packet++) {
+        const now = 100000 + packet * INPUT_SEND_MS;
+        net.inputs.flush(ws, now);
+        assert.equal(net.inputs.flush(ws, now + 1), 0, 'catch-up never exceeds 20 packets/s');
+    }
+    const sequences = ws.sent.filter(m => m.type === 'input').flatMap(m => m.inputs.map(i => i.seq));
+    assert.deepEqual(sequences, Array.from({ length: 243 }, (_, i) => i + 1));
+    assert.equal(net.inputs.dropped, 0);
     const latest = ws.sent.at(-1); assert.ok(latest?.type === 'input');
-    assert.equal(latest.inputs.at(-1)?.seq, 1000);
-    assert.equal(latest.inputs[0].seq, 1000 - MAX_INPUT_BATCH + 1, 'resume with recent controls');
+    assert.equal(latest.inputs.at(-1)?.seq, 243);
     assert.deepEqual(latest.inputs.slice(-3).map(i => [i.forward, i.strafe, i.jump]), [[0, -1, false], [0, -1, true], [0, -1, false]], 'newest stop, turn and jump edges survive coalescing');
 });
 
@@ -321,12 +328,12 @@ test('acknowledgements bound inputs hidden in a kernel or proxy even when buffer
     const sent = ws.sent.filter(m => m.type === 'input');
     assert.equal(sent.reduce((n, m) => n + m.inputs.length, 0), MAX_IN_FLIGHT_INPUTS);
     assert.equal(net.inputs.inFlight.length, MAX_IN_FLIGHT_INPUTS);
-    assert.ok(net.pending.length <= MAX_IN_FLIGHT_INPUTS + MAX_INPUT_BATCH);
+    assert.ok(net.pending.length <= MAX_PENDING_INPUTS);
     assert.equal(ws.bufferedAmount, 0, 'a locally drained socket is not proof of delivery');
     net.inputs.acknowledge(MAX_IN_FLIGHT_INPUTS);
     net.inputs.flush(ws, 100000);
     const latest = ws.sent.at(-1); assert.ok(latest?.type === 'input');
-    assert.equal(latest.inputs.at(-1)?.seq, 1000, 'recovery sends recent controls, not the skipped backlog');
+    assert.equal(latest.inputs[0].seq, 1000 - MAX_PENDING_INPUTS + 1, 'an outage beyond retention resumes from the oldest retained command');
     assert.equal(net.inputs.inFlight.length, MAX_INPUT_BATCH);
 });
 
@@ -336,22 +343,22 @@ test('prediction advances independently of discarded uploads, with bounded local
     Object.assign(net.local!, moveState(34, 0, 24));
     net.predicted = { ...net.local! }; net.round!.phase = 'playing';
     ws.bufferedAmount = 100;
-    for (let seq = 1; seq <= 600; seq++) {
+    for (let seq = 1; seq <= MAX_PENDING_INPUTS + 120; seq++) {
         const before = net.predicted!.z;
         // Reverse before reaching map boundaries; neither queue capacity nor
         // history eviction may remove a local simulation step.
         net.input({ ...neutralInput(seq), forward: Math.floor((seq - 1) / 60) % 2 ? -1 : 1 });
         net.inputs.flush(ws, seq * INPUT_SEND_MS);
         if (seq % 60 > 12) assert.ok(Math.abs(net.predicted!.z - before) > .15, `local step ${seq} advances`);
-        if (seq > 360 && seq % 3 === 0) {
+        if (seq > MAX_PENDING_INPUTS && seq % 3 === 0) {
             const position: number = net.predicted!.z;
             ws.receive({ type: 'snapshot', n: seq, base: 0, time: Date.now(), full: true, players: [{ ...net.local!, hp: 80 }], removed: [] });
             assert.equal(net.predicted!.z, position, 'an ACK older than retained replay history cannot erase movement');
             assert.equal(net.predicted!.hp, 80, 'gameplay updates still apply during an upload outage');
         }
     }
-    assert.equal(net.pending.length, MAX_INPUT_BATCH);
-    assert.equal(net.predictionHistory.pending.length, 360, 'replay memory stays bounded without stalling simulation');
+    assert.equal(net.pending.length, MAX_PENDING_INPUTS);
+    assert.equal(net.predictionHistory.pending.length, MAX_PENDING_INPUTS, 'replay memory stays bounded without stalling simulation');
 });
 
 test('remote interpolation reserves two snapshots behind one-way delivery latency', t => {
@@ -374,10 +381,36 @@ test('a respawn does not reopen the transmission window for still-unacknowledged
         net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS);
     }
     ws.receive({ type: 'snapshot', n: 2, base: 0, time: Date.now(), full: true, players: [{ ...net.local!, life: net.local!.life + 1 }], removed: [] });
-    for (let seq = 31; seq <= 60; seq++) { net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS); }
+    for (let seq = MAX_IN_FLIGHT_INPUTS + 1; seq <= MAX_IN_FLIGHT_INPUTS + 30; seq++) { net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS); }
     assert.equal(net.inputs.inFlight.length, MAX_IN_FLIGHT_INPUTS);
     assert.equal(ws.sent.filter(m => m.type === 'input').reduce((n, m) => n + m.inputs.length, 0), MAX_IN_FLIGHT_INPUTS);
     ws.receive({ type: 'snapshot', n: 3, base: 0, time: Date.now(), full: true, players: [{ ...net.local!, ack: 30 }], removed: [] });
-    net.inputs.flush(ws, 10000);
-    const packet = ws.sent.at(-1); assert.ok(packet?.type === 'input'); assert.equal(packet.inputs.at(-1)?.seq, 60);
+    net.inputs.flush(ws, 100000);
+    const packet = ws.sent.at(-1); assert.ok(packet?.type === 'input'); assert.equal(packet.inputs.at(-1)?.seq, MAX_IN_FLIGHT_INPUTS + MAX_INPUT_BATCH);
+});
+
+test('partial acknowledgement credit cannot deadlock an ordered recovery backlog', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    for (let seq = 1; seq <= MAX_IN_FLIGHT_INPUTS + 120; seq++) {
+        net.input(neutralInput(seq)); net.inputs.flush(ws, seq * INPUT_SEND_MS);
+    }
+    net.inputs.acknowledge(1); net.inputs.flush(ws, 100000);
+    const packet = ws.sent.at(-1); assert.ok(packet?.type === 'input');
+    assert.deepEqual(packet.inputs.map(i => i.seq), [MAX_IN_FLIGHT_INPUTS + 1]);
+    assert.equal(net.inputs.inFlight.length, MAX_IN_FLIGHT_INPUTS);
+});
+
+test('same-life snapshots cannot change local aim or turn cosmetic drift into movement', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    Object.assign(net.predicted!, moveState(34, 0, 24), { yaw: 1.1, pitch: -.4 });
+    const before = { ...net.predicted! };
+    for (let n = 2; n <= 101; n++) {
+        ws.receive({ type: 'snapshot', n, base: 0, full: true, time: Date.now(), players: [{ ...before, z: before.z + .06, yaw: -2, pitch: 1, hp: 50 }], removed: [] });
+        assert.equal(net.predicted!.z, before.z); assert.equal(net.predicted!.yaw, before.yaw); assert.equal(net.predicted!.pitch, before.pitch);
+        assert.equal(net.predicted!.hp, 50);
+    }
+    assert.ok(Math.abs(net.movementMetrics.rawMetres.p95 - .06) < 1e-12, 'instrumentation records the disagreement before suppression');
+    assert.equal(net.movementMetrics.appliedMetres.max, 0);
+    assert.equal(net.movementMetrics.renderedSnapshotMetres.max, 0);
+    assert.equal(net.movementMetrics.correctionsPerSecond, 0);
 });

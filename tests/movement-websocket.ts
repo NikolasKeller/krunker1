@@ -5,6 +5,8 @@ import { WebSocket } from 'ws';
 import { Network } from '../src/client/network';
 import { neutralInput } from '../src/shared/movement';
 import { STEP } from '../src/shared/types';
+import { MAX_IN_FLIGHT_INPUTS, MAX_PENDING_INPUTS } from '../src/shared/protocol';
+import { MAX_CORRECTION_SPEED } from '../src/client/prediction';
 
 // Run against an isolated production HTTP/WS port, locally or inside Railway.
 // The real client owns prediction, input pacing and acknowledgement backpressure.
@@ -68,9 +70,9 @@ for (const stallMs of [1000, 2000]) {
         assert.equal(row.frozenSteps, 0, 'actual WebSocket backpressure cannot pause local walking');
         assert.ok(row.movedMetres > stallMs / 1000 * 9);
         assert.ok(cameraJump < 1e-8, 'no snapshot camera teleport');
-        assert.ok(row.visibleCorrectionMetresPerSecond.max <= 6 + 1e-9, 'at most 10 cm of correction per 60 FPS frame');
+        assert.ok(row.visibleCorrectionMetresPerSecond.max <= MAX_CORRECTION_SPEED + 1e-9, 'at most 1 cm of correction per 60 FPS frame');
         assert.ok(row.remainingVisualCorrectionMetres < .001, 'recovery converges');
-        assert.ok(row.maxInFlight <= 30 && row.maxOutgoing <= 12, 'sender bounds remain intact');
+        assert.ok(row.maxInFlight <= MAX_IN_FLIGHT_INPUTS && row.maxOutgoing <= MAX_PENDING_INPUTS, 'sender remains bounded');
     } finally { net.disconnect(); }
 }
 if (process.env.MOVEMENT_WS_REPORT) await writeFile(process.env.MOVEMENT_WS_REPORT, JSON.stringify(report, null, 2) + '\n');

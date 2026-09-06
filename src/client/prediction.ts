@@ -1,12 +1,12 @@
 import { clipPlayerMotion } from '../shared/collision';
 import { move, moveState } from '../shared/movement';
 import { CLASSES } from '../shared/weapons';
+import { MAX_PENDING_INPUTS } from '../shared/protocol';
 import type { Input, MoveState, PlayerState, Vec3 } from '../shared/types';
 
-// Prediction is a local simulation, not a transmission queue. Keep enough replay
-// history for six seconds of stalls, independently of the 12 unsent / 30
-// in-flight transport limits. Longer stalls preserve movement until ACKs catch up.
-export const MAX_PREDICTION_INPUTS = 360;
+// Prediction is independent of transport capacity, including when bounded
+// retention is exhausted by an outage longer than the supported ten seconds.
+export const MAX_PREDICTION_INPUTS = MAX_PENDING_INPUTS;
 const movementFields = Object.keys(moveState()) as (keyof MoveState)[];
 export class PredictionHistory {
     pending: Input[] = [];
@@ -33,13 +33,30 @@ export class PredictionHistory {
     clear() { this.pending = []; this.evictedThrough = 0; }
 }
 
-// Ordinary errors settle within a few frames. A multi-second outage can lose
-// metres of server movement; never turn that into a one-frame camera teleport.
-export const MAX_CORRECTION_SPEED = 6;
+// Same-contact discrepancies below 8 cm are cosmetic. Keep local movement
+// state too, so tiny velocity/ground timer errors cannot repeatedly tug it back.
+export const CORRECTION_DEADZONE = .08;
+export function preserveLocalMotion(previous: PlayerState, next: PlayerState) {
+    const error = Math.hypot(previous.x - next.x, previous.y - next.y, previous.z - next.z);
+    const contact = clipPlayerMotion(previous, next);
+    if (previous.alive && next.alive && previous.life === next.life &&
+        error <= CORRECTION_DEADZONE && previous.grounded === next.grounded &&
+        previous.jumpHeld === next.jumpHeld && previous.slideHeld === next.slideHeld &&
+        Math.hypot(previous.vx - next.vx, previous.vy - next.vy, previous.vz - next.vz) < .05 &&
+        Math.hypot(contact.x - next.x, contact.y - next.y, contact.z - next.z) < 1e-8) {
+        for (const key of movementFields) (next as unknown as Record<string, unknown>)[key] = previous[key];
+    }
+    // Authority never owns the same-life view direction, even with no pending input.
+    if (previous.life === next.life) { next.yaw = previous.yaw; next.pitch = previous.pitch; }
+    return next;
+}
+
+// Residual gameplay corrections drift over many frames (at most 1 cm at 60 Hz).
+export const MAX_CORRECTION_SPEED = .6;
 export function smoothCorrection(correction: Vec3, dt: number) {
     const length = Math.hypot(correction.x, correction.y, correction.z);
     if (!length) return 0;
-    const distance = Math.min(length * (1 - Math.exp(-18 * dt)), MAX_CORRECTION_SPEED * dt);
+    const distance = Math.min(length * (1 - Math.exp(-2.5 * dt)), MAX_CORRECTION_SPEED * dt);
     const scale = 1 - distance / length;
     correction.x *= scale; correction.y *= scale; correction.z *= scale;
     return distance;

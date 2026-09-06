@@ -5,8 +5,10 @@ export const WIRE_PROTOCOL = 'arena-v2';
 export const INPUT_RATE = 20;
 export const INPUT_SEND_MS = 1000 / INPUT_RATE;
 export const MAX_INPUT_BATCH = 12;
-export const MAX_PENDING_INPUTS = 120;
-export const MAX_IN_FLIGHT_INPUTS = 30;
+// Ten seconds of movement history; packets still contain at most 200 ms and
+// are sent at 20 Hz. A four-second outage must not erase locally applied steps.
+export const MAX_PENDING_INPUTS = 600;
+export const MAX_IN_FLIGHT_INPUTS = 360;
 export const MAX_CLIENT_PAYLOAD = 4096;
 const INPUT = 1, SNAPSHOT = 2, EVENTS = 3;
 const utf8 = new TextEncoder(), text = new TextDecoder('utf-8', { fatal: true });

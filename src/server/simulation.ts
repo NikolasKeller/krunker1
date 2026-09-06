@@ -2,13 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { CLASS_IDS, CLASSES, damageFor, shotRays, WEAPONS } from '../shared/weapons';
 import { STEP, MAX_PLAYERS, COUNTDOWN_MS, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import { SPAWNS } from '../shared/map';
-import { eyeHeight, move, moveState, neutralInput, validInput } from '../shared/movement';
+import { eyeHeight, move, moveState, validInput } from '../shared/movement';
 import { distance, hitPlayer, worldHit } from '../shared/math';
 import { History, rewindTime } from './history';
 import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
 import { MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../shared/protocol';
 import { summarizeLineup } from '../shared/lobby';
+export const MAX_QUEUED_SHOT_AGE_MS = 1000;
 export interface Actor {
     state: PlayerState;
     queue: Input[];
@@ -115,6 +116,7 @@ export class Room {
         a.recoilIndex = 0;
         a.aimTime = 0;
         a.queue = [];
+        a.credit = 1;
         // These received commands were discarded by the new life. Release their
         // transmission credit without pretending to have simulated their movement.
         if (!p.bot) p.ack = a.lastSeq;
@@ -169,10 +171,9 @@ export class Room {
         for (const a of this.players.values()) {
             const p = a.state;
             if (!a.connected) continue;
-            // Save up to one input window of simulation time across network jitter.
-            // With only three credits, each delayed 20 Hz packet permanently lost
-            // processing capacity even though inputs still arrived at 60 steps/s.
-            a.credit = Math.min(MAX_INPUT_BATCH, a.credit + 1);
+            // Bank elapsed simulation time through stalls, never sequence gaps.
+            // Catch-up remains bounded per tick and cannot create extra time.
+            a.credit = Math.min(MAX_PENDING_INPUTS, a.credit + 1);
             if (!p.alive && this.round.phase === 'playing' && now >= p.respawnAt)
                 this.spawn(a, now);
             if (p.reloadEnd && now >= p.reloadEnd) {
@@ -186,7 +187,7 @@ export class Room {
             if (a.botBrain && this.round.phase === 'playing' && p.alive)
                 a.queue = [botInput(p, a.botBrain, states, this.round.mode, this.difficulty, now)];
             let processed = 0;
-            while (a.queue.length && a.credit >= 1 && processed < 3) {
+            while (a.queue.length && a.credit >= 1 && processed < MAX_INPUT_BATCH) {
                 const i = a.queue.shift()!;
                 a.credit--;
                 processed++;
@@ -214,23 +215,18 @@ export class Room {
                 move(p, i, CLASSES[p.classId].speed * (weapon === 'knife' ? 1.16 : 1));
                 if (i.reload && weapon !== 'knife' && !p.reloadEnd && p.ammo < WEAPONS[weapon].magazine)
                     p.reloadEnd = now + WEAPONS[weapon].reload;
-                if (i.fire && !p.reloadEnd && now >= a.nextShot) {
+                // Preserve old movement, but never turn a multi-second recovery
+                // backlog into shots at today's targets from yesterday's aim.
+                if (i.fire && now - i.shotTime <= MAX_QUEUED_SHOT_AGE_MS && !p.reloadEnd && now >= a.nextShot) {
                     if (p.ammo > 0 || weapon === 'knife')
                         this.fire(a, i, now);
                     else
                         p.reloadEnd = now + WEAPONS[weapon].reload;
                 }
             }
-            // A slow link can deliver seconds of old commands in one TCP burst.
-            // After this tick's budget, retain only a recent 200 ms input window.
-            // Sequence acknowledgement naturally discards skipped prediction steps.
-            if (a.queue.length > MAX_INPUT_BATCH)
-                a.queue.splice(0, a.queue.length - MAX_INPUT_BATCH);
-            if (!processed && now - a.lastInputAt > 250 && p.alive && this.round.phase === 'playing') {
-                const i = neutralInput(p.ack);
-                i.yaw = p.yaw;
-                move(p, i, CLASSES[p.classId].speed);
-            }
+            // Human movement advances only with acknowledged commands. Applying
+            // unacknowledged neutral physics here changes the replay origin and
+            // makes even a complete input history diverge after upload silence.
         }
         if (this.round.phase === 'playing') this.history.record(now, states);
         if (checkRound(this.round, states, now)) this.resetReady();

@@ -1,0 +1,566 @@
+[
+  {
+    "seconds": 120,
+    "renderHz": 60,
+    "mode": "hidden",
+    "profile": "four-second blackout stress",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1600,
+      "p99": 2925,
+      "max": 4175
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.0646619632240224,
+      "p99": 2.773875798853048,
+      "max": 24.28323386484919
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0.013915826274022443,
+      "p99": 0.9667499927199334,
+      "max": 24.28323386484919
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00021994155526591541,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 0.1
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 10.256934576755945,
+      "p95": 22.548088568768577,
+      "p99": 32.95908824321203,
+      "max": 33.35742390847585
+    },
+    "maxBackwardFrameMetres": 24.098178309293633,
+    "correctionsOver1cmPerSecond": 1.5083333333333333,
+    "frozenStallFrames": 0,
+    "stallFrames": 238,
+    "sequenceGaps": 1407,
+    "dropped": 1407,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 7.53465904652707
+  },
+  {
+    "seconds": 120,
+    "renderHz": 144,
+    "mode": "hidden",
+    "profile": "four-second blackout stress",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1600,
+      "p99": 2925,
+      "max": 4175
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.0646619632240224,
+      "p99": 2.773875798853048,
+      "max": 24.28323386484919
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0.013915826274022443,
+      "p99": 0.9667499927199334,
+      "max": 24.28323386484919
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00009326192121038189,
+      "p95": 0.041666666666666664,
+      "p99": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 10.25693579983945,
+      "p95": 22.54783696056557,
+      "p99": 32.95908824321203,
+      "max": 33.35742390847585
+    },
+    "maxBackwardFrameMetres": 24.205042545404744,
+    "correctionsOver1cmPerSecond": 1.5083333333333333,
+    "frozenStallFrames": 0,
+    "stallFrames": 574,
+    "sequenceGaps": 1407,
+    "dropped": 1407,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 7.53465904652707
+  },
+  {
+    "seconds": 120,
+    "renderHz": 60,
+    "mode": "blocked",
+    "profile": "four-second blackout stress",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1600,
+      "p99": 2925,
+      "max": 4175
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.007169709218164405,
+      "p99": 0.1683730170604676,
+      "max": 21.034542816849626
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0.004099744836999264,
+      "p99": 0.10384483351424127,
+      "max": 21.034542816849626
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00014465325478986928,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 0.1
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 8.818706539530957,
+      "p95": 21.555047661149075,
+      "p99": 28.24668731832897,
+      "max": 28.66238185040706
+    },
+    "maxBackwardFrameMetres": 19.902426534293088,
+    "correctionsOver1cmPerSecond": 0.9166666666666666,
+    "frozenStallFrames": 0,
+    "stallFrames": 238,
+    "sequenceGaps": 1531,
+    "dropped": 1531,
+    "maxPending": 35,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 8.718222382358434
+  },
+  {
+    "seconds": 120,
+    "renderHz": 144,
+    "mode": "blocked",
+    "profile": "four-second blackout stress",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1600,
+      "p99": 2925,
+      "max": 4175
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.007169709218164405,
+      "p99": 0.1683730170604676,
+      "max": 21.034542816849626
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0.004099744836999264,
+      "p99": 0.10384483351424127,
+      "max": 21.034542816849626
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00006007352657038127,
+      "p95": 0.041666666666666664,
+      "p99": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 8.818706539530956,
+      "p95": 21.555047661149075,
+      "p99": 28.24668731832897,
+      "max": 28.662281108095506
+    },
+    "maxBackwardFrameMetres": 20.00742653429309,
+    "correctionsOver1cmPerSecond": 0.9166666666666666,
+    "frozenStallFrames": 0,
+    "stallFrames": 574,
+    "sequenceGaps": 1531,
+    "dropped": 1531,
+    "maxPending": 35,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 8.718222382358434
+  },
+  {
+    "seconds": 120,
+    "renderHz": 60,
+    "mode": "upload-only",
+    "profile": "four-second blackout stress",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1600,
+      "p99": 2925,
+      "max": 4175
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.0646619632240224,
+      "p99": 2.773875798853048,
+      "max": 28.613265602228026
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0.01430667201196202,
+      "p99": 1.0320849197140838,
+      "max": 28.613265602228026
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00020102148710165002,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 0.1
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 10.256928714219402,
+      "p95": 22.548088568768577,
+      "p99": 32.95908824321203,
+      "max": 33.35742390847585
+    },
+    "maxBackwardFrameMetres": 28.406067251657504,
+    "correctionsOver1cmPerSecond": 1.5166666666666666,
+    "frozenStallFrames": 0,
+    "stallFrames": 238,
+    "sequenceGaps": 1406,
+    "dropped": 1406,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 7.534659046527068
+  },
+  {
+    "seconds": 120,
+    "renderHz": 144,
+    "mode": "upload-only",
+    "profile": "four-second blackout stress",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1600,
+      "p99": 2925,
+      "max": 4175
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.0646619632240224,
+      "p99": 2.773875798853048,
+      "max": 28.613265602228026
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0.01430667201196202,
+      "p99": 1.0320849197140838,
+      "max": 28.613265602228026
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00008409214028056328,
+      "p95": 0.041666666666666664,
+      "p99": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 10.256928742747359,
+      "p95": 22.54783696056557,
+      "p99": 32.95908824321203,
+      "max": 33.35742390847585
+    },
+    "maxBackwardFrameMetres": 28.52750850713078,
+    "correctionsOver1cmPerSecond": 1.5166666666666666,
+    "frozenStallFrames": 0,
+    "stallFrames": 574,
+    "sequenceGaps": 1406,
+    "dropped": 1406,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 7.534659046527068
+  },
+  {
+    "seconds": 120,
+    "renderHz": 60,
+    "mode": "hidden",
+    "profile": "matched quantiles",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1121,
+      "p99": 1908,
+      "max": 2158
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.09548613221676669,
+      "p99": 2.7773744654040518,
+      "max": 16.15666767967285
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0,
+      "p99": 2.220446049250313e-16,
+      "max": 0.2420612520307579
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00009294854141785573,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 0.1
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 9.217181877819007,
+      "p95": 20.360042423979017,
+      "p99": 21.625863708633588,
+      "max": 22.040312215098474
+    },
+    "maxBackwardFrameMetres": 7.564930733626135,
+    "correctionsOver1cmPerSecond": 1.55,
+    "frozenStallFrames": 0,
+    "stallFrames": 238,
+    "sequenceGaps": 970,
+    "dropped": 970,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 0.9174346300855077
+  },
+  {
+    "seconds": 120,
+    "renderHz": 144,
+    "mode": "hidden",
+    "profile": "matched quantiles",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1121,
+      "p99": 1908,
+      "max": 2158
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.09548613221676669,
+      "p99": 2.7773744654040518,
+      "max": 16.15666767967285
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0,
+      "p99": 2.220446049250313e-16,
+      "max": 0.2420612520307579
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.000038475730940087394,
+      "p95": 0.041666666666666664,
+      "p99": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 9.215836809096379,
+      "p95": 20.360042423979014,
+      "p99": 21.625860675894685,
+      "max": 22.04032878248422
+    },
+    "maxBackwardFrameMetres": 5.351621100193137,
+    "correctionsOver1cmPerSecond": 1.55,
+    "frozenStallFrames": 0,
+    "stallFrames": 574,
+    "sequenceGaps": 970,
+    "dropped": 970,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 0.9174346300855077
+  },
+  {
+    "seconds": 120,
+    "renderHz": 60,
+    "mode": "blocked",
+    "profile": "matched quantiles",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1121,
+      "p99": 1908,
+      "max": 2158
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.006665281777664235,
+      "p99": 0.15644787863789134,
+      "max": 19.315826995316385
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 3.158111852030743e-7,
+      "p99": 0.05980028389786442,
+      "max": 19.315826995316385
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.0000022815531544726804,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 0.1
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 7.82727522968959,
+      "p95": 19.924983419943075,
+      "p99": 20.154901155886932,
+      "max": 20.525431381514238
+    },
+    "maxBackwardFrameMetres": 18.24744331537696,
+    "correctionsOver1cmPerSecond": 0.8833333333333333,
+    "frozenStallFrames": 0,
+    "stallFrames": 238,
+    "sequenceGaps": 1106,
+    "dropped": 1106,
+    "maxPending": 35,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 2.6415196411333044
+  },
+  {
+    "seconds": 120,
+    "renderHz": 144,
+    "mode": "blocked",
+    "profile": "matched quantiles",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1121,
+      "p99": 1908,
+      "max": 2158
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.006665281777664235,
+      "p99": 0.15644787863789134,
+      "max": 19.315826995316385
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 3.158111852030743e-7,
+      "p99": 0.05980028389786442,
+      "max": 19.315826995316385
+    },
+    "frameCorrectionMetres": {
+      "p50": 9.829313411088613e-7,
+      "p95": 0.041666666666666664,
+      "p99": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 7.83570464863554,
+      "p95": 19.924983419943075,
+      "p99": 20.18516565305848,
+      "max": 20.525445979490012
+    },
+    "maxBackwardFrameMetres": 18.35244331537696,
+    "correctionsOver1cmPerSecond": 0.8833333333333333,
+    "frozenStallFrames": 0,
+    "stallFrames": 574,
+    "sequenceGaps": 1106,
+    "dropped": 1106,
+    "maxPending": 35,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 2.6415196411333044
+  },
+  {
+    "seconds": 120,
+    "renderHz": 60,
+    "mode": "upload-only",
+    "profile": "matched quantiles",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1121,
+      "p99": 1908,
+      "max": 2158
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.09548613221676669,
+      "p99": 2.7773744654040518,
+      "max": 16.15666767967285
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0,
+      "p99": 2.220446049250313e-16,
+      "max": 0.2420612520307579
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.00009294854141785573,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 0.1
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 9.217181877819007,
+      "p95": 20.360042423979017,
+      "p99": 21.625863708633588,
+      "max": 22.040312215098474
+    },
+    "maxBackwardFrameMetres": 7.564930733626135,
+    "correctionsOver1cmPerSecond": 1.55,
+    "frozenStallFrames": 0,
+    "stallFrames": 238,
+    "sequenceGaps": 970,
+    "dropped": 970,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 0.9174346300855077
+  },
+  {
+    "seconds": 120,
+    "renderHz": 144,
+    "mode": "upload-only",
+    "profile": "matched quantiles",
+    "probeRttMs": {
+      "p50": 350,
+      "p95": 1121,
+      "p99": 1908,
+      "max": 2158
+    },
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.09548613221676669,
+      "p99": 2.7773744654040518,
+      "max": 16.15666767967285
+    },
+    "snapshotCameraJumpMetres": {
+      "p50": 0,
+      "p95": 0,
+      "p99": 2.220446049250313e-16,
+      "max": 0.2420612520307579
+    },
+    "frameCorrectionMetres": {
+      "p50": 0.000038475730940087394,
+      "p95": 0.041666666666666664,
+      "p99": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "deviationFromUnimpairedClientMetres": {
+      "p50": 9.215836809096379,
+      "p95": 20.360042423979014,
+      "p99": 21.625860675894685,
+      "max": 22.04032878248422
+    },
+    "maxBackwardFrameMetres": 5.351621100193137,
+    "correctionsOver1cmPerSecond": 1.55,
+    "frozenStallFrames": 0,
+    "stallFrames": 574,
+    "sequenceGaps": 970,
+    "dropped": 970,
+    "maxPending": 42,
+    "maxInFlight": 30,
+    "maxOutgoing": 12,
+    "finalAuthorityErrorMetres": 0,
+    "finalReferenceErrorMetres": 0.9174346300855077
+  }
+]

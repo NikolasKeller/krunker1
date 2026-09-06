@@ -192,7 +192,7 @@ test('server fire cadence and reload duration are authoritative', () => {
     a.state.protectionEnd = 0;
     let seq = 0;
     for (let n = 0; n < 60; n++) {
-        r.enqueue(a, [{ ...neutralInput(++seq), fire: true }], 1300 + n * STEP * 1000);
+        r.enqueue(a, [{ ...neutralInput(++seq), fire: true, shotTime: 1300 + n * STEP * 1000 }], 1300 + n * STEP * 1000);
         r.tick(1300 + n * STEP * 1000);
     }
     const shots = 30 - a.state.ammo;
@@ -334,7 +334,7 @@ test('delayed inputs from a previous life are acknowledged without moving or fir
     assert.ok(r.enqueue(a, [delayed], 2500)); r.tick(2500);
     assert.equal(a.state.ack, 1); assert.equal(a.state.x, origin.x); assert.equal(a.state.z, origin.z);
     assert.equal(r.events.some(e => e.type === 'shot'), false);
-    assert.ok(r.enqueue(a, [{ ...delayed, seq: 2, life: a.state.life }], 2517)); r.tick(2517);
+    assert.ok(r.enqueue(a, [{ ...delayed, seq: 2, life: a.state.life, shotTime: 2517 }], 2517)); r.tick(2517);
     assert.ok(r.events.some(e => e.type === 'shot'));
 });
 
@@ -366,15 +366,15 @@ test('dropped input sequence gaps recover while movement remains limited by serv
     assert.equal(a.queue.length, 0);
 });
 
-test('a stalled TCP stream resumes with recent controls instead of replaying seconds of backlog', () => {
+test('a stalled TCP stream replays every retained movement step within its banked tick budget', () => {
     const r = room(), a = r.add('Burst', 'triggerman', 'blue'); r.start(1000);
     for (let tick = 1; tick <= 60; tick++) r.tick(1000 + tick * STEP * 1000);
     for (let batch = 0; batch < 6; batch++)
         assert.ok(r.enqueue(a, Array.from({ length: 10 }, (_, n) => neutralInput(batch * 10 + n + 1)), 2001));
     r.tick(2017);
-    assert.ok(a.queue.length <= 12, 'only the recent input window survives a simulation tick');
+    assert.equal(a.queue.length, 48, 'unprocessed movement remains queued');
     r.tick(2034);
-    assert.ok(a.state.ack >= 48, 'stale controls do not consume future simulation time');
+    assert.equal(a.state.ack, 24, 'acknowledgements cannot skip locally applied movement');
     for (let tick = 0; tick < 15; tick++) r.tick(2051 + tick * STEP * 1000);
     assert.equal(a.state.ack, 60); assert.equal(a.queue.length, 0);
 });

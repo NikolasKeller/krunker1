@@ -5,7 +5,7 @@ import { Network } from '../src/client/network';
 import { previewInput, MAX_CORRECTION_SPEED } from '../src/client/prediction';
 import { Room } from '../src/server/simulation';
 import { moveState, neutralInput } from '../src/shared/movement';
-import { decodeClientMessage, encodeServerMessage, MAX_IN_FLIGHT_INPUTS, MAX_INPUT_BATCH } from '../src/shared/protocol';
+import { decodeClientMessage, encodeServerMessage, MAX_IN_FLIGHT_INPUTS, MAX_PENDING_INPUTS } from '../src/shared/protocol';
 import { STEP, type ClientMessage, type ServerMessage } from '../src/shared/types';
 
 // Exercise the production Network, binary codec and authoritative simulation on
@@ -84,7 +84,7 @@ for (const stallSeconds of [1, 2]) for (const mode of ['blocked socket', 'hidden
                     if (stalled && mode !== 'upload only') heldDownloads.push(m); else receive(m);
                 }
                 assert.ok(net.inputs.inFlight.length <= MAX_IN_FLIGHT_INPUTS);
-                assert.ok(net.outgoing.length <= MAX_INPUT_BATCH);
+                assert.ok(net.outgoing.length <= MAX_PENDING_INPUTS);
             }
             visible.push(net.smoothCorrection(1 / 144));
             const rendered = previewInput(net.predicted, { ...neutralInput(net.seq + 1), forward: tick < stallEnd ? 1 : 0 }, true, accumulator / STEP)!;
@@ -98,7 +98,7 @@ for (const stallSeconds of [1, 2]) for (const mode of ['blocked socket', 'hidden
         assert.ok(stallSteps.every(distance => distance > .15), 'every 60 Hz step advances, even when either transport window is full');
         assert.ok(stallFrames.every(distance => distance > .005 && distance < .12), 'every 144 Hz frame moves continuously, bounded by walking plus correction speed');
         assert.ok(maxSnapshotJump < 1e-9, 'receiving authority, including a backlog of snapshots, cannot teleport the camera');
-        assert.ok(report.visibleCorrectionMetres.max <= MAX_CORRECTION_SPEED / 144 + 1e-9, 'recovery correction stays below 4.2 cm per render frame (10 cm at 60 FPS)');
+        assert.ok(report.visibleCorrectionMetres.max <= MAX_CORRECTION_SPEED / 144 + 1e-9, 'recovery correction stays below 0.42 cm per render frame (1 cm at 60 FPS)');
         assert.ok(report.residualCorrectionMetres < .001, 'smoothing converges instead of hiding a permanent divergence');
         assert.ok(Math.hypot(net.predicted!.x - actor.state.x, net.predicted!.y - actor.state.y, net.predicted!.z - actor.state.z) < .001, 'prediction returns to authority after recovery');
     });

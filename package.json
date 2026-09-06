@@ -14,6 +14,8 @@
     "audit:map": "tsx scripts/audit-map-geometry.ts",
     "test:movement": "tsx --test tests/movement-stall.test.ts",
     "test:movement:ws": "tsx tests/movement-websocket.ts",
+    "test:bad-link": "tsx --test tests/bad-link.test.ts tests/local-motion.test.ts tests/input-recovery.test.ts",
+    "test:bad-link:ws": "tsx tests/bad-link-websocket.ts",
     "test:integration": "tsx tests/integration.ts",
     "test:soak": "tsx tests/soak.ts",
     "test:lifecycle": "tsx tests/lifecycle.ts",

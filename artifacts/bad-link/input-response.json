@@ -1,0 +1,23 @@
+[
+  {
+    "renderHz": 60,
+    "phasesTested": 100,
+    "maxInputToMotionFrames": 1,
+    "maxInputToMotionMs": 16.666666666666668,
+    "minFirstFrameDistanceMetres": 0.030555555555556745
+  },
+  {
+    "renderHz": 144,
+    "phasesTested": 100,
+    "maxInputToMotionFrames": 1,
+    "maxInputToMotionMs": 6.944444444444445,
+    "minFirstFrameDistanceMetres": 0.012731481481480986
+  },
+  {
+    "renderHz": 240,
+    "phasesTested": 100,
+    "maxInputToMotionFrames": 1,
+    "maxInputToMotionMs": 4.166666666666667,
+    "minFirstFrameDistanceMetres": 0.007638888888890453
+  }
+]
