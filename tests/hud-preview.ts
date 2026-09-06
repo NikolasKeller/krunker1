@@ -9,6 +9,7 @@ import type { Renderer } from '../src/client/renderer';
 import { Room } from '../src/server/simulation';
 import type { GameEvent } from '../src/shared/types';
 import { installDOM } from './dom';
+import { assertVisibleWeapon, createViewmodelFixture, VIEWMODEL_POSES, type ViewmodelPose } from './viewmodel-fixture';
 
 const out = new URL('../artifacts/hud-preview/', import.meta.url);
 await mkdir(out, { recursive: true });
@@ -21,14 +22,25 @@ const geometry = (await readFile(new URL('../artifacts/arena-preview.png', impor
 const bundle = await build({ entryPoints: ['tests/viewmodel-preview.ts'], bundle: true, format: 'iife', write: false, minify: true });
 const script = bundle.outputFiles[0].text.replaceAll('</script', '<\\/script');
 const fixtures = [
-    ...['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill'].map(state => ({ state, name: state, weapon: 'sniper' as WeaponId, pose: 'hip' })),
-    ...(Object.keys(WEAPONS) as WeaponId[]).flatMap(weapon => ['hip', 'aim', 'reload'].map(pose => ({ state: 'ffa', name: `${weapon}-${pose}`, weapon, pose }))),
+    ...['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill'].map(state => ({ state, name: state, weapon: 'sniper' as WeaponId, pose: 'hip' as ViewmodelPose })),
+    ...(Object.keys(WEAPONS) as WeaponId[]).flatMap(weapon => VIEWMODEL_POSES.map(pose => ({ state: 'ffa', name: `${weapon}-${pose}`, weapon, pose }))),
 ];
+const scenes = [];
 for (const { state, name, weapon, pose } of fixtures) {
     const { dom, restore } = installDOM('https://furo.example');
     try {
         Object.defineProperty(dom.window, 'innerWidth', { value: 1024 });
         Object.defineProperty(dom.window, 'innerHeight', { value: 614 });
+        // installDOM provides only the UI root. Match index.html so the preview
+        // renderer has an attached canvas before its bundled script runs.
+        const canvas = document.createElement('canvas');
+        canvas.id = 'game';
+        document.body.prepend(canvas);
+        if (state !== 'lobby') {
+            const vm = createViewmodelFixture(weapon, pose);
+            vm.resize(1024, 614);
+            scenes.push({ name, weapon, pose, ...assertVisibleWeapon(vm) });
+        }
         const room = new Room('PROOF');
         const classId = (Object.keys(CLASSES) as ClassId[]).find(id => CLASSES[id].weapon === weapon) ?? 'triggerman';
         const a = room.add('You', classId, 'blue').state;
@@ -72,6 +84,8 @@ body { background:#cdbfbe url(data:image/png;base64,${geometry}) center/cover no
         await writeFile(new URL(`${name}.html`, out), html);
     } finally { restore(); }
 }
+await writeFile(new URL('viewmodel-scenes.json', out), JSON.stringify(scenes, null, 2) + '\n');
 await writeFile(new URL('index.html', out), `<!doctype html><title>Viewmodel review</title><style>body{font:18px system-ui;background:#202829;color:white}a{color:#ffe5a2}li{margin:12px}</style><h1>HUD and viewmodel review</h1><p>Every weapon in hip, aiming and reload poses. Sniper aim freezes before full scope. Right arm retained.</p><ul>${fixtures.map(f => `<li><a href="${f.name}.html">${f.name}</a></li>`).join('')}</ul>`);
 console.log('Exported 24 HUD/viewmodel fixtures and artifacts/hud-preview/index.html.');
+console.log(`Verified visible weapon geometry in ${scenes.length} scenes; counts saved in viewmodel-scenes.json.`);
 console.log('Real UI markup, CSS and embedded font; frozen feedback over a software geometry preview. No browser screenshots taken.');
