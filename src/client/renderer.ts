@@ -132,7 +132,7 @@ export class Renderer {
                 c.weapon = p.weapon;
             }
             animateCharacter(c, Math.hypot(p.vx, p.vz), time, p.pitch, p.slide);
-            if (p.protectionEnd > serverNow)
+            if (p.alive && p.protectionEnd > serverNow)
                 c.group.visible = Math.floor(time * 12) % 5 !== 0;
             void friendly;
         }

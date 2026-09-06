@@ -3,6 +3,7 @@ import { correctedPosition, predictInput, PredictionHistory, preserveLocalMotion
 import { RemoteInterpolation } from './interpolation';
 import { clamp, lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
+import { WeaponPrediction } from './weapon-prediction';
 import { InputBuffer } from '../shared/input-buffer';
 export const JOIN_RETRY_MS = 2000;
 export const CONNECT_TIMEOUT_MS = 30000;
@@ -14,6 +15,12 @@ export function retryDelay(attempt: number, base = RECONNECT_BASE_MS, cap = RECO
     return Math.min(cap, base * 2 ** Math.min(attempt, 10)) * (0.75 + Math.random() * 0.25);
 }
 export class Network {
+    readonly weapons = new WeaponPrediction();
+    onCombat: (message: Extract<ServerMessage, { type: 'combat' }>) => void = () => {};
+    combatDelays: number[] = [];
+    selectWeapon(slot: Input['slot'], seq = this.seq + 1, _time = performance.now()) {
+        return !!this.predicted && this.round?.phase === 'playing' && this.weapons.select(this.predicted, slot, seq);
+    }
     onChat: (message: Extract<ServerMessage, { type: 'chat' }>) => void = () => {};
     ws?: WebSocket;
     id = '';
@@ -125,6 +132,7 @@ export class Network {
         this.lastMessageAt = Date.now();
         this.lastSyncAt = 0;
         this.players.clear();
+        this.weapons.reset(); this.combatDelays = [];
         this.frames = [];
         this.interpolation.reset();
         this.predicted = undefined;
@@ -200,6 +208,7 @@ export class Network {
         const timing = input.interpolationDelay === undefined ? this.shotTiming(input.shotTime) : {};
         const i = this.inputs.enqueue({ ...input, ...timing, life: this.predicted.life });
         this.predictionHistory.add(i);
+        if (this.round?.phase === 'playing') this.weapons.advance(this.predicted, i);
         predictInput(this.predicted, i, this.round?.phase === 'playing');
     }
     smoothCorrection(dt: number) {
@@ -248,6 +257,21 @@ export class Network {
             this.onNotice(m.message);
         }
         if (m.type === 'shot-rejected') this.onNotice('Shot expired during connection delay. Fire again.');
+        if (m.type === 'weapon' && this.predicted) this.weapons.confirm(m, this.predicted);
+        if (m.type === 'combat') {
+            this.combatDelays.push(this.serverNow - m.time);
+            if (this.combatDelays.length > 24000) this.combatDelays.shift();
+            // Living movement and ACKs stay on the snapshot channel. Death
+            // carries its freeze pose; provisional feedback never writes here.
+            for (const patch of m.players) {
+                const p = this.players.get(patch.id);
+                if (!p || p.life !== patch.life) continue;
+                Object.assign(p, patch);
+                if (patch.id === this.id && this.predicted?.life === patch.life) Object.assign(this.predicted, patch);
+            }
+            this.onCombat(m);
+            this.onEvents(m.events);
+        }
         if (m.type === 'events')
             this.onEvents(m.events);
         if (m.type === 'snapshot') {
@@ -284,6 +308,7 @@ export class Network {
                 this.pending = this.pending.filter(i => i.seq > local.ack);
                 this.seq = Math.max(this.seq, local.ack);
                 this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
+                this.weapons.reconcile(local, this.predicted);
                 if (old && old.life === local.life && old.alive === local.alive) {
                     if (!this.movementMeasuredAt) this.movementMeasuredAt = performance.now();
                     const raw = Math.hypot(old.x - this.predicted.x, old.y - this.predicted.y, old.z - this.predicted.z);
@@ -317,6 +342,13 @@ export class Network {
         }
     }
     remotePlayers(): PlayerState[] {
-        return this.interpolation.sample(this.frames, this.id, this.serverNow, Date.now(), this.ping);
+        return this.interpolation.sample(this.frames, this.id, this.serverNow, Date.now(), this.ping).map(p => {
+            const latest = this.players.get(p.id);
+            // Position uses playback history; health and life transitions use the
+            // latest authority. Never replay a dead opponent as alive.
+            if (!latest) return p;
+            if (latest.life !== p.life) return { ...latest };
+            return { ...p, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd };
+        });
     }
 }

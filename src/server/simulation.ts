@@ -1,9 +1,10 @@
+import { CombatClock, traceShot } from '../shared/combat';
 import { randomUUID } from 'node:crypto';
-import { CLASS_IDS, CLASSES, damageFor, shotRays, WEAPONS } from '../shared/weapons';
+import { CLASS_IDS, CLASSES, shotRays, WEAPONS } from '../shared/weapons';
 import { STEP, MAX_PLAYERS, COUNTDOWN_MS, MAX_REWIND_MS, type ServerMessage, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import { SPAWNS } from '../shared/map';
 import { eyeHeight, move, moveState, validInput } from '../shared/movement';
-import { distance, hitPlayer, worldHit } from '../shared/math';
+import { distance } from '../shared/math';
 import { History, rewindTime } from './history';
 import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
@@ -14,6 +15,8 @@ import { summarizeLineup } from '../shared/lobby';
 // after an outage. Total target history remains bounded independently at 1.5 s.
 export const MAX_QUEUED_SHOT_AGE_MS = 1000;
 export interface Actor {
+    combat?: CombatClock;
+    spawnFireAt?: number;
     state: PlayerState;
     queue: Input[];
     lastSeq: number;
@@ -36,6 +39,8 @@ export class Room {
     round = newRound();
     history = new History();
     events: GameEvent[] = [];
+    onCombat: (message: Extract<ServerMessage, { type: 'combat' }>) => void = () => {};
+    onWeapon: (id: string, message: Extract<ServerMessage, { type: 'weapon' }>) => void = () => {};
     shotRejections = new Map<string, Extract<ServerMessage, { type: 'shot-rejected' }>>();
     host = '';
     difficulty: Difficulty = 'normal';
@@ -120,6 +125,8 @@ export class Room {
         Object.assign(p, moveState(spawn.x, spawn.y, spawn.z), { yaw: spawn.yaw, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: now + 1500, aiming: false, bloom: 0, life: p.life + 1 });
         a.ammo = ammo();
         a.nextShot = now + 250;
+        a.spawnFireAt = now + 250;
+        a.combat = undefined;
         a.recoilIndex = 0;
         a.aimTime = 0;
         a.queue = [];
@@ -199,11 +206,18 @@ export class Room {
                 a.credit--;
                 processed++;
                 p.ack = i.seq;
-                if (this.round.phase !== 'playing' || !p.alive || (i.life !== undefined && i.life !== p.life))
+                if (this.round.phase !== 'playing' || !p.alive || (i.life !== undefined && i.life !== p.life)) {
+                    if (i.combat && i.fire) this.rejectShot(a, i, now, 'unavailable');
                     continue;
+                }
                 p.yaw = i.yaw;
                 p.pitch = i.pitch;
+                const modern = !!i.combat || !!a.combat;
                 const weapon = i.slot === 1 ? CLASSES[p.classId].weapon : i.slot === 2 ? 'pistol' : 'knife';
+                if (modern) {
+                    a.combat ??= new CombatClock(p.weapon);
+                    a.combat.advance(weapon, i, Math.hypot(p.vx, p.vz));
+                }
                 if (weapon !== p.weapon) {
                     a.ammo[p.weapon] = p.ammo;
                     p.weapon = weapon;
@@ -211,8 +225,9 @@ export class Room {
                     p.reloadEnd = 0;
                     p.bloom = 0;
                     a.aimTime = 0;
-                    a.nextShot = Math.max(a.nextShot, now + 180);
+                    if (!modern) a.nextShot = Math.max(a.nextShot, now + 180);
                     a.recoilIndex = 0;
+                    this.onWeapon(p.id, { type: 'weapon', time: Date.now(), seq: i.seq, life: p.life, weapon, ammo: p.ammo, reloadEnd: 0 });
                 }
                 p.aiming = i.aim;
                 if (i.aim)
@@ -228,11 +243,19 @@ export class Room {
                     a.lastShotRejection = now;
                     this.shotRejections.set(p.id, { type: 'shot-rejected', seq: i.seq, reason: 'expired' });
                 }
-                if (i.fire && !expired && !p.reloadEnd && now >= a.nextShot) {
-                    if (p.ammo > 0 || weapon === 'knife')
+                if (i.fire) {
+                    const ready = modern ? a.combat!.steps >= a.combat!.next && now >= (a.spawnFireAt ?? 0) : now >= a.nextShot;
+                    if (!expired && !p.reloadEnd && ready && (p.ammo > 0 || weapon === 'knife')) {
+                        if (modern) {
+                            a.aimTime = a.combat!.aim; p.bloom = a.combat!.bloom;
+                            a.recoilIndex = a.combat!.fire()!;
+                        }
                         this.fire(a, i, now);
-                    else
-                        p.reloadEnd = now + WEAPONS[weapon].reload;
+                        if (modern) a.combat!.bloomAfterFire();
+                    } else {
+                        if (modern) this.rejectShot(a, i, now, expired ? 'expired' : !ready ? 'cooldown' : 'unavailable');
+                        if (!expired && !p.reloadEnd && ready && p.ammo === 0 && weapon !== 'knife') p.reloadEnd = now + WEAPONS[weapon].reload;
+                    }
                 }
             }
             // Human movement advances only with acknowledged commands. Applying
@@ -242,7 +265,11 @@ export class Room {
         if (recordHistory && this.round.phase === 'playing') this.history.record(now, states);
         if (checkRound(this.round, states, now)) this.resetReady();
     }
+    rejectShot(a: Actor, i: Input, now: number, reason: 'expired' | 'cooldown' | 'unavailable') {
+        this.onCombat({ type: 'combat', time: Date.now(), shooter: a.state.id, life: i.life ?? a.state.life, seq: i.seq, accepted: false, reason, events: [], players: [] });
+    }
     fire(a: Actor, i: Input, now: number) {
+        const firstEvent = this.events.length;
         const p = a.state, w = WEAPONS[p.weapon];
         a.nextShot = now + w.interval;
         a.lastShot = now;
@@ -252,43 +279,17 @@ export class Room {
         const origin = { x: p.x, y: p.y + eyeHeight(p), z: p.z };
         const dirs = shotRays(p.weapon, p.yaw, p.pitch, Math.hypot(p.vx, p.vz), p.bloom, a.aimTime, a.recoilIndex++, i.seq, p.life);
         p.bloom = Math.min(w.maxBloom, p.bloom + w.bloom);
-        const hits = new Map<string, {
-            damage: number;
-            zone: 'head' | 'body' | 'legs';
-            point: {
-                x: number;
-                y: number;
-                z: number;
-            };
-        }>();
         const time = a.botBrain ? now : rewindTime(i.shotTime, now, a.rtt, i.interpolationDelay);
-        const ends = dirs.map(d => {
-            let nearest = worldHit(origin, d, w.range), target: Actor | undefined, zone: 'head' | 'body' | 'legs' = 'body';
-            for (const other of this.players.values()) {
-                const q = other.state;
-                if (q.id === p.id || !q.alive || q.protectionEnd > now || (this.round.mode === 'tdm' && q.team === p.team))
-                    continue;
-                // Bots aim at the current simulation; humans aim at snapshots.
-                const rewound = a.botBrain ? q : this.history.rewind(q.id, time) ?? q;
-                if (!rewound.alive || rewound.life !== q.life)
-                    continue;
-                const hit = hitPlayer(origin, d, rewound);
-                if (hit && hit.distance < nearest) {
-                    nearest = hit.distance;
-                    target = other;
-                    zone = hit.zone;
-                }
-            }
-            const point = { x: origin.x + d.x * nearest, y: origin.y + d.y * nearest, z: origin.z + d.z * nearest };
-            if (target) {
-                const prev = hits.get(target.state.id);
-                hits.set(target.state.id, { damage: (prev?.damage ?? 0) + damageFor(p.weapon, zone, nearest), zone: prev?.zone === 'head' ? 'head' : zone, point });
-            }
-            return point;
+        const targets = [...this.players.values()].flatMap(other => {
+            const q = other.state;
+            if (q.id === p.id || !q.alive || q.protectionEnd > now || (this.round.mode === 'tdm' && q.team === p.team)) return [];
+            const rewound = a.botBrain ? q : this.history.rewind(q.id, time) ?? q;
+            return rewound.alive && rewound.life === q.life ? [{ ...rewound, id: q.id }] : [];
         });
+        const { ends, hits } = traceShot(p.weapon, origin, dirs, targets);
         this.events.push({ type: 'shot', shooter: p.id, weapon: p.weapon, origin, ends, seq: i.seq });
-        for (const [id, hit] of hits) {
-            const q = this.players.get(id)!.state;
+        for (const hit of hits) {
+            const q = this.players.get(hit.victim)!.state;
             const actual = Math.min(q.hp, hit.damage);
             q.hp = Math.max(0, q.hp - hit.damage);
             this.events.push({ type: 'hit', shooter: p.id, victim: q.id, damage: actual, zone: hit.zone, point: hit.point, from: origin, lethal: q.hp <= 0 });
@@ -311,5 +312,13 @@ export class Room {
                 this.events.push({ type: 'kill', killer: p.id, victim: q.id, killerName: p.name, victimName: q.name, weapon: p.weapon, headshot: hit.zone === 'head', team: p.team });
             }
         }
+        const players = [p, ...hits.map(h => this.players.get(h.victim)!.state)].map(q => ({
+            id: q.id, life: q.life, hp: q.hp, alive: q.alive, kills: q.kills, deaths: q.deaths,
+            score: q.score, streak: q.streak, respawnAt: q.respawnAt, protectionEnd: q.protectionEnd,
+            // A death is a life transition: freeze at its authoritative pose now,
+            // rather than treating the next snapshot as a movement correction.
+            ...(!q.alive ? { x: q.x, y: q.y, z: q.z, vx: 0, vy: 0, vz: 0, reloadEnd: 0 } : {}),
+        }));
+        this.onCombat({ type: 'combat', time: Date.now(), shooter: p.id, life: p.life, seq: i.seq, accepted: true, events: this.events.slice(firstEvent), players });
     }
 }

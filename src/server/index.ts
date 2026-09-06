@@ -14,6 +14,7 @@ import { MAX_HUMANS, MAX_BOTS, TICK_RATE, SNAPSHOT_RATE, type ClientMessage, typ
 interface Connection {
     id: string;
     binary: boolean;
+    combat: boolean;
     ws: WebSocket;
     room?: Room;
     actor?: Actor;
@@ -66,7 +67,8 @@ export function createGameServer() {
     const socketLog = (event: string, details: Record<string, unknown>) => console.log(JSON.stringify({ event: `ws.${event}`, ...details }));
     server.on('upgrade', req => socketLog('upgrade', { requestId: req.headers['x-railway-request-id'], path: req.url }));
     const wss = new WebSocketServer({ server, path: '/ws', maxPayload: MAX_CLIENT_PAYLOAD, perMessageDeflate: false });
-    function send(c: Connection, m: ServerMessage) { if (c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount === 0) {
+    function send(c: Connection, m: ServerMessage, critical = false) { if (c.ws.readyState === WebSocket.OPEN && (critical || c.ws.bufferedAmount === 0)) {
+        if (critical && c.ws.bufferedAmount > 1024 * 1024) { c.ws.close(1013, 'Connection too slow'); return; }
         const data = c.binary ? encodeServerMessage(m, c.actor?.state.id) : JSON.stringify(m);
         const started = performance.now();
         c.ws.send(data, () => { transport.maxSendCallbackMs = Math.max(transport.maxSendCallbackMs, +(performance.now() - started).toFixed(3)); });
@@ -85,7 +87,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { id: connectionId, binary: ws.protocol === WIRE_PROTOCOL || ws.protocol === LEGACY_WIRE_PROTOCOL, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
+        const c: Connection = { id: connectionId, combat: ws.protocol === WIRE_PROTOCOL, binary: [WIRE_PROTOCOL, LEGACY_WIRE_PROTOCOL, 'arena-v3'].includes(ws.protocol), ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -305,7 +307,18 @@ export function createGameServer() {
         const begin = performance.now(), now = Date.now();
         for (const r of rooms.values())
             if ([...r.players.values()].some(a => !a.state.bot && a.connected))
+            {
+                r.onCombat = message => {
+                    for (const c of connections) if (c.room === r && (message.accepted || c.actor?.state.id === message.shooter)) {
+                        if (c.combat) send(c, message, true);
+                        else if (message.events.length) send(c, { type: 'events', events: message.events }, true);
+                    }
+                };
+                r.onWeapon = (id, message) => {
+                    for (const c of connections) if (c.room === r && c.actor?.state.id === id && c.combat) send(c, message, true);
+                };
                 r.tick(now, false);
+            }
         if (tick++ % (TICK_RATE / SNAPSHOT_RATE) === 0) {
             snapshotId++;
             // Rewind the exact 20 Hz timeline clients interpolate. Recording
@@ -323,12 +336,12 @@ export function createGameServer() {
                 }
             }
             for (const r of rooms.values()) {
-                if (r.events.length) {
+                if (r.events.some(e => e.type === 'notice')) {
                     for (const c of connections)
                         if (c.room === r)
-                            send(c, { type: 'events', events: r.events });
-                    r.events = [];
+                            send(c, { type: 'events', events: r.events.filter(e => e.type === 'notice') }, true);
                 }
+                r.events = [];
             }
         }
         const elapsed = performance.now() - begin;

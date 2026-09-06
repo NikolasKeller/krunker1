@@ -26,7 +26,8 @@
     "test:load": "tsx tests/load.ts",
     "preview:geometry": "tsx tests/geometry-preview.ts",
     "preview:hud": "tsx tests/hud-preview.ts",
-    "preview:lobby": "tsx tests/lobby-preview.ts"
+    "preview:lobby": "tsx tests/lobby-preview.ts",
+    "test:combat:ws": "tsx tests/combat-latency.ts"
   },
   "dependencies": {
     "three": "0.185.1",

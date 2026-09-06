@@ -4,8 +4,9 @@ import { writeFile } from 'node:fs/promises';
 import { WebSocket } from 'ws';
 import { brain, botInput } from '../src/server/bots';
 import { predictInput, PredictionHistory } from '../src/client/prediction';
-import { CLASS_IDS } from '../src/shared/weapons';
+import { CLASS_IDS, WEAPONS } from '../src/shared/weapons';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../src/shared/protocol';
+import { WeaponPrediction } from '../src/client/weapon-prediction';
 import { InputBuffer } from '../src/shared/input-buffer';
 import type { ClientMessage, Input, PlayerState, RoundState, ServerMessage } from '../src/shared/types';
 
@@ -50,6 +51,7 @@ class Client {
     serverGaps: number[] = []; deliveryJitter: number[] = []; snapshotTime = 0;
     inputs = new InputBuffer();
     predictionHistory = new PredictionHistory();
+    weapons = new WeaponPrediction();
     get pending() { return this.inputs.pending; }
     set pending(value: Input[]) { this.inputs.pending = value; }
     get outgoing() { return this.inputs.outgoing; }
@@ -81,7 +83,7 @@ class Client {
     receive(m: ServerMessage) {
         if (m.type === 'welcome') { this.id = m.id; this.room = m.room; this.token = m.token; this.offset = m.serverTime + latency - Date.now(); }
         if (m.type === 'error') this.errors.push(m.message);
-        if (m.type === 'events' && this.measured) {
+        if ((m.type === 'events' || m.type === 'combat') && this.measured) {
             this.shots += m.events.filter(e => e.type === 'shot' && e.shooter === this.id).length;
             this.hits += m.events.filter(e => e.type === 'hit' && e.shooter === this.id).length;
             this.kills += m.events.filter(e => e.type === 'kill' && e.killer === this.id).length;
@@ -108,6 +110,7 @@ class Client {
         this.inputs.acknowledge(local.ack);
         const old = this.predicted;
         this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
+        this.weapons.reconcile(local, this.predicted);
         this.pending = this.pending.filter(i => i.seq > local.ack);
         this.seq = Math.max(this.seq, local.ack);
         if (old?.life === local.life) {
@@ -150,9 +153,16 @@ class Client {
                 let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
                 i.seq = ++this.seq; i.shotTime = Date.now() + this.offset - 100;
                 i.interpolationDelay = 100; // Exercise the current wire format and bounded timing path.
+                i.combat = true;
+                this.weapons.select(p, i.slot, i.seq);
+                const clock = this.weapons.preview(p, i);
+                i.fire = i.fire && this.weapons.canFire && !p.reloadEnd && (p.ammo > 0 || p.weapon === 'knife') &&
+                    Date.now() + this.offset >= p.protectionEnd - 1250 && clock.steps >= clock.next &&
+                    !(i.reload && p.weapon !== 'knife' && p.ammo < WEAPONS[p.weapon].magazine);
                 const prev = { x: p.x, z: p.z };
                 i = this.inputs.enqueue({ ...i, life: p.life });
                 this.predictionHistory.add(i);
+                this.weapons.advance(p, i);
                 predictInput(p, i, true);
                 if (this.measured) this.moved += Math.hypot(p.x - prev.x, p.z - prev.z);
 

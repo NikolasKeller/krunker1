@@ -3,6 +3,7 @@ import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
 import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId, type ServerMessage } from '../shared/types';
 import type { Network } from './network';
 import { LobbyPanel } from './lobby';
+import type { ProvisionalHit } from './shot-feedback';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
 import { inviteAddresses } from '../shared/invite';
@@ -27,7 +28,7 @@ export class UI {
         }>;
         until: number;
     }[] = [];
-    private numbers: { node: HTMLElement; until: number }[] = [];
+    private numbers: { node: HTMLElement; until: number; key?: string }[] = [];
     private nameplates = new Map<string, { node: HTMLElement; name: HTMLElement; bar: HTMLElement }>();
     private lastKill = -Infinity;
     private multiKill = 0;
@@ -39,6 +40,8 @@ export class UI {
     private lastBoard = '';
     private hurtUntil = 0;
     private hitUntil = 0;
+    private hitKey = '';
+    private weaponHud = '';
     private killUntil = 0;
     private noticeUntil = 0;
     private lastDraw = 0;
@@ -234,20 +237,7 @@ export class UI {
                 $('kill-notice').style.opacity = '1';
             }
         }
-        if (e.type === 'hit' && e.shooter === this.net.id) {
-            this.hitUntil = now + 160;
-            $('hitmarker').classList.toggle('headshot', e.zone === 'head');
-            const p = renderer.project(e.point);
-            const node = document.createElement('span');
-            node.className = e.zone === 'head' ? 'head' : 'body';
-            node.textContent = `+${Math.round(e.damage)}`;
-            const onScreen = p.visible && p.x > 32 && p.x < window.innerWidth - 32 && p.y > 70 && p.y < window.innerHeight - 80;
-            node.style.left = `${onScreen ? p.x : window.innerWidth / 2}px`;
-            node.style.top = `${onScreen ? p.y - 28 : window.innerHeight / 2 - 45}px`;
-            $('damage-numbers').append(node);
-            this.numbers.push({ node, until: now + 1100 });
-            if (this.numbers.length > 16) this.numbers.shift()!.node.remove();
-        }
+        if (e.type === 'hit' && e.shooter === this.net.id) this.showHit(e, renderer, now);
         if (e.type === 'hit' && e.victim === this.net.id) {
             this.hurtUntil = now + 450;
             const p = this.net.predicted;
@@ -256,6 +246,34 @@ export class UI {
         }
         if (e.type === 'notice')
             this.notice(e.text);
+    }
+    provisionalHit(e: ProvisionalHit, renderer: Renderer, now: number) { this.showHit(e, renderer, now, e.key); }
+    confirmHit(key: string, e: Extract<GameEvent, { type: 'hit' }>) {
+        const number = this.numbers.find(n => n.key === key);
+        if (number) { number.node.textContent = `+${Math.round(e.damage)}`; number.node.className = e.zone === 'head' ? 'head' : 'body'; }
+    }
+    retractHit(key: string, now: number) {
+        if (this.hitKey === key) this.hitUntil = Math.min(this.hitUntil, now + 40);
+        const number = this.numbers.find(n => n.key === key);
+        if (number) {
+            number.node.style.animation = 'none'; number.node.style.transition = 'opacity 80ms';
+            number.node.style.opacity = '0'; number.until = Math.min(number.until, now + 80);
+        }
+    }
+    private showHit(e: Extract<GameEvent, { type: 'hit' }>, renderer: Renderer, now: number, key?: string) {
+        this.hitKey = key ?? '';
+        this.hitUntil = now + 160;
+        $('hitmarker').classList.toggle('headshot', e.zone === 'head');
+        const p = renderer.project(e.point);
+        const node = document.createElement('span');
+        node.className = e.zone === 'head' ? 'head' : 'body';
+        node.textContent = `+${Math.round(e.damage)}`;
+        const onScreen = p.visible && p.x > 32 && p.x < window.innerWidth - 32 && p.y > 70 && p.y < window.innerHeight - 80;
+        node.style.left = `${onScreen ? p.x : window.innerWidth / 2}px`;
+        node.style.top = `${onScreen ? p.y - 28 : window.innerHeight / 2 - 45}px`;
+        $('damage-numbers').append(node);
+        this.numbers.push({ node, until: now + 1100, key });
+        if (this.numbers.length > 16) this.numbers.shift()!.node.remove();
     }
     updateLobby() {
         const team = this.net.local?.team;
@@ -281,6 +299,34 @@ export class UI {
         // Nameplates share the body's render sample and cadence; the slower
         // scoreboard/ammo HUD refresh must not throttle their position or health.
         this.updateNameplates(p, remotes, renderer, round?.mode);
+        if (p) {
+            $('health').textContent = String(p.hp);
+            $('health-max').textContent = `|${p.maxHp}`;
+            $('health-bar').style.width = `${p.hp / p.maxHp * 100}%`;
+            $('health-bar').classList.toggle('low', p.hp < 30);
+            $('health-status').textContent = p.protectionEnd > serverNow ? 'SPAWN PROTECTED' : p.slide > 0 ? 'SLIDING' : !p.grounded ? 'AIRBORNE' : 'LOCKED & LOADED';
+            $('speed').textContent = `${Math.round(Math.hypot(p.vx, p.vz) * 3.6)} KM/H`;
+            const w = WEAPONS[p.weapon];
+            $('ammo').textContent = p.weapon === 'knife' ? '∞' : String(p.ammo);
+            $('ammo-max').textContent = String(w.magazine);
+            const empty = p.weapon !== 'knife' && p.ammo === 0;
+            $('ammo-line').classList.toggle('empty', empty);
+            $('ammo-alert').classList.toggle('hidden', !empty);
+            $('hud-weapon').textContent = w.name;
+            if (this.weaponHud !== `${p.classId}:${p.weapon}`) {
+                this.weaponHud = `${p.classId}:${p.weapon}`;
+                $('weapon-slots').innerHTML = ([CLASSES[p.classId].weapon, 'pistol', 'knife'] as WeaponId[]).map((w, i) => `<div class="${w === p.weapon ? 'active' : ''}"><kbd>${i + 1}</kbd>${gunIcon(w)}</div>`).join('');
+            }
+            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? '<span class="reload-empty">[R] Reload</span>' : '';
+            $('death-card').classList.toggle('hidden', p.alive || round?.phase !== 'playing');
+            $('respawn-time').textContent = Math.max(0, (p.respawnAt - serverNow) / 1000).toFixed(1);
+        }
+        this.feeds = this.feeds.filter(f => f.until > now);
+        const feed = this.feeds.map(({ event: e }) => {
+            const victimTeam = net.players.get(e.victim)?.team ?? (e.team === 'red' ? 'blue' : 'red');
+            return `<div class="feed-row">${e.killer === net.id ? 'You' : `<span class="${e.team}">${escapeHTML(e.killerName)}</span>`} killed <span class="${victimTeam}">${escapeHTML(e.victimName)}</span></div>`;
+        }).join('');
+        if ($('killfeed').innerHTML !== feed) $('killfeed').innerHTML = feed;
         if (now - this.lastDraw < 90)
             return;
         this.lastDraw = now;
@@ -300,12 +346,6 @@ export class UI {
         $('score-top').innerHTML = `<strong>${net.local?.kills ?? 0}</strong><span>/ ${round.scoreLimit}<small>ELIMINATIONS</small></span>`;
         $('performance').innerHTML = `<b>${renderer.fps}</b> FPS <span>·</span> <b>${net.ping}</b> MS <span>·</span> 60 HZ`;
         $('mini-board').innerHTML = players.slice(0, 5).map((p, i) => `<div class="${p.id === net.id ? 'self' : ''}"><b>${i + 1}.</b><span>${escapeHTML(p.name)}</span><strong>${p.score}</strong></div>`).join('');
-        this.feeds = this.feeds.filter(f => f.until > now);
-        const feed = this.feeds.map(({ event: e }) => {
-            const victimTeam = net.players.get(e.victim)?.team ?? (e.team === 'red' ? 'blue' : 'red');
-            return `<div class="feed-row">${e.killer === net.id ? 'You' : `<span class="${e.team}">${escapeHTML(e.killerName)}</span>`} killed <span class="${victimTeam}">${escapeHTML(e.victimName)}</span></div>`;
-        }).join('');
-        if ($('killfeed').innerHTML !== feed) $('killfeed').innerHTML = feed;
         $('scoreboard').classList.toggle('hidden', !this.scoreOpen);
         if (results) {
             $('board-eyebrow').textContent = 'ROUND COMPLETE';
@@ -328,23 +368,6 @@ export class UI {
             }
         }
         if (p) {
-            $('health').textContent = String(p.hp);
-            $('health-max').textContent = `|${p.maxHp}`;
-            $('health-bar').style.width = `${p.hp / p.maxHp * 100}%`;
-            $('health-bar').classList.toggle('low', p.hp < 30);
-            $('health-status').textContent = p.protectionEnd > serverNow ? 'SPAWN PROTECTED' : p.slide > 0 ? 'SLIDING' : !p.grounded ? 'AIRBORNE' : 'LOCKED & LOADED';
-            $('speed').textContent = `${Math.round(Math.hypot(p.vx, p.vz) * 3.6)} KM/H`;
-            const w = WEAPONS[p.weapon];
-            $('ammo').textContent = p.weapon === 'knife' ? '∞' : String(p.ammo);
-            $('ammo-max').textContent = String(w.magazine);
-            const empty = p.weapon !== 'knife' && p.ammo === 0;
-            $('ammo-line').classList.toggle('empty', empty);
-            $('ammo-alert').classList.toggle('hidden', !empty);
-            $('hud-weapon').textContent = w.name;
-            $('weapon-slots').innerHTML = ([CLASSES[p.classId].weapon, 'pistol', 'knife'] as WeaponId[]).map((w, i) => `<div class="${w === p.weapon ? 'active' : ''}"><kbd>${i + 1}</kbd>${gunIcon(w)}</div>`).join('');
-            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? '<span class="reload-empty">[R] Reload</span>' : '';
-            $('death-card').classList.toggle('hidden', p.alive || round.phase !== 'playing');
-            $('respawn-time').textContent = Math.max(0, (p.respawnAt - serverNow) / 1000).toFixed(1);
             this.minimap(p, players);
         }
         if (round.phase !== this.lastPhase) {

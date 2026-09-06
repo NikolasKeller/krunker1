@@ -1,7 +1,7 @@
 import type { ClientMessage, GameEvent, Input, PlayerPatch, PlayerState, ServerMessage } from './types';
 
 // Control/lobby messages stay JSON. Versioned binary frames carry the frequent traffic.
-export const WIRE_PROTOCOL = 'arena-v3';
+export const WIRE_PROTOCOL = 'arena-v4';
 export const LEGACY_WIRE_PROTOCOL = 'arena-v2';
 export const INPUT_RATE = 20;
 export const INPUT_SEND_MS = 1000 / INPUT_RATE;
@@ -11,7 +11,7 @@ export const MAX_INPUT_BATCH = 12;
 export const MAX_PENDING_INPUTS = 600;
 export const MAX_IN_FLIGHT_INPUTS = 360;
 export const MAX_CLIENT_PAYLOAD = 4096;
-const INPUT = 1, SNAPSHOT = 2, EVENTS = 3;
+const INPUT = 1, SNAPSHOT = 2, EVENTS = 3, COMBAT_INPUT = 4, COMBAT = 5;
 const utf8 = new TextEncoder(), text = new TextDecoder('utf-8', { fatal: true });
 type WireData = string | ArrayBuffer | ArrayBufferView;
 class Writer {
@@ -111,18 +111,21 @@ function readEvent(r: Reader): GameEvent {
 export function encodeClientMessage(m: ClientMessage): string | Uint8Array {
     if (m.type !== 'input') return JSON.stringify(m);
     if (!m.inputs.length || m.inputs.length > MAX_INPUT_BATCH) throw new Error('Invalid input batch');
-    const w = new Writer(); w.u8(INPUT); w.u8(m.inputs.length);
+    const modern = m.inputs.some(i => i.combat !== undefined);
+    const w = new Writer(); w.u8(modern ? COMBAT_INPUT : INPUT); w.u8(m.inputs.length);
     for (const i of m.inputs) {
         w.u32(i.seq); w.u32(i.life ?? 0xffffffff); w.f32(i.forward); w.f32(i.strafe); w.f32(i.yaw); w.f32(i.pitch); w.f64(i.shotTime);
         w.u8(+i.jump | +i.slide << 1 | +i.fire << 2 | +i.aim << 3 | +i.reload << 4 | (i.slot - 1) << 5 | +(i.interpolationDelay !== undefined) << 7);
         if (i.interpolationDelay !== undefined) w.f32(i.interpolationDelay);
+        if (modern) w.u8(i.combat === undefined ? 0 : i.combat ? 2 : 1);
     }
     return w.finish();
 }
 export function decodeClientMessage(data: WireData): ClientMessage {
     if (typeof data === 'string') return JSON.parse(data);
     const r = new Reader(data);
-    if (r.u8() !== INPUT) throw new Error('Invalid client frame');
+    const kind = r.u8();
+    if (kind !== INPUT && kind !== COMBAT_INPUT) throw new Error('Invalid client frame');
     const count = r.u8();
     if (!count || count > MAX_INPUT_BATCH) throw new Error('Invalid input batch');
     const inputs: Input[] = [];
@@ -130,14 +133,20 @@ export function decodeClientMessage(data: WireData): ClientMessage {
         const seq = r.u32(), life = r.u32(), forward = r.f32(), strafe = r.f32(), yaw = r.f32(), pitch = r.f32(), shotTime = r.f64(), flags = r.u8();
         if ((flags >> 5 & 3) === 3) throw new Error('Invalid input flags');
         const timing = flags & 128 ? { interpolationDelay: r.f32() } : {};
-        inputs.push({ seq, life: life === 0xffffffff ? undefined : life, forward, strafe, yaw, pitch: Math.abs(pitch) === Math.fround(Math.PI / 2) ? Math.sign(pitch) * Math.PI / 2 : pitch, shotTime, ...timing, jump: !!(flags & 1), slide: !!(flags & 2), fire: !!(flags & 4), aim: !!(flags & 8), reload: !!(flags & 16), slot: ((flags >> 5 & 3) + 1) as 1 | 2 | 3 });
+        const combat = kind === COMBAT_INPUT ? r.u8() : 0;
+        if (combat > 2) throw new Error('Invalid combat flag');
+        inputs.push({ ...(combat ? { combat: combat === 2 } : {}), seq, life: life === 0xffffffff ? undefined : life, forward, strafe, yaw, pitch: Math.abs(pitch) === Math.fround(Math.PI / 2) ? Math.sign(pitch) * Math.PI / 2 : pitch, shotTime, ...timing, jump: !!(flags & 1), slide: !!(flags & 2), fire: !!(flags & 4), aim: !!(flags & 8), reload: !!(flags & 16), slot: ((flags >> 5 & 3) + 1) as 1 | 2 | 3 });
     }
     r.done(); return { type: 'input', inputs };
 }
 export function encodeServerMessage(m: ServerMessage, selfId?: string): string | Uint8Array {
-    if (m.type !== 'snapshot' && m.type !== 'events') return JSON.stringify(m);
+    if (m.type !== 'snapshot' && m.type !== 'events' && m.type !== 'combat') return JSON.stringify(m);
     const w = new Writer();
-    if (m.type === 'snapshot') {
+    if (m.type === 'combat') {
+        w.u8(COMBAT); w.f64(m.time); w.string(m.shooter); w.u32(m.life); w.u32(m.seq); w.u8(+m.accepted); w.string(m.reason ?? '');
+        w.u8(m.players.length); for (const p of m.players) writePlayer(w, p, p.id === selfId);
+        w.u32(m.events.length); for (const e of m.events) writeEvent(w, e);
+    } else if (m.type === 'snapshot') {
         w.u8(SNAPSHOT); w.u32(m.n); w.u32(m.base); w.f64(m.time); w.u8(+m.full); w.u8(m.players.length);
         for (const p of m.players) writePlayer(w, p, p.id === selfId);
         w.u8(m.removed.length); for (const id of m.removed) w.string(id);
@@ -160,6 +169,12 @@ export function decodeServerMessage(data: WireData): ServerMessage {
     } else if (type === EVENTS) {
         const count = r.u32(); if (count > 4096) throw new Error('Too many events');
         m = { type: 'events', events: Array.from({ length: count }, () => readEvent(r)) };
+    } else if (type === COMBAT) {
+        const time = r.f64(), shooter = r.string(), life = r.u32(), seq = r.u32(), accepted = !!r.u8();
+        const reason = r.string() as Extract<ServerMessage, { type: 'combat' }>['reason'];
+        const players = Array.from({ length: r.u8() }, () => readPlayer(r));
+        const count = r.u32(); if (count > 4096) throw new Error('Too many combat events');
+        m = { type: 'combat', time, shooter, life, seq, accepted, ...(reason ? { reason } : {}), players, events: Array.from({ length: count }, () => readEvent(r)) };
     } else throw new Error('Invalid server frame');
     r.done(); return m;
 }

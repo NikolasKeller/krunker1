@@ -37,6 +37,8 @@ export interface MoveState {
 }
 export interface Input {
     seq: number;
+    // v4: explicit predicted fire commands with shared command-clock timing.
+    combat?: boolean;
     life?: number;
     forward: number;
     strafe: number;
@@ -173,7 +175,27 @@ export type ClientMessage = {
 } | {
     type: 'sync';
 };
-export type ServerMessage = {
+export type CombatMessage = {
+    type: 'combat';
+    time: number;
+    shooter: string;
+    life: number;
+    seq: number;
+    accepted: boolean;
+    reason?: 'expired' | 'cooldown' | 'unavailable';
+    events: GameEvent[];
+    players: PlayerPatch[];
+};
+export type WeaponMessage = {
+    type: 'weapon';
+    time: number;
+    seq: number;
+    life: number;
+    weapon: WeaponId;
+    ammo: number;
+    reloadEnd: number;
+};
+export type ServerMessage = CombatMessage | WeaponMessage | {
     type: 'shot-rejected';
     seq: number;
     reason: 'expired';

@@ -49,7 +49,7 @@ class Client {
         if (m.round) this.phase = m.round.phase;
         this.snapshots++;
         this.seq = Math.max(this.seq, this.players.get(this.id)?.ack ?? 0);
-    } if (m.type === 'events')
+    } if ((m.type === 'events' || m.type === 'combat'))
         this.events.push(...m.events); }); }
     send(m: ClientMessage) { if (this.ws.readyState === WebSocket.OPEN)
         this.ws.send(JSON.stringify(m)); }

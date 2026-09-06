@@ -1,7 +1,7 @@
 import { Controls } from './input';
 import type { Network } from './network';
 import { ShotFeedback } from './shot-feedback';
-import { ShotClock } from './shot-clock';
+import { predictInput } from './prediction';
 import { LocalMotion } from './local-motion';
 import { Renderer } from './renderer';
 import { AudioEngine } from './audio';
@@ -18,7 +18,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     renderer.setClass(ui.selected);
     renderer.setQuality(localStorage.getItem('arena-quality') ?? 'balanced');
     const motion = new LocalMotion();
-    const shotClock = new ShotClock();
+    let spawnReadyAt = 0, lastCombatLog = 0;
     let playing = false, lastLife = -1, lastWeapon: WeaponId = 'sniper', previousReload = 0, lastStep = 0, lastTime = performance.now();
     ui.onClass = id => { renderer.setClass(id); };
     ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); document.exitPointerLock(); net.connect(ui.joinConfig); };
@@ -51,12 +51,18 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     net.onNotice = text => ui.notice(text);
     net.onChat = message => ui.chat(message);
     let phase = '';
-    let pendingFireAim: Pick<Input, 'seq' | 'yaw' | 'pitch' | 'shotTime' | 'interpolationDelay'> | undefined;
+    let pendingFireAim: Input | undefined;
     const welcomed = net.onWelcome;
-    net.onWelcome = () => { shots.clear(); shotClock.reset(0); lastLife = -1; phase = ''; welcomed(); };
+    net.onWelcome = () => { shots.clear(); spawnReadyAt = 0; lastLife = -1; phase = ''; welcomed(); };
+    shots.onHit = e => ui.provisionalHit(e, renderer, performance.now());
+    shots.onRetract = key => ui.retractHit(key, performance.now());
+    shots.onConfirm = (key, e) => ui.confirmHit(key, e);
+    net.onCombat = m => shots.resolve(m);
+    net.weapons.onCorrection = slot => { controls.slot = slot; };
     net.onEvents = events => {
         for (const e of events) {
-            ui.event(e, renderer, performance.now());
+            const provisional = shots.reconcileEvent(e);
+            if (!provisional) ui.event(e, renderer, performance.now());
             if (e.type === 'shot') {
                 const own = e.shooter === net.id;
                 const dist = net.predicted ? distance(e.origin, net.predicted) : 0;
@@ -72,7 +78,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             }
             if (e.type === 'hit') {
                 renderer.effects.particles(e.point, true, 8);
-                if (e.shooter === net.id)
+                if (e.shooter === net.id && !provisional)
                     audio.hit(e.zone === 'head', e.lethal);
                 if (e.victim === net.id) {
                     renderer.damage();
@@ -83,7 +89,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     };
     function sampleInput(seq: number) {
         const timing = net.shotTiming();
-        const input = { ...controls.sample(seq, timing.shotTime), ...timing };
+        const input: Input = { ...controls.sample(seq, timing.shotTime), ...timing, combat: true, fire: false, life: net.predicted?.life };
         // A shot shown between physics ticks keeps its original aim on the next
         // command even though the camera recoil has already responded this frame.
         if (pendingFireAim?.seq === seq) Object.assign(input, pendingFireAim);
@@ -128,26 +134,38 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             controls.yaw = p.yaw;
             controls.pitch = p.pitch;
             controls.slot = 1;
-            shotClock.reset(time, 250);
+            spawnReadyAt = time + 250;
             audio.spawn();
-        }
-        if (p?.weapon !== lastWeapon && p) {
-            lastWeapon = p.weapon;
-            shotClock.switchWeapon(time);
         }
         if (p?.reloadEnd && p.reloadEnd !== previousReload)
             audio.reload();
         previousReload = p?.reloadEnd ?? 0;
-        const fireInput = motion.advance(dt, net, sampleInput, input => {
+        const remotes = net.remotePlayers();
+        shots.expire(time);
+        if (time - lastCombatLog >= 30000) { lastCombatLog = time; console.info('Combat prediction session', shots.metrics); }
+        motion.advance(dt, net, sampleInput, input => {
             if (pendingFireAim?.seq === input.seq) pendingFireAim = undefined;
         });
+        if (p && playing && controls.locked && !controls.typing && !ui.menu) net.selectWeapon(controls.slot);
+        if (p?.weapon !== lastWeapon && p) {
+            lastWeapon = p.weapon;
+            renderer.viewmodel.setWeapon(p.weapon);
+        }
         if (p && playing && controls.locked && !controls.typing && !ui.menu && p.alive && net.round?.phase === 'playing') {
-            if (controls.fire && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
-                const index = shotClock.fire(time, WEAPONS[p.weapon].interval);
-                if (index !== undefined) {
-                    const recoil = shots.fire(p, fireInput, index, renderer.viewmodel.aim, renderer.shotMuzzle(p, fireInput, net.correction));
+            if (controls.fire && net.weapons.canFire && !pendingFireAim && time >= spawnReadyAt && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
+                const input = sampleInput(net.seq + 1);
+                input.fire = !(input.reload && p.weapon !== 'knife' && p.ammo < WEAPONS[p.weapon].magazine);
+                const clock = net.weapons.preview(p, input);
+                const index = clock.fire();
+                if (input.fire && index !== undefined) {
+                    // Use the exact committed command/eye and shared combat state.
+                    // Freeze it until the next physics step so recoil and movement
+                    // sampled on another frame cannot alter the predicted ray.
+                    const shotPlayer = { ...p, bloom: clock.bloom };
+                    predictInput(shotPlayer, input, true);
+                    const recoil = shots.fire(shotPlayer, input, index, clock.aim, renderer.shotMuzzle(shotPlayer, input, net.correction), remotes, net.round.mode, now);
                     if (recoil) {
-                        if (fireInput.seq > net.seq) pendingFireAim = { seq: fireInput.seq, yaw: fireInput.yaw, pitch: fireInput.pitch, shotTime: fireInput.shotTime, interpolationDelay: fireInput.interpolationDelay };
+                        pendingFireAim = input;
                         controls.pitch = clamp(controls.pitch + recoil[0], -1.54, 1.54);
                         controls.yaw += recoil[1];
                     }
@@ -161,13 +179,12 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         net.smoothCorrection(dt);
         const rendered = motion.preview(net.predicted, sampleInput(net.seq + 1), playing);
         const aim = controls.locked && controls.aim && !!p?.alive && p.reloadEnd <= now;
-        const remotes = net.remotePlayers();
         renderer.render(dt, time / 1000, rendered, remotes, controls, net.correction, ui.menu, aim, now, net.round?.mode ?? 'ffa');
         ui.update(time, renderer, aim, remotes);
     }
     requestAnimationFrame(frame);
     // Read-only diagnostics for external browser verification; no server debug commands are exposed.
-    Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { movement: net.movementMetrics, fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
+    Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { combat: shots.metrics, combatReceiptMs: [...net.combatDelays], movement: net.movementMetrics, fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
 
     return started;
 }
