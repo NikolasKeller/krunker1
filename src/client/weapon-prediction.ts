@@ -38,28 +38,39 @@ export class WeaponPrediction {
         clock.advance(slotWeapon(p, input.slot), input, Math.hypot(p.vx, p.vz));
         return clock;
     }
+    private startReload(p: PlayerState, input: Input) {
+        if (!p.alive || p.weapon === 'knife' || p.reloadEnd || this.reload || p.ammo >= WEAPONS[p.weapon].magazine) return;
+        p.reloadEnd = input.shotTime + (input.interpolationDelay ?? 0) + WEAPONS[p.weapon].reload;
+        this.reload = { seq: input.seq, weapon: p.weapon, until: p.reloadEnd };
+    }
+    // Called on the render frame that displays the shot, before its fixed command
+    // step. advance still owns cadence; this estimate is applied only once.
+    predictShot(p: PlayerState, input: Input) {
+        if (!input.combat || !input.fire || !p.alive || (input.life !== undefined && input.life !== p.life)) return;
+        this.init(p); this.active = true;
+        if (this.shots.some(s => s.seq === input.seq) || p.weapon === 'knife') return;
+        p.ammo = Math.max(0, p.ammo - 1);
+        this.shots.push({ seq: input.seq, weapon: p.weapon });
+        if (this.shots.length > 600) this.shots.shift();
+        this.ammo.set(p.weapon, p.ammo);
+        if (p.ammo === 0) this.startReload(p, input);
+    }
     advance(p: PlayerState, input: Input) {
         if (!input.combat || !p.alive || (input.life !== undefined && input.life !== p.life)) return;
         this.init(p); this.active = true;
         this.select(p, input.slot, input.seq);
         this.clock.advance(p.weapon, input, Math.hypot(p.vx, p.vz));
-        if (input.reload && p.weapon !== 'knife' && !p.reloadEnd && p.ammo < WEAPONS[p.weapon].magazine) {
-            p.reloadEnd = input.shotTime + (input.interpolationDelay ?? 0) + WEAPONS[p.weapon].reload;
-            this.reload = { seq: input.seq, weapon: p.weapon, until: p.reloadEnd };
-        }
-        if (input.fire && this.clock.fire() !== undefined) {
+        if (input.reload) this.startReload(p, input);
+        const shown = this.shots.some(s => s.seq === input.seq);
+        if (input.fire && (shown || (!this.reload && !p.reloadEnd && (p.ammo > 0 || p.weapon === 'knife'))) && this.clock.fire() !== undefined) {
             this.clock.bloomAfterFire();
-            if (p.weapon !== 'knife') {
-                p.ammo = Math.max(0, p.ammo - 1);
-                this.shots.push({ seq: input.seq, weapon: p.weapon });
-                if (this.shots.length > 600) this.shots.shift();
-                this.ammo.set(p.weapon, p.ammo);
-            }
+            if (!shown) this.predictShot(p, input);
         }
         p.bloom = this.clock.bloom;
     }
     reconcile(authority: PlayerState, p: PlayerState) {
         this.init(authority);
+        if (!authority.alive) { this.reset(); return; }
         if (!this.active) return;
         if (this.reload && authority.ack >= this.reload.seq && (authority.weapon !== this.reload.weapon || !authority.reloadEnd)) this.reload = undefined;
         this.shots = this.shots.filter(s => s.seq > authority.ack);
@@ -71,7 +82,7 @@ export class WeaponPrediction {
         const weapon = this.pending?.weapon ?? authority.weapon;
         Object.assign(p, { weapon, ammo: this.ammo.get(weapon), bloom: this.clock.bloom });
         if (this.reload && this.reload.weapon === weapon && authority.ack < this.reload.seq) p.reloadEnd = this.reload.until;
-        else if (weapon !== authority.weapon) p.reloadEnd = 0;
+        else p.reloadEnd = weapon !== authority.weapon ? 0 : authority.reloadEnd;
     }
     confirm(m: WeaponMessage, p: PlayerState) {
         if (m.life !== this.life) return;
@@ -80,5 +91,6 @@ export class WeaponPrediction {
         if (this.pending && m.weapon !== this.pending.weapon) this.onCorrection(m.weapon === CLASSES[p.classId].weapon ? 1 : m.weapon === 'pistol' ? 2 : 3);
         this.pending = { seq: m.seq, weapon: m.weapon };
         Object.assign(p, { weapon: m.weapon, ammo: this.ammo.get(m.weapon), reloadEnd: m.reloadEnd });
+        if (this.reload?.weapon === m.weapon && m.seq < this.reload.seq) p.reloadEnd = this.reload.until;
     }
 }

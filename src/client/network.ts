@@ -21,7 +21,6 @@ export class Network {
     selectWeapon(slot: Input['slot'], seq = this.seq + 1, _time = performance.now()) {
         return !!this.predicted && this.round?.phase === 'playing' && this.weapons.select(this.predicted, slot, seq);
     }
-    onChat: (message: Extract<ServerMessage, { type: 'chat' }>) => void = () => {};
     ws?: WebSocket;
     id = '';
     room = '';
@@ -232,7 +231,7 @@ export class Network {
     flush() { if (this.ws) this.inputs.flush(this.ws); }
     private receive(m: ServerMessage) {
         this.lastMessageAt = Date.now();
-        if (m.type === 'chat') this.onChat(m);
+        // Legacy room chat packets are intentionally ignored by this client.
         if (m.type === 'welcome') {
             const firstWelcome = this.id !== m.id || this.room !== m.room;
             this.id = m.id;

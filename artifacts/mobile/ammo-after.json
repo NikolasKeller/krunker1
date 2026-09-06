@@ -1,0 +1,58 @@
+[
+  {
+    "rttMs": 0,
+    "renderHz": 60,
+    "maxInputToDOMMs": 16.666,
+    "frameMs": 16.667,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 0,
+    "renderHz": 120,
+    "maxInputToDOMMs": 8.332,
+    "frameMs": 8.333,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 0,
+    "renderHz": 144,
+    "maxInputToDOMMs": 6.943,
+    "frameMs": 6.944,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 0,
+    "renderHz": 240,
+    "maxInputToDOMMs": 4.166,
+    "frameMs": 4.167,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 350,
+    "renderHz": 60,
+    "maxInputToDOMMs": 16.666,
+    "frameMs": 16.667,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 350,
+    "renderHz": 120,
+    "maxInputToDOMMs": 8.332,
+    "frameMs": 8.333,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 350,
+    "renderHz": 144,
+    "maxInputToDOMMs": 6.943,
+    "frameMs": 6.944,
+    "withinOneFrame": true
+  },
+  {
+    "rttMs": 350,
+    "renderHz": 240,
+    "maxInputToDOMMs": 4.166,
+    "frameMs": 4.167,
+    "withinOneFrame": true
+  }
+]

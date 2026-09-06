@@ -33,6 +33,7 @@ test('while gameplay loads, classes and room controls work but ready and host st
         assert.deepEqual(sent, []);
         (document.querySelector('[data-class="vince"]') as HTMLButtonElement).click();
         assert.equal(ui.selected, 'vince');
+        assert.equal(document.querySelector('.loadout-details,.class-detail,.menu-footer kbd'), null);
         assert.deepEqual(sent.at(-1), { type: 'class', classId: 'vince' });
         let joins = 0; ui.onRoom = () => joins++;
         (document.getElementById('join-room') as HTMLButtonElement).click();

@@ -10,18 +10,20 @@ import { wireInput } from '../shared/protocol';
 import { type Input, type WeaponId } from '../shared/types';
 import { WEAPONS } from '../shared/weapons';
 import { clamp, distance } from '../shared/math';
+import { FrameBudget } from './frame-budget';
 // Lobby/network ownership stays in lobby-app; only gameplay waits for Three.js.
 export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Promise<void> {
     const audio = new AudioEngine(), controls = new Controls(canvas);
-    const renderer = new Renderer(canvas);
+    const renderer = new Renderer(canvas, controls.touchMode);
     const shots = new ShotFeedback(renderer.effects, renderer.viewmodel, audio);
     renderer.setClass(ui.selected);
-    renderer.setQuality(localStorage.getItem('arena-quality') ?? 'balanced');
+    renderer.setQuality(localStorage.getItem('arena-quality') ?? (controls.touchMode ? 'low' : 'balanced'));
+    const budget = new FrameBudget(controls.touchMode);
     const motion = new LocalMotion();
     let spawnReadyAt = 0, lastCombatLog = 0;
     let playing = false, lastLife = -1, lastWeapon: WeaponId = 'sniper', previousReload = 0, lastStep = 0, lastTime = performance.now();
     ui.onClass = id => { renderer.setClass(id); };
-    ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); document.exitPointerLock(); net.connect(ui.joinConfig); };
+    ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); controls.unlock(); net.connect(ui.joinConfig); };
     const deploy = () => {
         audio.unlock();
         ui.menu = false;
@@ -35,21 +37,22 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     ui.onSettings = (key, value) => { if (key === 'sensitivity') {
         controls.sensitivity = Number(value);
         localStorage.setItem('arena-sensitivity', value);
-    } if (key === 'volume')
+    } if (key === 'touch-sensitivity') { controls.touchSensitivity = Number(value); localStorage.setItem('arena-touch-sensitivity', value); } if (key === 'volume')
         audio.setVolume(Number(value)); if (key === 'quality')
-        renderer.setQuality(value); };
+        { budget.reset(); renderer.setQuality(value); } };
     controls.onLock = locked => { if (playing && !ui.menu) {
         ui.paused = !locked;
         ui.visibility();
     } };
     controls.onScore = open => { ui.scoreOpen = open; };
-    controls.onChat = () => ui.focusChat();
+    ui.onOverlay = () => { if (playing) controls.unlock(); };
+    controls.onMode = touch => { ui.setTouchMode(touch); budget.mobile = touch; budget.reset(); renderer.setResolutionScale(1); renderer.setTouch(touch); };
+    ui.setTouchMode(controls.touchMode);
     controls.onPause = () => { if (!controls.locked && playing && !ui.menu) {
         ui.paused = true;
         ui.visibility();
     } };
     net.onNotice = text => ui.notice(text);
-    net.onChat = message => ui.chat(message);
     let phase = '';
     let pendingFireAim: Input | undefined;
     const welcomed = net.onWelcome;
@@ -93,7 +96,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         // A shot shown between physics ticks keeps its original aim on the next
         // command even though the camera recoil has already responded this frame.
         if (pendingFireAim?.seq === seq) Object.assign(input, pendingFireAim);
-        if (!playing || ui.menu || net.round?.phase !== 'playing') {
+        if (!playing || ui.menu || ui.paused || !controls.locked || net.round?.phase !== 'playing') {
             input.forward = 0; input.strafe = 0; input.jump = false;
             input.fire = false; input.slide = false; input.aim = false; input.reload = false;
         }
@@ -105,7 +108,10 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     function frame(time: number) {
         if (window.__furoStartup.failed) return;
         try {
-            renderFrame(time);
+            if (firstFrame || budget.shouldRender(time)) {
+                if (budget.observe(time, controls.locked && playing)) renderer.setResolutionScale(budget.scale);
+                renderFrame(time);
+            }
             if (firstFrame) { firstFrame = false; ready(); }
             requestAnimationFrame(frame);
         } catch (error) {
@@ -124,7 +130,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             ui.menu = !playing;
             ui.paused = playing && !controls.locked;
             ui.scoreOpen = false;
-            if (!playing && controls.locked) document.exitPointerLock();
+            if (!playing) { controls.unlock(); pendingFireAim = undefined; }
             ui.visibility();
         }
         if (p && p.life !== lastLife) {
@@ -137,13 +143,13 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             spawnReadyAt = time + 250;
             audio.spawn();
         }
-        if (p?.reloadEnd && p.reloadEnd !== previousReload)
-            audio.reload();
-        previousReload = p?.reloadEnd ?? 0;
         const remotes = net.remotePlayers();
         shots.expire(time);
         if (time - lastCombatLog >= 30000) { lastCombatLog = time; console.info('Combat prediction session', shots.metrics); }
+        if (!p?.alive) { pendingFireAim = undefined; if (controls.touchMode) controls.clear(); }
+        controls.updateLook(dt, playing && !ui.paused ? p : undefined, remotes, net.round?.mode ?? 'ffa', now);
         motion.advance(dt, net, sampleInput, input => {
+            controls.touch.consumed(input);
             if (pendingFireAim?.seq === input.seq) pendingFireAim = undefined;
         });
         if (p && playing && controls.locked && !controls.typing && !ui.menu) net.selectWeapon(controls.slot);
@@ -166,6 +172,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
                     const recoil = shots.fire(shotPlayer, input, index, clock.aim, renderer.shotMuzzle(shotPlayer, input, net.correction), remotes, net.round.mode, now);
                     if (recoil) {
                         pendingFireAim = input;
+                        net.weapons.predictShot(p, input);
                         controls.pitch = clamp(controls.pitch + recoil[0], -1.54, 1.54);
                         controls.yaw += recoil[1];
                     }
@@ -176,15 +183,19 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
                 audio.step();
             }
         }
+        controls.touch.finishFrame();
+        controls.drawTouch();
         net.smoothCorrection(dt);
         const rendered = motion.preview(net.predicted, sampleInput(net.seq + 1), playing);
         const aim = controls.locked && controls.aim && !!p?.alive && p.reloadEnd <= now;
+        if (p?.reloadEnd && p.reloadEnd !== previousReload) audio.reload();
+        previousReload = p?.reloadEnd ?? 0;
         renderer.render(dt, time / 1000, rendered, remotes, controls, net.correction, ui.menu, aim, now, net.round?.mode ?? 'ffa');
         ui.update(time, renderer, aim, remotes);
     }
     requestAnimationFrame(frame);
     // Read-only diagnostics for external browser verification; no server debug commands are exposed.
-    Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { combat: shots.metrics, combatReceiptMs: [...net.combatDelays], movement: net.movementMetrics, fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
+    Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { combat: shots.metrics, combatReceiptMs: [...net.combatDelays], movement: net.movementMetrics, fps: renderer.fps, targetHz: budget.targetHz, pixelRatio: renderer.gl.getPixelRatio(), touch: controls.touchMode, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
 
     return started;
 }

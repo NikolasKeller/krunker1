@@ -203,49 +203,17 @@ test('the minimap defaults off, skips canvas work, and can be enabled persistent
     } finally { restore(); }
 });
 
-test('changing rooms clears chat history and opening the lobby releases chat focus', async () => {
-    const { restore, ui, net } = setup(), originalFetch = globalThis.fetch;
+test('chat markup and Enter wiring are removed; focused form fields still suppress gameplay', () => {
+    const { dom, restore, sent } = setup();
     try {
-        globalThis.fetch = async () => ({ json: async () => ({ lan: [] }) }) as Response;
-        await ui.welcomed();
-        ui.chat({ type: 'chat', player: 'b', name: 'Bravo', team: 'red', text: 'old room' });
-        await ui.welcomed();
-        assert.equal(node('chat-log').children.length, 1, 'reconnect preserves this room history');
-        ui.focusChat(); assert.equal(document.activeElement, node('chat-input'));
-        ui.menu = true; ui.visibility();
-        assert.notEqual(document.activeElement, node('chat-input'));
-        net.room = 'NEXT'; await ui.welcomed();
-        assert.equal(node('chat-log').children.length, 0);
-    } finally { globalThis.fetch = originalFetch; restore(); }
-});
-
-test('chat opens deliberately, suppresses movement and shooting while typing, sends and cancels safely', () => {
-    const { dom, restore, ui, sent } = setup();
-    try {
-        const controls = new Controls(document.createElement('canvas'));
-        controls.locked = true; controls.onChat = () => ui.focusChat();
-        // Dispatch on the body as browser keyboard events do.
-        document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', { code: 'KeyW', bubbles: true }));
-        controls.fire = true;
+        assert.equal(document.querySelector('#chat-input,#chat-form,#chat-log,.chat-mic'), null);
+        const controls = new Controls(document.createElement('canvas')); controls.locked = true;
         document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', { code: 'Enter', bubbles: true }));
-        const input = node('chat-input') as HTMLInputElement;
-        assert.equal(document.activeElement, input);
-        input.value = 'wasd r 123';
+        assert.equal(document.activeElement, document.body);
+        const input = node('player-name') as HTMLInputElement; input.focus();
         for (const code of ['KeyW', 'KeyR', 'Digit2', 'Space']) input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { code, bubbles: true }));
         const sample = controls.sample(1, 1000);
         assert.equal(sample.forward, 0); assert.equal(sample.fire, false); assert.equal(sample.reload, false); assert.equal(sample.slot, 1);
-        node('chat-form').dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
-        assert.deepEqual(sent.at(-1), { type: 'chat', text: 'wasd r 123' });
-        assert.notEqual(document.activeElement, input);
-        document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', { code: 'KeyW', bubbles: true }));
-        assert.equal(controls.sample(2, 1100).forward, 1, 'movement resumes after chat');
-        ui.focusChat(); input.value = 'cancel';
-        input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { code: 'Escape', bubbles: true }));
-        assert.equal(input.value, ''); assert.equal(sent.length, 1);
-        ui.chat({ type: 'chat', player: 'b', name: '<img>', team: 'red', text: '<script>hello</script>' });
-        assert.equal(node('chat-log').textContent, '<img>: <script>hello</script>');
-        assert.equal(node('chat-log').querySelector('img,script'), null);
-        for (let i = 0; i < 10; i++) ui.chat({ type: 'chat', player: 'b', name: 'Bravo', team: 'red', text: String(i) });
-        assert.equal(node('chat-log').children.length, 4);
+        assert.equal(sent.length, 0);
     } finally { restore(); }
 });

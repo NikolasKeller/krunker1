@@ -190,6 +190,7 @@ export class Room {
             a.credit = Math.min(MAX_PENDING_INPUTS, a.credit + 1);
             if (!p.alive && this.round.phase === 'playing' && now >= p.respawnAt)
                 this.spawn(a, now);
+            if (!p.alive || this.round.phase !== 'playing') p.reloadEnd = 0;
             if (p.reloadEnd && now >= p.reloadEnd) {
                 p.reloadEnd = 0;
                 p.ammo = WEAPONS[p.weapon].magazine;
@@ -263,7 +264,7 @@ export class Room {
             // makes even a complete input history diverge after upload silence.
         }
         if (recordHistory && this.round.phase === 'playing') this.history.record(now, states);
-        if (checkRound(this.round, states, now)) this.resetReady();
+        if (checkRound(this.round, states, now)) { this.resetReady(); for (const p of states) p.reloadEnd = 0; }
     }
     rejectShot(a: Actor, i: Input, now: number, reason: 'expired' | 'cooldown' | 'unavailable') {
         this.onCombat({ type: 'combat', time: Date.now(), shooter: a.state.id, life: i.life ?? a.state.life, seq: i.seq, accepted: false, reason, events: [], players: [] });
@@ -274,8 +275,11 @@ export class Room {
         a.nextShot = now + w.interval;
         a.lastShot = now;
         p.protectionEnd = 0;
-        if (p.weapon !== 'knife')
+        if (p.weapon !== 'knife') {
             p.ammo--;
+            if (p.ammo === 0 && p.alive && this.round.phase === 'playing' && !p.reloadEnd)
+                p.reloadEnd = now + w.reload;
+        }
         const origin = { x: p.x, y: p.y + eyeHeight(p), z: p.z };
         const dirs = shotRays(p.weapon, p.yaw, p.pitch, Math.hypot(p.vx, p.vz), p.bloom, a.aimTime, a.recoilIndex++, i.seq, p.life);
         p.bloom = Math.min(w.maxBloom, p.bloom + w.bloom);

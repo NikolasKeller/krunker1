@@ -14,7 +14,6 @@ export async function startLobby() {
         ui.onRoom = () => net.connect(ui.joinConfig);
         ui.onSettings = (key, value) => localStorage.setItem(`arena-${key}`, value);
         net.onNotice = text => ui.notice(text);
-        net.onChat = message => ui.chat(message);
         net.onWelcome = () => { void ui.welcomed(); };
         if (ui.joinConfig.room) net.connect(ui.joinConfig);
         ui.updateLobby();

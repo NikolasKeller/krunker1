@@ -18,6 +18,9 @@ export class Renderer {
     fps = 0;
     drawCalls = 0;
     triangles = 0;
+    private sun: THREE.DirectionalLight;
+    private quality = 'balanced';
+    private resolutionScale = 1;
     private width = 1;
     private height = 1;
     private fpsTime = 0;
@@ -29,9 +32,9 @@ export class Renderer {
     private previewCamera = new THREE.PerspectiveCamera(31, 1, 0.1, 30);
     private preview: Character;
     private selected: ClassId = 'hunter';
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, private touch = false) {
         try {
-            this.gl = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+            this.gl = new THREE.WebGLRenderer({ canvas, antialias: !touch, powerPreference: 'high-performance' });
         } catch (cause) {
             throw new Error('WebGL could not start. Enable hardware acceleration in your browser and reload.', { cause });
         }
@@ -45,7 +48,7 @@ export class Renderer {
         this.scene.background = new THREE.Color(0xcdbfbe);
         this.scene.fog = new THREE.Fog(0xcdbfbe, 75, 160);
         this.scene.add(new THREE.HemisphereLight(0xf4f9ff, 0xaaa5a0, 1.7));
-        const sun = new THREE.DirectionalLight(0xfff0d4, 2.2);
+        const sun = this.sun = new THREE.DirectionalLight(0xfff0d4, 2.2);
         sun.position.set(-30, 55, 20);
         sun.castShadow = true;
         sun.shadow.mapSize.set(1536, 1536);
@@ -71,7 +74,27 @@ export class Renderer {
         addEventListener('resize', () => this.resize());
         this.resize();
     }
-    setQuality(quality: string) { this.gl.setPixelRatio(Math.min(devicePixelRatio, quality === 'low' ? 1 : quality === 'high' ? 1.6 : 1.35)); this.gl.shadowMap.enabled = quality !== 'low'; this.resize(); localStorage.setItem('arena-quality', quality); }
+    setTouch(touch: boolean) { this.touch = touch; this.applyQuality(); }
+    setResolutionScale(scale: number) { this.resolutionScale = scale; this.applyQuality(); }
+    setQuality(quality: string) {
+        this.quality = quality; this.resolutionScale = 1; this.applyQuality();
+        localStorage.setItem('arena-quality', quality);
+    }
+    private applyQuality() {
+        const high = this.quality === 'high', low = this.quality === 'low';
+        const cap = this.touch ? (high ? 1.15 : 1) : low ? 1 : high ? 1.6 : 1.35;
+        this.gl.setPixelRatio(Math.min(devicePixelRatio, cap) * this.resolutionScale);
+        this.gl.shadowMap.enabled = !low;
+        const size = this.touch ? (high ? 1024 : 512) : 1536;
+        if (this.sun.shadow.mapSize.x !== size) {
+            this.sun.shadow.mapSize.set(size, size);
+            this.sun.shadow.map?.dispose(); this.sun.shadow.map = null;
+        }
+        // The complete arena remains in range; only distant background is culled.
+        this.camera.far = this.touch ? 120 : 220;
+        this.scene.fog = new THREE.Fog(0xcdbfbe, this.touch ? 70 : 75, this.touch ? 120 : 160);
+        this.resize();
+    }
     private resize() { this.width = innerWidth; this.height = innerHeight; this.gl.setSize(this.width, this.height); this.camera.aspect = this.width / this.height; this.camera.updateProjectionMatrix(); this.viewmodel.resize(this.width, this.height); }
     setClass(id: ClassId) { if (id === this.selected)
         return; this.selected = id; this.previewScene.remove(this.preview.group); releaseCharacter(this.preview); this.preview = makeCharacter(id, id === 'hunter' ? 0xb9bda2 : id === 'triggerman' ? 0x768c68 : id === 'vince' ? 0xaa6f54 : 0x619398); this.preview.group.rotation.y = -2.15; this.previewScene.add(this.preview.group); }
@@ -162,7 +185,7 @@ export class Renderer {
         this.gl.info.reset();
         this.gl.clear();
         this.gl.render(this.scene, this.camera);
-        if (menu) {
+        if (menu && !this.touch) {
             this.gl.clearDepth();
             const w = this.width * (this.width < 900 ? 0.43 : 0.42), h = this.height * 0.78;
             this.gl.setViewport(this.width * 0.31, this.height * 0.16, w, h);
@@ -173,7 +196,7 @@ export class Renderer {
             this.gl.render(this.previewScene, this.previewCamera);
             this.gl.setViewport(0, 0, this.width, this.height);
         }
-        else if (local?.alive && !(aiming && local.weapon === 'sniper' && this.viewmodel.aim > 0.82)) {
+        else if (!menu && local?.alive && !(aiming && local.weapon === 'sniper' && this.viewmodel.aim > 0.82)) {
             this.gl.clearDepth();
             this.gl.render(this.viewmodel.scene, this.viewmodel.camera);
         }

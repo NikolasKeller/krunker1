@@ -48,7 +48,7 @@ for (const scenario of ['delayed game', 'failed chunk', 'failed first frame']) t
         assert.ok(doc.querySelector('.room-panel'), 'actual UI is available before the game import');
         assert.equal(game, undefined);
         (doc.querySelector('[data-class="vince"]') as HTMLButtonElement).click();
-        assert.equal(doc.getElementById('class-name')!.textContent, 'VINCE');
+        assert.equal(doc.querySelector('.class-card.selected strong')!.textContent, 'VINCE');
         assert.equal((doc.getElementById('create-room') as HTMLButtonElement).disabled, false);
         frames.shift()!(0);
         assert.deepEqual(marks, ['furo-lobby-ready']);

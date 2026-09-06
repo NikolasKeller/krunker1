@@ -1779,17 +1779,8 @@ td small {
   #roster { max-height:none; }
 }
 
-/* Keep combat history, room chat, and the flat health strip together at every viewport size. */
+/* Keep combat history just above the flat health strip at every viewport size. */
 .communication-hud { position:absolute; left:12px; bottom:56px; width:min(340px,43vw); display:flex; flex-direction:column; gap:5px; z-index:4; }
-.chat-form { display:flex; gap:6px; align-items:center; width:214px; max-width:100%; position:relative; pointer-events:auto; }
-#chat-input { margin:0; width:calc(100% - 28px); height:29px; padding:3px 5px 0; background:#392d295c; border:0; color:white; font:600 24px/1 var(--heading); letter-spacing:0; }
-#chat-input::placeholder { color:#f3e8d5; opacity:.85; }
-#chat-input:focus { background:#2b2628b3; outline:1px solid #eee5c399; outline-offset:0; }
-.chat-mic { width:19px; height:23px; color:#e1c6ad; fill:currentColor; opacity:.7; }
-.chat-log { display:flex; flex-direction:column; align-items:flex-start; gap:3px; max-height:110px; overflow-y:auto; scrollbar-width:thin; pointer-events:auto; }
-.chat-log:empty { display:none; }
-.chat-log>div { font:600 18px/1.2 var(--heading); background:#392d295c; padding:2px 5px; max-width:100%; overflow-wrap:anywhere; }
-#chat-status { position:absolute; left:0; bottom:100%; font-size:16px; background:#29232de6; padding:2px 6px; }
 .hud .red { color:#f15a60; }
 .hud .blue { color:#87c9f3; }
 .team-scores { margin-top:7px; display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
@@ -1979,3 +1970,140 @@ button.team-heading:hover:enabled { background:#30434a; }
   .room-sidebar .class-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .ffa .team-roster { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Touch input is selected at runtime; viewport queries only arrange the layout. */
+html, body { overscroll-behavior:none; }
+.menu-footer { justify-content:flex-end; }
+.touch-only, .touch-controls, #rotate-prompt { display:none; }
+.touch-device .touch-only { display:block; }
+.touch-device .bottom-hint, .touch-device .pause-controls, .touch-device .desktop-controls { display:none; }
+.touch-device { --safe-left:max(14px, env(safe-area-inset-left)); --safe-right:max(14px, env(safe-area-inset-right)); --safe-top:max(8px, env(safe-area-inset-top)); --safe-bottom:max(10px, env(safe-area-inset-bottom)); }
+.touch-playing, .touch-playing body, .touch-playing #game, .touch-controls { touch-action:none; overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.touch-device button { touch-action:manipulation; }
+.touch-device .touch-controls { display:block; position:fixed; inset:0; z-index:12; pointer-events:none; }
+.touch-controls [data-touch], .touch-controls button { pointer-events:auto; }
+.touch-move { position:absolute; left:var(--safe-left); bottom:var(--safe-bottom); top:38%; width:42%; }
+.move-hint { position:absolute; bottom:72px; left:70px; color:#ffffff70; font:600 12px Arial,sans-serif; letter-spacing:2px; }
+.touch-look { position:absolute; left:47%; right:var(--safe-right); top:16%; bottom:var(--safe-bottom); }
+.touch-stick { position:absolute; width:112px; height:112px; margin:-56px; border-radius:50%; border:2px solid #ffffff60; background:#1a242a38; pointer-events:none; }
+.touch-stick i { display:block; position:absolute; left:34px; top:34px; width:40px; height:40px; border:2px solid #edffb3b0; background:#b9da5c70; border-radius:50%; }
+.touch-controls button { color:#fff9e9; background:#202a35b0; border:1px solid #eee7cd60; font:700 12px Arial,sans-serif; text-shadow:0 1px 2px #000; -webkit-tap-highlight-color:transparent; }
+.touch-controls button:active, .touch-controls [aria-pressed=true], .touch-controls button.selected { background:#c7f45155; border-color:#c7f451; }
+.touch-action { position:absolute; border-radius:50%; width:56px; height:56px; padding:0; }
+.touch-fire { width:88px; height:88px; right:calc(var(--safe-right) + 78px); bottom:calc(var(--safe-bottom) + 46px); border:2px solid #efcf8acc!important; background:#544b36b5!important; }
+.touch-fire span { display:block; font-size:20px; }
+.touch-fire small { display:block; font-size:8px; margin-top:4px; }
+.touch-aim { right:calc(var(--safe-right) + 174px); bottom:calc(var(--safe-bottom) + 108px); }
+.touch-jump { right:calc(var(--safe-right) + 8px); bottom:calc(var(--safe-bottom) + 111px); }
+.touch-slide { right:var(--safe-right); bottom:calc(var(--safe-bottom) + 46px); }
+.touch-reload { right:calc(var(--safe-right) + 184px); bottom:calc(var(--safe-bottom) + 30px); }
+.touch-tools { position:absolute; display:flex; gap:8px; right:var(--safe-right); top:var(--safe-top); }
+.touch-tools button { min-width:48px; height:44px; padding:0 10px; border-radius:8px; }
+.touch-weapons { position:absolute; display:flex; gap:6px; right:var(--safe-right); bottom:var(--safe-bottom); }
+.touch-weapons button { height:40px; min-width:64px; padding:0 10px; border-radius:8px; font-size:10px; }
+.touch-device .modal-layer { padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); z-index:30; }
+.touch-device .pause-panel, .touch-device .settings-panel { max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom)); overflow-y:auto; padding:20px 24px; }
+.touch-device .pause-panel h2, .touch-device .settings-panel h2 { font-size:32px; margin:10px 0; }
+.touch-device .pause-panel p { margin:10px 0; }
+.touch-device .secondary-button, .touch-device .icon-button, .touch-device select, .touch-device input, .touch-device summary, .touch-device .segmented button, .touch-device .copy-button { min-height:44px; }
+.touch-device input:not([type=range]), .touch-device select { font-size:16px; }
+.touch-device .match-hud { top:var(--safe-top); left:var(--safe-left); }
+.touch-device .timer-box { padding:1px 8px; }
+.touch-device .timer-box strong { font-size:30px; }
+.touch-device .timer-icon { font-size:24px; }
+.touch-device .match-mode { font-size:15px; margin-top:2px; }
+.touch-device .match-mode span { font-size:11px; }
+.touch-device .team-scores { position:absolute; top:0; left:100px; flex-direction:row; margin:0; }
+.touch-device .team-scores>div { font-size:20px; }
+.touch-device .performance { right:calc(var(--safe-right) + 120px); top:var(--safe-top); font-size:11px; }
+.touch-device .score-top { top:12px; transform:translateX(-50%) scale(.65); transform-origin:top; }
+.touch-device #mini-board { display:none; }
+.touch-device .communication-hud { left:var(--safe-left); top:calc(var(--safe-top) + 78px); bottom:auto; width:38vw; }
+.touch-device .feed-row { font-size:16px; line-height:1.15; }
+.touch-device .health-hud { left:calc(var(--safe-left) + 150px); bottom:var(--safe-bottom); width:150px; }
+.touch-device .health-content strong { font-size:36px; }
+.touch-device .health-max { font-size:22px; }
+.touch-device .health-sub { font-size:9px; }
+.touch-device .ammo-hud { right:var(--safe-right); top:calc(var(--safe-top) + 53px); bottom:auto; }
+.touch-device .ammo-line strong { font-size:36px; }
+.touch-device .ammo-line b { font-size:24px; }
+.touch-device .ammo-line { line-height:1; }
+.touch-device #hud-weapon { font-size:12px; }
+.touch-device .weapon-slots { display:none; }
+.touch-device .reload-prompt { bottom:24%; font-size:16px; }
+.touch-device .kill-notice { top:22%; }
+.touch-device .kill-notice span { font-size:30px; }
+.touch-device .kill-notice strong { font-size:26px; }
+.touch-device #minimap { width:80px; height:80px; margin-top:6px; }
+.touch-device .score-panel { max-height:calc(100dvh - 20px); width:min(680px,100%); }
+.touch-device .score-panel h2 { font-size:28px; margin:8px 0; }
+.touch-device .score-panel td, .touch-device .score-panel th { padding:7px; font-size:13px; }
+.touch-device #board-footer { display:none; }
+.touch-device #close-score { margin:6px 0 0; }
+
+@media (orientation:landscape) and (max-height:600px) {
+  .touch-device .menu { overflow:hidden; }
+  .touch-device .menu-header { position:absolute; top:var(--safe-top); left:var(--safe-left); right:var(--safe-right); margin:0; height:44px; }
+  .touch-device .brand { font-size:26px; }
+  .touch-device .brand-mark { font-size:26px; width:32px; height:32px; }
+  .touch-device .brand-sub { font-size:7px; }
+  .touch-device .header-right { font-size:10px; }
+  .touch-device .room-panel { position:absolute; left:var(--safe-left); right:var(--safe-right); top:calc(var(--safe-top) + 50px); bottom:var(--safe-bottom); width:auto; margin:0; display:grid; grid-template-columns:minmax(0,1fr) 260px; overflow:hidden; }
+  .touch-device .lineup-panel { padding:10px; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr) auto auto; }
+  .touch-device .lineup-heading .eyebrow { display:none; }
+  .touch-device .lineup-title-row { margin:0 0 3px; gap:8px; }
+  .touch-device .lineup-title-row h1 { font-size:26px; }
+  .touch-device .readiness strong { font-size:23px; }
+  .touch-device .readiness span { font-size:9px; }
+  .touch-device .lineup-heading #lobby-status { font-size:12px; }
+  .touch-device .waiting-players { font-size:11px; margin:3px 0 6px; }
+  .touch-device #roster.lineup-teams { min-height:0; max-height:none; gap:7px; }
+  .touch-device .team-heading { padding:7px; min-height:48px; }
+  .touch-device .team-title strong { font-size:21px; }
+  .touch-device .team-count { font-size:22px; }
+  .touch-device .team-meta { font-size:9px; margin-top:3px; }
+  .touch-device .team-roster { padding:4px; gap:5px; }
+  .touch-device .lineup-card { padding:6px; gap:5px; min-height:58px; }
+  .touch-device .player-name { font-size:18px; }
+  .touch-device .player-class { font-size:10px; margin-top:3px; }
+  .touch-device .player-status { flex-wrap:wrap; gap:4px; }
+  .touch-device .move-player { min-height:44px; font-size:11px; }
+  .touch-device .lineup-card .ready-state { font-size:10px; }
+  .touch-device .lineup-caption { font-size:10px; padding:5px 0; }
+  .touch-device .lineup-panel .lobby-actions { padding-top:5px; }
+  .touch-device .lineup-panel .deploy-button { min-height:44px; font-size:22px; padding:6px 10px; }
+  .touch-device .deploy-note { display:none; }
+  .touch-device .room-sidebar { border-top:0; border-left:1px solid #ffffff20; }
+  .touch-device .room-sidebar>.panel-heading, .touch-device .room-sidebar>.map-thumb { display:none; }
+  .touch-device .room-sidebar .room-options { overflow-y:auto; padding:10px; }
+  .touch-device .room-sidebar .class-picker { margin:12px 0 0; }
+  .touch-device .room-sidebar .class-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .touch-device .room-sidebar .class-card { height:65px; }
+  .touch-device .room-sidebar .picker-heading small { display:none; }
+  .touch-device .menu-footer { display:none; }
+  .touch-device .lobby-sharing { padding:6px; }
+  .touch-device .share-heading { gap:5px; }
+  .touch-device .copy-button { font-size:10px; }
+  .touch-device .ffa .team-roster { grid-template-columns:minmax(0,1fr); }
+}
+@media (orientation:landscape) and (max-width:740px) {
+  .touch-device .room-panel { grid-template-columns:minmax(0,1fr) 225px; }
+  .touch-device .lineup-title-row h1 { font-size:22px; }
+  .touch-device .health-hud { left:calc(var(--safe-left) + 122px); width:122px; }
+  .touch-device .health-sub #speed { display:none; }
+  .touch-device .score-top { display:none; }
+}
+@media (orientation:portrait) {
+  .touch-device #rotate-prompt { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; background:#182329f5; text-align:center; }
+  #rotate-prompt>span { font-size:80px; color:var(--lime); }
+  #rotate-prompt strong { font:400 40px var(--heading); }
+  #rotate-prompt p { max-width:260px; font-size:17px; line-height:1.5; }
+  .touch-device .touch-controls { display:none; }
+}
+
+.touch-device .modal-layer { backdrop-filter:none; }
+.touch-device #rotate-prompt { pointer-events:auto; touch-action:none; }
+.touch-device .ammo-line>span { font-size:32px; }
+.touch-device .ammo-line i { font-size:28px; }
+
+.touch-device .room-sidebar label { font-size:12px; }

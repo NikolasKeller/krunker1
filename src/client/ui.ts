@@ -1,12 +1,13 @@
 import { CLASS_IDS, CLASSES, WEAPONS } from '../shared/weapons';
 import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
-import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId, type ServerMessage } from '../shared/types';
+import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import type { Network } from './network';
 import { LobbyPanel } from './lobby';
 import type { ProvisionalHit } from './shot-feedback';
 import type { Renderer } from './renderer';
 import { distance, worldHit } from '../shared/math';
 import { inviteAddresses } from '../shared/invite';
+import { touchDevice, touchMarkup, TOUCH_SENSITIVITY } from './touch';
 export const escapeHTML = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 export function gunIcon(id: WeaponId) { const paths: Record<WeaponId, string> = { sniper: 'M3 29h20v-5h25v-7h14v-5h30v7h-5v5h30v5h37v4h-38v4H71l-7 17H54l3-17H32L12 47H3z M60 16h25v-6H60z', rifle: 'M4 25h21v-5h62v5h25v4h39v5h-48v7H72l9 17-14 6-15-23H32L9 49H4z M74 18h16v-6h-9z', shotgun: 'M4 27h22l10-6h63v4h51v5H99v4h51v5H75l-13 13H48l7-13H31L8 49H4z', smg: 'M9 25h20v-7h71v5h29v6h20v5h-30v6H82v23H67V40H48l-7 15H29V39H9z', pistol: 'M31 14h90v23H76L63 62H39l9-25H31z', knife: 'M15 47l35-11 3-10 14 8 65-22-37 31-27 5-8 13-14-9-28 10z' }; return `<svg viewBox="0 0 160 72" aria-hidden="true"><path d="${paths[id]}" fill="currentColor"/></svg>`; }
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -33,9 +34,10 @@ export class UI {
     private lastKill = -Infinity;
     private multiKill = 0;
     private lastKillLife = -1;
-    private lastChatAt = -Infinity;
     private minimapEnabled = localStorage.getItem('arena-minimap') === 'on';
-    private chatRoom = '';
+    private feedRoom = '';
+    touchMode = touchDevice();
+    onOverlay: () => void = () => {};
     readonly lobby: LobbyPanel;
     private lastBoard = '';
     private hurtUntil = 0;
@@ -82,37 +84,20 @@ export class UI {
             <section class="class-picker"><div class="picker-heading"><span>YOUR LOADOUT</span><small>SELECT A CLASS</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
             <section class="bot-settings" aria-label="Room bot settings"><div class="label-row"><span>ROOM BOTS</span><span id="bot-settings-status">CREATE A LOBBY TO CONFIGURE</span></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>BOT COUNT<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i === 0 ? 'No bots (friends only)' : `${i} bots`}</option>`).join('')}</select></label></div><p>Choose No bots to play only with your friends.</p></section>
             <details id="host-options"><summary>MATCH SETTINGS <span id="host-label">HOST CONTROLS</span></summary><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div class="two-fields"><label>SCORE LIMIT<input id="score-limit" type="number" min="5" max="200" value="25"/></label><label>TIME LIMIT<select id="time-limit">${[1, 2, 3, 4, 5, 10, 15, 30].map(n => `<option value="${n * 60000}" ${n === 4 ? 'selected' : ''}>${n} minutes</option>`).join('')}</select></label></div></details>
-            <details class="loadout-details"><summary>LOADOUT DETAILS</summary><section class="class-detail"><div class="class-index"><span id="class-num">01</span><span>/ 04</span><span id="class-role">PRECISION</span></div><h2 id="class-name">HUNTER</h2><div class="weapon-label"><span class="tiny-cross">+</span><span id="weapon-name">TRIANGLE .50</span></div><p id="class-description"></p><div class="class-stats" id="class-stats"></div><div class="class-health"><span>+</span><strong id="class-hp">60</strong><small>STARTING HEALTH</small></div></section></details>
             <details class="join-options"><summary>JOIN ANOTHER LOBBY</summary><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false" placeholder="AB7K4"/><button id="join-room" title="Join room" aria-label="Join room code">↗</button></div></label><button id="create-room" class="secondary-button">CREATE NEW LOBBY</button></details>
           </div>
           </aside>
         </main>
 
-        <footer class="menu-footer"><span><kbd>W A S D</kbd> MOVE <kbd>SPACE</kbd> HOP <kbd>SHIFT</kbd> SLIDE <kbd>R</kbd> RELOAD</span><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
+        <footer class="menu-footer"><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
       </div>
-      <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div id="team-scores" class="team-scores hidden" aria-label="Team scores"></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" class="${this.minimapEnabled ? '' : 'hidden'}" width="300" height="300" aria-label="Minimap"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="communication-hud"><div class="killfeed" id="killfeed" aria-label="Kill feed"></div><div id="chat-log" class="chat-log" role="log" aria-label="Room messages" aria-live="polite"></div><form id="chat-form" class="chat-form"><input id="chat-input" aria-label="Room message" placeholder="Enter Message" maxlength="160" autocomplete="off" spellcheck="false"/><svg class="chat-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M6 10v3a6 6 0 0 0 12 0v-3M12 19v4M8 23h8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="chat-status" class="hidden" role="status"></span></form></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><strong id="health">100</strong><span class="health-max" id="health-max">|100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line" id="ammo-line"><strong id="ammo">3</strong><span>|</span><b id="ammo-max">3</b><i id="ammo-alert" class="hidden">!!!</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
-      <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>ROUND LIVE<span class="lime">.</span></h2><p>Click to capture your mouse and play.</p><button id="resume" class="deploy-button">CLICK TO PLAY <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
-      <div id="scoreboard" class="modal-layer hidden"><div class="score-panel"><div class="panel-heading"><span id="board-eyebrow">LIVE SCOREBOARD</span><span id="board-round">ROUND 01</span></div><h2 id="board-title">SANDYARD</h2><p id="board-subtitle">FREE FOR ALL / FIRST TO 25 KILLS</p><div id="board-table"></div><div id="board-footer">HOLD TAB TO VIEW</div></div></div>
-      <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity') ?? 0.0022}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume') ?? 0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><label>MINIMAP<select id="minimap-setting"><option value="off">Off</option><option value="on">On</option></select></label><p>Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
+      <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div id="team-scores" class="team-scores hidden" aria-label="Team scores"></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" class="${this.minimapEnabled ? '' : 'hidden'}" width="300" height="300" aria-label="Minimap"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="communication-hud"><div class="killfeed" id="killfeed" aria-label="Kill feed"></div></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><strong id="health">100</strong><span class="health-max" id="health-max">|100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line" id="ammo-line"><strong id="ammo">3</strong><span>|</span><b id="ammo-max">3</b><i id="ammo-alert" class="hidden">!!!</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
+      ${touchMarkup}
+      <div id="rotate-prompt" role="status"><span>↻</span><strong>ROTATE TO PLAY</strong><p>Turn your phone sideways for room to move and aim.</p></div>
+      <div id="pause" class="modal-layer hidden"><div class="pause-panel"><div class="eyebrow">TAKE A BREATHER</div><h2>ROUND LIVE<span class="lime">.</span></h2><p id="play-help">Click to capture your mouse and play.</p><button id="resume" class="deploy-button">CLICK TO PLAY <span>↗</span></button><button id="change-class" class="secondary-button">CHANGE CLASS</button><button id="pause-settings" class="secondary-button">SETTINGS</button><p class="pause-controls"><kbd>1</kbd> PRIMARY <kbd>2</kbd> SIDEARM <kbd>3</kbd> KNIFE<br><kbd>RMB</kbd> AIM <kbd>LMB</kbd> FIRE</p></div></div>
+      <div id="scoreboard" class="modal-layer hidden"><div class="score-panel"><div class="panel-heading"><span id="board-eyebrow">LIVE SCOREBOARD</span><span id="board-round">ROUND 01</span></div><h2 id="board-title">SANDYARD</h2><p id="board-subtitle">FREE FOR ALL / FIRST TO 25 KILLS</p><div id="board-table"></div><button id="close-score" class="secondary-button touch-only">BACK TO GAME</button><div id="board-footer">HOLD TAB TO VIEW</div></div></div>
+      <div id="settings" class="modal-layer hidden"><div class="settings-panel"><div class="panel-heading"><span>SETTINGS</span><button id="close-settings" class="icon-button">×</button></div><h2>MAKE IT YOURS<span class="lime">.</span></h2><label>MOUSE SENSITIVITY<input id="sensitivity" type="range" min="0.0006" max="0.006" step="0.0001" value="${localStorage.getItem('arena-sensitivity') ?? 0.0022}"/></label><label>TOUCH SENSITIVITY<input id="touch-sensitivity" type="range" min="0.001" max="0.009" step="0.0001" value="${localStorage.getItem('arena-touch-sensitivity') ?? TOUCH_SENSITIVITY}"/></label><label>MASTER VOLUME<input id="volume" type="range" min="0" max="1" step="0.05" value="${localStorage.getItem('arena-volume') ?? 0.35}"/></label><label>GRAPHICS<select id="quality"><option value="low">Performance · no shadows</option><option value="balanced" selected>Balanced · recommended</option><option value="high">High · sharper rendering</option></select></label><label>MINIMAP<select id="minimap-setting"><option value="off">Off</option><option value="on">On</option></select></label><p class="desktop-controls">Movement: WASD · Jump: Space · Slide: Shift<br>Fire: LMB · Aim: RMB · Reload: R<br>Primary / Sidearm / Knife: 1 / 2 / 3<br>Scoreboard: Tab · Release mouse: Esc</p><p class="touch-only">Left thumb: move. Right thumb: drag to look, or hold FIRE and drag to aim while shooting. AIM toggles zoom.</p><div class="tip"><strong>KEEP YOUR MOMENTUM</strong>Tap Shift just before landing, then jump again quickly. Good timing builds speed.</div></div></div>
     `;
-        const chatInput = $<HTMLInputElement>('chat-input');
-        $('chat-form').addEventListener('submit', e => {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (text && (!['CONNECTED', 'CONNECTION SLOW'].includes(this.net.status) || performance.now() - this.lastChatAt < 800)) {
-                $('chat-status').textContent = !['CONNECTED', 'CONNECTION SLOW'].includes(this.net.status) ? `${this.net.status}…` : 'Wait a moment…';
-                $('chat-status').classList.remove('hidden');
-                return;
-            }
-            if (text) { this.net.send({ type: 'chat', text }); this.lastChatAt = performance.now(); }
-            chatInput.value = '';
-            chatInput.blur();
-            $('chat-status').classList.add('hidden');
-        });
-        chatInput.addEventListener('keydown', e => {
-            e.stopPropagation();
-            if (e.code === 'Escape') { e.preventDefault(); chatInput.value = ''; chatInput.blur(); }
-        });
         const room = new URLSearchParams(location.search).get('room') ?? '';
         $('player-name').setAttribute('value', localStorage.getItem('arena-name') ?? `Guest_${Math.floor(Math.random() * 900 + 100)}`);
         $('room-code').setAttribute('value', room);
@@ -140,11 +125,13 @@ export class UI {
         $('resume').onclick = () => this.onResume();
         $('change-class').onclick = () => { this.menu = true; this.paused = false; this.visibility(); };
         for (const id of ['settings-button', 'pause-settings'])
-            $(id).onclick = () => $('settings').classList.remove('hidden');
+            $(id).onclick = () => { this.onOverlay(); $('settings').classList.remove('hidden'); };
         $('close-settings').onclick = () => $('settings').classList.add('hidden');
-        for (const key of ['sensitivity', 'volume', 'quality'])
+        for (const key of ['sensitivity', 'touch-sensitivity', 'volume', 'quality'])
             $(key).oninput = () => this.onSettings(key, $<HTMLInputElement>(key).value);
-        $<HTMLSelectElement>('quality').value = localStorage.getItem('arena-quality') ?? 'balanced';
+        $<HTMLSelectElement>('quality').value = localStorage.getItem('arena-quality') ?? (this.touchMode ? 'low' : 'balanced');
+        $('close-score').onclick = () => { this.scoreOpen = false; $('scoreboard').classList.add('hidden'); };
+        this.setTouchMode(this.touchMode);
         const minimapSetting = $<HTMLSelectElement>('minimap-setting');
         minimapSetting.value = this.minimapEnabled ? 'on' : 'off';
         minimapSetting.onchange = () => {
@@ -182,10 +169,8 @@ export class UI {
         } catch { field.select(); $('copy-status').textContent = 'Link selected. Press Ctrl+C / ⌘C to copy.'; }
     }
     async welcomed() {
-        if (this.chatRoom !== this.net.room) {
-            this.chatRoom = this.net.room;
-            $('chat-log').replaceChildren();
-            $<HTMLInputElement>('chat-input').value = '';
+        if (this.feedRoom !== this.net.room) {
+            this.feedRoom = this.net.room;
             this.feeds = [];
             this.lastKill = -Infinity;
             this.killUntil = 0;
@@ -207,19 +192,21 @@ export class UI {
             $('lan-links').innerHTML = addresses.lan.map(href => `<div>LAN <a href="${escapeHTML(href)}">${escapeHTML(href)}</a></div>`).join('');
         } catch { $('lan-links').textContent = ''; }
     }
-    choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
+    choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
         this.net.send({ type: 'class', classId: id }); }
-    visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); if (this.menu || this.paused) $('chat-input').blur(); }
-    focusChat() { if (!this.menu && !this.paused) $<HTMLInputElement>('chat-input').focus(); }
-    chat(message: Extract<ServerMessage, { type: 'chat' }>) {
-        const row = document.createElement('div'), name = document.createElement('span');
-        name.className = message.team;
-        name.textContent = message.name;
-        row.append(name, document.createTextNode(`: ${message.text}`));
-        const log = $('chat-log');
-        log.append(row);
-        while (log.children.length > 4) log.firstElementChild!.remove();
-        log.scrollTop = log.scrollHeight;
+    setTouchMode(touch: boolean) {
+        this.touchMode = touch;
+        document.documentElement.classList.toggle('touch-device', touch);
+        $('resume').innerHTML = `${touch ? 'TAP' : 'CLICK'} TO PLAY <span>↗</span>`;
+        $('play-help').textContent = touch ? 'Move with your left thumb. Hold FIRE and drag to aim with your right.' : 'Click to capture your mouse and play.';
+        this.visibility();
+    }
+    visibility() {
+        $('menu').classList.toggle('hidden', !this.menu);
+        $('hud').classList.toggle('hidden', this.menu);
+        $('pause').classList.toggle('hidden', !this.paused || this.menu);
+        $('touch-controls').classList.toggle('hidden', !this.touchMode || this.menu || this.paused);
+        document.documentElement.classList.toggle('touch-playing', this.touchMode && !this.menu && !this.paused);
     }
     notice(text: string) { $('notice').textContent = text; this.noticeUntil = performance.now() + 3500; }
     event(e: GameEvent, renderer: Renderer, now: number) {
@@ -297,7 +284,7 @@ export class UI {
             $('crosshair').style.setProperty('--gap', `${5 + spread * 200 + Math.min(8, Math.hypot(p.vx, p.vz) * 0.45)}px`);
         }
         // Nameplates share the body's render sample and cadence; the slower
-        // scoreboard/ammo HUD refresh must not throttle their position or health.
+        // scoreboard refresh must not throttle their position or health.
         this.updateNameplates(p, remotes, renderer, round?.mode);
         if (p) {
             $('health').textContent = String(p.hp);
@@ -317,7 +304,7 @@ export class UI {
                 this.weaponHud = `${p.classId}:${p.weapon}`;
                 $('weapon-slots').innerHTML = ([CLASSES[p.classId].weapon, 'pistol', 'knife'] as WeaponId[]).map((w, i) => `<div class="${w === p.weapon ? 'active' : ''}"><kbd>${i + 1}</kbd>${gunIcon(w)}</div>`).join('');
             }
-            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? '<span class="reload-empty">[R] Reload</span>' : '';
+            $('reload-prompt').innerHTML = p.reloadEnd > serverNow ? `<span>RELOADING</span><i style="--progress:${100 * (1 - (p.reloadEnd - serverNow) / (w.reload || 1))}%"></i>` : p.ammo === 0 && p.weapon !== 'knife' ? `<span class="reload-empty">${this.touchMode ? 'Tap reload' : '[R] Reload'}</span>` : '';
             $('death-card').classList.toggle('hidden', p.alive || round?.phase !== 'playing');
             $('respawn-time').textContent = Math.max(0, (p.respawnAt - serverNow) / 1000).toFixed(1);
         }
@@ -357,7 +344,7 @@ export class UI {
             $('board-eyebrow').textContent = 'LIVE SCOREBOARD';
             $('board-title').textContent = MAP_NAME;
             $('board-subtitle').textContent = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'} / FIRST TO ${round.scoreLimit} KILLS`;
-            $('board-footer').textContent = 'HOLD TAB TO VIEW';
+            $('board-footer').textContent = this.touchMode ? 'LIVE STANDINGS' : 'HOLD TAB TO VIEW';
         }
         $('board-round').textContent = `ROUND ${String(round.round).padStart(2, '0')}`;
         if (results || this.scoreOpen) {

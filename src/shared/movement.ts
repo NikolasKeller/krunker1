@@ -57,7 +57,7 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
         p.slide = 0;
     const len = Math.hypot(i.forward, i.strafe), f = len > 0 ? i.forward / len : 0, s = len > 0 ? i.strafe / len : 0;
     const wx = -Math.sin(i.yaw) * f + Math.cos(i.yaw) * s, wz = -Math.cos(i.yaw) * f - Math.sin(i.yaw) * s;
-    const wish = BASE_SPEED * speedScale * (len > 1 ? 1.12 : 1) * (i.aim ? 0.83 : 1);
+    const wish = Math.min(1, len) * BASE_SPEED * speedScale * (len > 1.001 ? 1.12 : 1) * (i.aim ? 0.83 : 1);
     if (p.grounded && p.slide <= 0) {
         const friction = Math.max(0, 1 - 8.5 * dt);
         p.vx *= friction;
