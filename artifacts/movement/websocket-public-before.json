@@ -1,0 +1,46 @@
+[
+  {
+    "stallMs": 1000,
+    "origin": "https://krunker1-production.up.railway.app",
+    "simulationSteps": 60,
+    "frozenSteps": 18,
+    "movedMetres": 6.889203361592454,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0,
+      "max": 2.6999999999999957
+    },
+    "correctionsOver1cm": 1,
+    "maxSnapshotCameraJumpMetres": 1.6913960466588551e-15,
+    "visibleCorrectionMetresPerSecond": {
+      "p50": 2.3302665473694995e-26,
+      "p95": 0.08664460387852227,
+      "max": 46.591288478807044
+    },
+    "remainingVisualCorrectionMetres": 1.5006746726245915e-46,
+    "maxInFlight": 30,
+    "maxOutgoing": 12
+  },
+  {
+    "stallMs": 2000,
+    "origin": "https://krunker1-production.up.railway.app",
+    "simulationSteps": 120,
+    "frozenSteps": 80,
+    "movedMetres": 6.5292033615924545,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0,
+      "max": 2.3399999999999963
+    },
+    "correctionsOver1cm": 1,
+    "maxSnapshotCameraJumpMetres": 1.7433232021397524e-15,
+    "visibleCorrectionMetresPerSecond": {
+      "p50": 2.5619860935073235e-30,
+      "p95": 0.027620882997143135,
+      "max": 40.55252155855588
+    },
+    "remainingVisualCorrectionMetres": 1.3754998620554838e-46,
+    "maxInFlight": 28,
+    "maxOutgoing": 12
+  }
+]

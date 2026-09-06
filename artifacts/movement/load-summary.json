@@ -1,0 +1,98 @@
+[
+  {
+    "latency": 0,
+    "humans": 2,
+    "bots": 7,
+    "passed": true,
+    "desyncs": 0,
+    "replicaErrors": 0,
+    "snapshotP99": 53,
+    "upRange": [
+      2.13,
+      2.14
+    ],
+    "maxPredictionP99": 0,
+    "tickHz": 60,
+    "tickP95": 2.806
+  },
+  {
+    "latency": 0,
+    "humans": 5,
+    "bots": 7,
+    "passed": true,
+    "desyncs": 0,
+    "replicaErrors": 0,
+    "snapshotP99": 52,
+    "upRange": [
+      2.12,
+      2.13
+    ],
+    "maxPredictionP99": 0,
+    "tickHz": 59.96,
+    "tickP95": 4.073
+  },
+  {
+    "latency": 0,
+    "humans": 10,
+    "bots": 7,
+    "passed": true,
+    "desyncs": 0,
+    "replicaErrors": 0,
+    "snapshotP99": 60,
+    "upRange": [
+      2.13,
+      2.14
+    ],
+    "maxPredictionP99": 0,
+    "tickHz": 60,
+    "tickP95": 7.473
+  },
+  {
+    "latency": 80,
+    "humans": 2,
+    "bots": 7,
+    "passed": true,
+    "desyncs": 0,
+    "replicaErrors": 0,
+    "snapshotP99": 54,
+    "upRange": [
+      2.13,
+      2.13
+    ],
+    "maxPredictionP99": 0,
+    "tickHz": 60.01,
+    "tickP95": 2.947
+  },
+  {
+    "latency": 80,
+    "humans": 5,
+    "bots": 7,
+    "passed": true,
+    "desyncs": 0,
+    "replicaErrors": 0,
+    "snapshotP99": 58,
+    "upRange": [
+      2.11,
+      2.12
+    ],
+    "maxPredictionP99": 0,
+    "tickHz": 59.38,
+    "tickP95": 7.089
+  },
+  {
+    "latency": 80,
+    "humans": 10,
+    "bots": 7,
+    "passed": true,
+    "desyncs": 0,
+    "replicaErrors": 0,
+    "snapshotP99": 58,
+    "upRange": [
+      2.13,
+      2.14
+    ],
+    "maxPredictionP99": 0,
+    "tickHz": 60.02,
+    "tickP95": 6.958
+  }
+]

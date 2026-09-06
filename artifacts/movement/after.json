@@ -1,0 +1,128 @@
+[
+  {
+    "stallSeconds": 1,
+    "mode": "blocked socket",
+    "renderHz": 144,
+    "stallDistanceMetres": 10.799999999999986,
+    "minSimulationStepMetres": 0.17999999999999972,
+    "minRenderStepMetres": 0.07499999999999929,
+    "maxSnapshotJumpMetres": 8.881784197001252e-16,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.003020430067746105,
+      "max": 9.206296555602812
+    },
+    "visibleCorrectionMetres": {
+      "p50": 7.144347103128938e-22,
+      "p95": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "correctionsOver1cm": 6,
+    "residualCorrectionMetres": 1.810862617022431e-36
+  },
+  {
+    "stallSeconds": 1,
+    "mode": "hidden TCP queue",
+    "renderHz": 144,
+    "stallDistanceMetres": 10.799999999999986,
+    "minSimulationStepMetres": 0.17999999999999972,
+    "minRenderStepMetres": 0.07499999999999929,
+    "maxSnapshotJumpMetres": 4.440892098500626e-16,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.004776401751819037,
+      "max": 4.3199999999999905
+    },
+    "visibleCorrectionMetres": {
+      "p50": 1.0139011585380163e-24,
+      "p95": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "correctionsOver1cm": 7,
+    "residualCorrectionMetres": 2.5699139177436057e-39
+  },
+  {
+    "stallSeconds": 1,
+    "mode": "upload only",
+    "renderHz": 144,
+    "stallDistanceMetres": 11.219459375430548,
+    "minSimulationStepMetres": 0.17999999999999972,
+    "minRenderStepMetres": 0.07499999999999929,
+    "maxSnapshotJumpMetres": 8.881784197001252e-16,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.003020430067746105,
+      "max": 9.206296555602812
+    },
+    "visibleCorrectionMetres": {
+      "p50": 5.584176633076392e-16,
+      "p95": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "correctionsOver1cm": 6,
+    "residualCorrectionMetres": 3.625272440932439e-36
+  },
+  {
+    "stallSeconds": 2,
+    "mode": "blocked socket",
+    "renderHz": 144,
+    "stallDistanceMetres": 21.59999999999998,
+    "minSimulationStepMetres": 0.17999999999999972,
+    "minRenderStepMetres": 0.07499999999999929,
+    "maxSnapshotJumpMetres": 1.7763568394002505e-15,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.0019100147492032704,
+      "max": 20.006373782193265
+    },
+    "visibleCorrectionMetres": {
+      "p50": 1.0383668691425942e-11,
+      "p95": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "correctionsOver1cm": 6,
+    "residualCorrectionMetres": 2.1326722449150126e-22
+  },
+  {
+    "stallSeconds": 2,
+    "mode": "hidden TCP queue",
+    "renderHz": 144,
+    "stallDistanceMetres": 21.59999999999998,
+    "minSimulationStepMetres": 0.17999999999999972,
+    "minRenderStepMetres": 0.07499999999999929,
+    "maxSnapshotJumpMetres": 1.7763568394002505e-15,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.003020430067746105,
+      "max": 15.11999999999999
+    },
+    "visibleCorrectionMetres": {
+      "p50": 1.4731826119445784e-14,
+      "p95": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "correctionsOver1cm": 7,
+    "residualCorrectionMetres": 3.0257279595022885e-25
+  },
+  {
+    "stallSeconds": 2,
+    "mode": "upload only",
+    "renderHz": 144,
+    "stallDistanceMetres": 22.019791562150044,
+    "minSimulationStepMetres": 0.17999999999999972,
+    "minRenderStepMetres": 0.07499999999999929,
+    "maxSnapshotJumpMetres": 0,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0.0019100147492032704,
+      "max": 20.006373782193265
+    },
+    "visibleCorrectionMetres": {
+      "p50": 0.000015173469508600542,
+      "p95": 0.041666666666666664,
+      "max": 0.041666666666666664
+    },
+    "correctionsOver1cm": 6,
+    "residualCorrectionMetres": 4.272506034543868e-22
+  }
+]

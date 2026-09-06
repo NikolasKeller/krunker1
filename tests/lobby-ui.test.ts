@@ -104,3 +104,45 @@ test('results and unchanged countdown seconds retain nodes without mutations', (
         observer.disconnect();
     } finally { restore(); }
 });
+
+
+test('a slow established connection keeps lobby actions available and reports the actual status', () => {
+    const { restore, ui, net } = setup();
+    try {
+        net.status = 'CONNECTION SLOW'; ui.updateLobby();
+        assert.match(document.getElementById('lobby-status')!.textContent!, /Connection slow/);
+        assert.equal((document.getElementById('deploy') as HTMLButtonElement).disabled, false);
+        const sent: ClientMessage[] = []; net.send = message => { sent.push(message); };
+        (document.getElementById('deploy') as HTMLButtonElement).click();
+        assert.deepEqual(sent.at(-1), { type: 'ready', ready: true });
+        net.status = 'RECONNECTING'; ui.updateLobby();
+        assert.match(document.getElementById('deploy-label')!.textContent!, /RECONNECTING/);
+    } finally { restore(); }
+});
+
+test('bot selectors are visible outside collapsed settings and send zero and every difficulty', () => {
+    const { dom, restore, ui, net } = setup();
+    try {
+        const bots = document.getElementById('bot-count') as HTMLSelectElement;
+        const difficulty = document.getElementById('difficulty') as HTMLSelectElement;
+        assert.equal(bots.closest('details'), null);
+        assert.equal(difficulty.closest('details'), null);
+        assert.equal(bots.disabled, false);
+        assert.match(bots.options[0].textContent!, /No bots/);
+        const sent: ClientMessage[] = []; net.send = message => { sent.push(message); };
+        bots.value = '0'; bots.dispatchEvent(new dom.window.Event('change'));
+        assert.deepEqual(sent.at(-1), { type: 'configure', bots: 0 });
+        for (const level of ['easy', 'normal', 'hard']) {
+            difficulty.value = level; difficulty.dispatchEvent(new dom.window.Event('change'));
+            assert.deepEqual(sent.at(-1), { type: 'configure', difficulty: level });
+        }
+        net.host = 'friend'; net.bots = 2; net.difficulty = 'easy'; ui.updateLobby();
+        assert.equal(bots.disabled, true); assert.equal(difficulty.disabled, true);
+        assert.equal(bots.value, '2'); assert.equal(difficulty.value, 'easy');
+        assert.equal(document.getElementById('bot-settings-status')!.textContent, 'SET BY THE HOST');
+        net.host = net.id; net.round!.phase = 'playing'; ui.updateLobby();
+        assert.equal(bots.disabled, true);
+        net.round!.phase = 'lobby'; ui.updateLobby();
+        assert.equal(bots.disabled, false); assert.equal(bots.value, '2');
+    } finally { restore(); }
+});

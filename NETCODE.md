@@ -1,5 +1,7 @@
 # Public netcode measurements
 
+**Historical bandwidth report.** The later [movement stall fix](artifacts/movement/README.md) replaces the prediction reset on dropped inputs described below with independent replay history and smooth correction; it also adjusts remote interpolation. The Railway results here predate that fix.
+
 Target: `https://krunker1-production.up.railway.app`. All measurements in this report use that public HTTPS/WSS address. Local unit/integration tests are listed separately. No browser launch or CDP connection was used.
 
 ## Changes

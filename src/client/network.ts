@@ -1,10 +1,17 @@
-import { INTERPOLATION_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
-import { predictInput, reconcile } from './prediction';
+import { INTERPOLATION_MS, MAX_REWIND_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
+import { predictInput, PredictionHistory, smoothCorrection } from './prediction';
 import { angleLerp, clamp, lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
 import { InputBuffer } from '../shared/input-buffer';
-export const JOIN_RETRY_MS = 1500;
-export const CONNECT_TIMEOUT_MS = 10000;
+export const JOIN_RETRY_MS = 2000;
+export const CONNECT_TIMEOUT_MS = 30000;
+export const SLOW_CONNECTION_MS = 5000;
+export const CONNECTION_DEAD_MS = 45000;
+export const RECONNECT_BASE_MS = 1000;
+export const RECONNECT_MAX_MS = 30000;
+export function retryDelay(attempt: number, base = RECONNECT_BASE_MS, cap = RECONNECT_MAX_MS) {
+    return Math.min(cap, base * 2 ** Math.min(attempt, 10)) * (0.75 + Math.random() * 0.25);
+}
 export class Network {
     onChat: (message: Extract<ServerMessage, { type: 'chat' }>) => void = () => {};
     ws?: WebSocket;
@@ -21,6 +28,7 @@ export class Network {
     difficulty: Difficulty = 'normal';
     bots = 5;
     readonly inputs = new InputBuffer();
+    readonly predictionHistory = new PredictionHistory();
     get pending() { return this.inputs.pending; }
     set pending(value: Input[]) { this.inputs.pending = value; }
     get outgoing() { return this.inputs.outgoing; }
@@ -38,11 +46,16 @@ export class Network {
     bytes = 0;
     reconciliations = 0;
     maxCorrection = 0;
+    correctionDistances: number[] = [];
+    maxFrameCorrection = 0;
     private retry = 0;
     private generation = 0;
     private reconnectTimer?: ReturnType<typeof setTimeout>;
     private handshakeTimer?: ReturnType<typeof setTimeout>;
-    private joinTimer?: ReturnType<typeof setInterval>;
+    private joinTimer?: ReturnType<typeof setTimeout>;
+    private reconnect?: () => void;
+    private lastMessageAt = 0;
+    private lastSyncAt = 0;
     private inputTimer?: ReturnType<typeof setInterval>;
     private heartbeatTimer: ReturnType<typeof setInterval>;
     private tokens = new Map<string, string>();
@@ -54,13 +67,25 @@ export class Network {
         create?: boolean;
     };
     constructor() { this.heartbeatTimer = setInterval(() => {
-        this.send({ type: 'ping', time: Date.now() });
-        if (this.ws?.readyState === WebSocket.OPEN && this.receivedAt > 0 && Date.now() - this.receivedAt > 6000)
-            this.connect(this.config!);
+        const now = Date.now();
+        if (this.ws?.readyState !== WebSocket.OPEN) return;
+        // TCP may be stalled for seconds. Avoid adding probes to a blocked write
+        // queue; any valid server message proves the transport is still alive.
+        if (!this.ws.bufferedAmount) this.send({ type: 'ping', time: now });
+        if (!this.local) return; // The generous handshake timer owns admission.
+        if (now - this.lastMessageAt >= CONNECTION_DEAD_MS) {
+            this.reconnect?.();
+        } else if (now - this.receivedAt >= SLOW_CONNECTION_MS) {
+            this.status = 'CONNECTION SLOW';
+            if (!this.ws.bufferedAmount && now - this.lastSyncAt >= SLOW_CONNECTION_MS) {
+                this.send({ type: 'sync' });
+                this.lastSyncAt = now;
+            }
+        }
     }, 1500); }
     private clearHandshake() {
         clearTimeout(this.handshakeTimer);
-        clearInterval(this.joinTimer);
+        clearTimeout(this.joinTimer);
     }
     disconnect() {
         ++this.generation;
@@ -84,45 +109,50 @@ export class Network {
         this.clearHandshake();
         clearTimeout(this.reconnectTimer);
         this.ws?.close();
-        this.status = 'CONNECTING';
+        this.status = this.retry ? 'RECONNECTING' : 'CONNECTING';
         this.id = '';
         this.host = '';
         this.seq = 0;
         this.round = undefined;
         this.receivedAt = 0;
+        this.lastMessageAt = Date.now();
+        this.lastSyncAt = 0;
         this.players.clear();
         this.frames = [];
         this.predicted = undefined;
         this.inputs.clear();
+        this.predictionHistory.clear();
+        this.correction = { x: 0, y: 0, z: 0 };
         this.lastSnapshot = 0;
         const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`, WIRE_PROTOCOL);
         ws.binaryType = 'arraybuffer';
         this.ws = ws;
         clearInterval(this.inputTimer);
         this.inputTimer = setInterval(() => this.flush(), INPUT_SEND_MS);
-        const reconnect = () => {
+        const reconnect = this.reconnect = () => {
             if (generation !== this.generation) return;
             ++this.generation;
             this.clearHandshake();
             this.status = 'RECONNECTING';
             ws.close();
-            this.reconnectTimer = setTimeout(() => this.connect(config), Math.min(5000, 600 * 2 ** this.retry++));
+            this.reconnectTimer = setTimeout(() => this.connect(config), retryDelay(this.retry++));
         };
         this.handshakeTimer = setTimeout(reconnect, CONNECT_TIMEOUT_MS);
         ws.onopen = () => {
             if (generation !== this.generation) return;
-            this.status = 'JOINING LOBBY';
+            this.status = this.retry ? 'REJOINING LOBBY' : 'JOINING LOBBY';
             let token = this.tokens.get(config.room);
             // Storage is optional: a privacy policy must not prevent the join from being sent.
             try { token ??= sessionStorage.getItem(`arena-token-${config.room}`) ?? undefined; } catch { /* Use the in-memory token. */ }
             const join: ClientMessage = { type: 'join', ...config, token };
+            let joinAttempt = 0;
             const requestLobby = () => {
-                if (generation !== this.generation) return;
-                this.send(this.id ? { type: 'sync' } : join);
+                if (generation !== this.generation || this.local) return;
+                if (!ws.bufferedAmount) this.send(this.id ? { type: 'sync' } : join);
+                this.joinTimer = setTimeout(requestLobby, retryDelay(joinAttempt++, JOIN_RETRY_MS, 12000));
             };
             requestLobby();
             this.send({ type: 'ping', time: Date.now() });
-            this.joinTimer = setInterval(requestLobby, JOIN_RETRY_MS);
             clearTimeout(this.handshakeTimer);
             this.handshakeTimer = setTimeout(reconnect, CONNECT_TIMEOUT_MS);
         };
@@ -140,23 +170,32 @@ export class Network {
             if (e.code === 4000) this.status = 'SESSION MOVED';
             else reconnect();
         };
-        ws.onerror = () => { if (generation === this.generation) this.status = 'SERVER UNREACHABLE'; };
+        // Browsers emit close after an error. Only close/the watchdog schedules a
+        // retry, so late error callbacks cannot flicker an established session.
+        ws.onerror = () => {};
     }
     send(message: ClientMessage) { if (this.ws?.readyState === WebSocket.OPEN)
         this.ws.send(encodeClientMessage(message)); }
     get serverNow() { return Date.now() + this.offset; }
+    // The jitter reserve starts behind the latest arriving snapshot, which is
+    // already approximately half an RTT old. A fixed 100 ms server-time delay
+    // underflows even at 80 ms one-way latency with 50 ms snapshot spacing.
+    get interpolationDelay() { return Math.min(MAX_REWIND_MS, INTERPOLATION_MS + this.ping / 2); }
     get local() { return this.players.get(this.id); }
     input(input: Input) {
         if (!this.predicted) return;
-        const dropped = this.inputs.dropped;
         const i = this.inputs.enqueue({ ...input, life: this.predicted.life });
-        const playing = this.round?.phase === 'playing';
-        if (this.inputs.dropped !== dropped && this.local)
-            this.predicted = reconcile(this.local, this.pending, playing).predicted;
-        else predictInput(this.predicted, i, playing);
+        this.predictionHistory.add(i);
+        predictInput(this.predicted, i, this.round?.phase === 'playing');
+    }
+    smoothCorrection(dt: number) {
+        const distance = smoothCorrection(this.correction, dt);
+        this.maxFrameCorrection = Math.max(this.maxFrameCorrection, distance);
+        return distance;
     }
     flush() { if (this.ws) this.inputs.flush(this.ws); }
     private receive(m: ServerMessage) {
+        this.lastMessageAt = Date.now();
         if (m.type === 'chat') this.onChat(m);
         if (m.type === 'welcome') {
             const firstWelcome = this.id !== m.id || this.room !== m.room;
@@ -211,34 +250,33 @@ export class Network {
                 this.clearHandshake();
                 this.status = 'CONNECTED';
                 this.retry = 0;
-                const old = this.predicted, replayed = reconcile(local, this.pending, this.round?.phase === 'playing');
-                this.pending = replayed.remaining;
+                const old = this.predicted;
+                this.pending = this.pending.filter(i => i.seq > local.ack);
                 this.seq = Math.max(this.seq, local.ack);
-                this.predicted = replayed.predicted;
+                this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
                 if (old && old.life === local.life && old.alive === local.alive) {
                     const dx = old.x - this.predicted.x, dy = old.y - this.predicted.y, dz = old.z - this.predicted.z;
                     const error = Math.hypot(dx, dy, dz);
                     this.maxCorrection = Math.max(this.maxCorrection, error);
+                    this.correctionDistances.push(error);
+                    if (this.correctionDistances.length > 1200) this.correctionDistances.shift();
                     if (error > 0.01)
                         this.reconciliations++;
-                    if (error < 3) {
-                        this.correction.x += dx;
-                        this.correction.y += dy;
-                        this.correction.z += dz;
-                    }
-                    else
-                        this.correction = { x: 0, y: 0, z: 0 };
+                    this.correction.x += dx;
+                    this.correction.y += dy;
+                    this.correction.z += dz;
                 }
                 else {
                     this.pending = [];
                     this.outgoing = [];
+                    this.predictionHistory.clear();
                     this.correction = { x: 0, y: 0, z: 0 };
                 }
             }
         }
     }
     remotePlayers(): PlayerState[] {
-        const time = this.serverNow - INTERPOLATION_MS;
+        const time = this.serverNow - this.interpolationDelay;
         let a = this.frames[0], b = a;
         if (!a)
             return [];

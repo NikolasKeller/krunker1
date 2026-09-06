@@ -1,11 +1,12 @@
 import './style.css';
 import { Controls } from './input';
 import { Network } from './network';
+import { previewInput } from './prediction';
 import { Renderer } from './renderer';
 import { AudioEngine } from './audio';
 import { UI } from './ui';
 import { LOBBY_UPDATE_MS } from './lobby';
-import { STEP, INTERPOLATION_MS, type WeaponId } from '../shared/types';
+import { STEP, type WeaponId } from '../shared/types';
 import { CLASSES, recoilFor, WEAPONS } from '../shared/weapons';
 import { clamp, distance } from '../shared/math';
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -82,6 +83,14 @@ net.onEvents = events => {
     }
 };
 if (ui.joinConfig.room) net.connect(ui.joinConfig);
+function sampleInput(seq: number) {
+    const input = controls.sample(seq, net.serverNow - net.interpolationDelay);
+    if (!playing || ui.menu || net.round?.phase !== 'playing') {
+        input.forward = 0; input.strafe = 0; input.jump = false;
+        input.fire = false; input.slide = false; input.aim = false; input.reload = false;
+    }
+    return input;
+}
 function frame(time: number) {
     const dt = Math.min(0.05, (time - lastTime) / 1000);
     lastTime = time;
@@ -118,17 +127,7 @@ function frame(time: number) {
         accumulator -= STEP;
         if (!net.predicted)
             continue;
-        const input = controls.sample(++net.seq, net.serverNow - INTERPOLATION_MS);
-        if (!playing || ui.menu || net.round?.phase !== 'playing') {
-            input.forward = 0;
-            input.strafe = 0;
-            input.jump = false;
-            input.fire = false;
-            input.slide = false;
-            input.aim = false;
-            input.reload = false;
-        }
-        net.input(input);
+        net.input(sampleInput(++net.seq));
     }
     if (p && playing && controls.locked && !controls.typing && !ui.menu && p.alive && net.round?.phase === 'playing') {
         if (controls.fire && now >= nextShot && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
@@ -150,13 +149,10 @@ function frame(time: number) {
             audio.step();
         }
     }
-    const c = net.correction;
-    const decay = Math.exp(-dt * 18);
-    c.x *= decay;
-    c.y *= decay;
-    c.z *= decay;
+    net.smoothCorrection(dt);
+    const rendered = previewInput(net.predicted, sampleInput(net.seq + 1), playing, accumulator / STEP);
     const aim = controls.locked && controls.aim && !!p?.alive && p.reloadEnd <= now;
-    renderer.render(dt, time / 1000, net.predicted, net.remotePlayers(), controls, c, ui.menu, aim, now, net.round?.mode ?? 'ffa');
+    renderer.render(dt, time / 1000, rendered, net.remotePlayers(), controls, net.correction, ui.menu, aim, now, net.round?.mode ?? 'ffa');
     ui.update(time, renderer, aim);
     requestAnimationFrame(frame);
 }
@@ -164,4 +160,4 @@ requestAnimationFrame(frame);
 ui.updateLobby();
 setInterval(() => ui.updateLobby(), LOBBY_UPDATE_MS);
 // Read-only diagnostics for external browser verification; no server debug commands are exposed.
-Object.defineProperty(window, '__arena', { value: { get metrics() { return { fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, reconciliations: net.reconciliations, maxCorrection: net.maxCorrection, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });
+Object.defineProperty(window, '__arena', { value: { get metrics() { const errors = [...net.correctionDistances].sort((a, b) => a - b); return { fps: renderer.fps, ping: net.ping, drawCalls: renderer.drawCalls, triangles: renderer.triangles, pendingInputs: net.pending.length, predictionInputs: net.predictionHistory.pending.length, reconciliations: net.reconciliations, correctionP50: errors[Math.floor((errors.length - 1) * .5)] ?? 0, correctionP95: errors[Math.floor((errors.length - 1) * .95)] ?? 0, maxCorrection: net.maxCorrection, maxFrameCorrection: net.maxFrameCorrection, interpolationDelay: net.interpolationDelay, receivedBytes: net.bytes, connection: net.status, lobby: ui.lobby.metrics }; }, get state() { return { id: net.id, room: net.room, local: net.local, predicted: net.predicted, round: net.round, players: [...net.players.values()] }; } } });

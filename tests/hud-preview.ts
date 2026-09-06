@@ -16,7 +16,7 @@ for (const match of css.matchAll(/url\('(?<path>\/fonts\/[^']+)'\)/g)) {
 }
 const geometry = (await readFile(new URL('../artifacts/geometry-preview.png', import.meta.url))).toString('base64');
 for (const state of ['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill'] as const) {
-    const { dom, restore } = installDOM('https://krunker1-production.up.railway.app');
+    const { dom, restore } = installDOM('https://furo.example');
     try {
         Object.defineProperty(dom.window, 'innerWidth', { value: 1024 });
         Object.defineProperty(dom.window, 'innerHeight', { value: 614 });
@@ -54,7 +54,7 @@ for (const state of ['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill']
         // Serialize input properties too, so the static fixture retains the actual lobby form state.
         for (const field of document.querySelectorAll('input')) field.setAttribute('value', field.value);
         for (const field of document.querySelectorAll('select')) for (const option of field.options) option.toggleAttribute('selected', option.selected);
-        const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HUD review: ${state}</title><style>${css}
+        const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Furo HUD review: ${state}</title><style>${css}
 body { background:#cdbfbe url(data:image/png;base64,${geometry}) center/cover no-repeat; }
 #damage-numbers>span { animation-play-state:paused; animation-delay:-.15s; }
 </style><body>${document.body.innerHTML}</body></html>`;

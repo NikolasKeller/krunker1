@@ -1,0 +1,58 @@
+[
+  {
+    "stallMs": 1000,
+    "blockedSocket": true,
+    "stallMovementMetres": 1.4892033615924625,
+    "pausedSteps": 48,
+    "backwardsSteps": 0,
+    "minStepMetres": 0,
+    "maxSnapshotCameraJump": 0,
+    "rawCorrections": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0
+    }
+  },
+  {
+    "stallMs": 1000,
+    "blockedSocket": false,
+    "stallMovementMetres": 6.889203361592454,
+    "pausedSteps": 18,
+    "backwardsSteps": 0,
+    "minStepMetres": 0,
+    "maxSnapshotCameraJump": 1.73595057194575e-15,
+    "rawCorrections": {
+      "p50": 0,
+      "p95": 0,
+      "max": 2.6999999999999957
+    }
+  },
+  {
+    "stallMs": 2000,
+    "blockedSocket": true,
+    "stallMovementMetres": 1.4892033615924625,
+    "pausedSteps": 108,
+    "backwardsSteps": 0,
+    "minStepMetres": 0,
+    "maxSnapshotCameraJump": 0,
+    "rawCorrections": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0
+    }
+  },
+  {
+    "stallMs": 2000,
+    "blockedSocket": false,
+    "stallMovementMetres": 6.889203361592454,
+    "pausedSteps": 78,
+    "backwardsSteps": 0,
+    "minStepMetres": 0,
+    "maxSnapshotCameraJump": 1.73595057194575e-15,
+    "rawCorrections": {
+      "p50": 0,
+      "p95": 0,
+      "max": 2.6999999999999957
+    }
+  }
+]

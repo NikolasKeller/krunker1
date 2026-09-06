@@ -50,11 +50,11 @@ export class UI {
             this.team = 'blue';
         $('ui').innerHTML = `
       <div id="menu" class="menu">
-        <header class="menu-header"><div class="brand"><span class="brand-mark">K</span><div>KRUNKER<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
+        <header class="menu-header"><div class="brand"><span class="brand-mark">F</span><div>FURO<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
         <section class="class-detail"><div class="eyebrow"><span class="small-line"></span> SELECT YOUR LOADOUT</div><h1>CHOOSE<br>YOUR CLASS<span class="lime">.</span></h1><div class="class-index"><span id="class-num">01</span><span>/ 04</span><span id="class-role">PRECISION</span></div><h2 id="class-name">HUNTER</h2><div class="weapon-label"><span class="tiny-cross">+</span><span id="weapon-name">TRIANGLE .50</span></div><p id="class-description"></p><div class="class-stats" id="class-stats"></div><div class="class-health"><span>+</span><strong id="class-hp">60</strong><small>STARTING HEALTH</small></div></section>
         <div class="preview-label"><span class="status-dot"></span><span>READY TO DROP</span><small>STANDARD ISSUE / DEFAULT</small></div>
         <aside class="room-panel">
-          <div class="panel-heading"><span id="lobby-heading">YOUR NEXT ROUND</span><span class="tag">10 FRIENDS + BOTS</span></div>
+          <div class="panel-heading"><span id="lobby-heading">YOUR NEXT FURO ROUND</span><span class="tag">10 FRIENDS + BOTS</span></div>
           <div class="map-thumb"><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div>
           <div class="room-options">
             <div id="lobby-status" role="status" aria-live="polite">Create a lobby, then invite your friends.</div>
@@ -62,8 +62,9 @@ export class UI {
             <label>YOUR CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name" autocomplete="nickname"/></label>
             <div class="lobby-sharing hidden" id="lobby-sharing"><div class="share-heading"><strong id="share-code"></strong><button id="copy-link" class="copy-button">COPY INVITE LINK</button></div><label>INVITE URL<input id="share-url" readonly aria-label="Lobby invite URL"/></label><div id="lan-links"></div><div id="copy-status" role="status" aria-live="polite"></div></div>
             <div id="team-select" class="team-select visible"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div>
+            <section class="bot-settings" aria-label="Room bot settings"><div class="label-row"><span>ROOM BOTS</span><span id="bot-settings-status">CREATE A LOBBY TO CONFIGURE</span></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>BOT COUNT<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i === 0 ? 'No bots (friends only)' : `${i} bots`}</option>`).join('')}</select></label></div><p>Choose No bots to play only with your friends.</p></section>
             <div class="label-row roster-label"><span>PLAYERS / TEAM / READY</span><span id="player-count">0 / 10</span></div><div id="roster" aria-live="polite"></div>
-            <details id="host-options"><summary>MATCH SETTINGS <span id="host-label">HOST CONTROLS</span></summary><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div class="two-fields"><label>SCORE LIMIT<input id="score-limit" type="number" min="5" max="200" value="25"/></label><label>TIME LIMIT<select id="time-limit">${[1, 2, 3, 4, 5, 10, 15, 30].map(n => `<option value="${n * 60000}" ${n === 4 ? 'selected' : ''}>${n} minutes</option>`).join('')}</select></label></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>EXTRA BOTS<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i} bots</option>`).join('')}</select></label></div></details>
+            <details id="host-options"><summary>MATCH SETTINGS <span id="host-label">HOST CONTROLS</span></summary><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div class="two-fields"><label>SCORE LIMIT<input id="score-limit" type="number" min="5" max="200" value="25"/></label><label>TIME LIMIT<select id="time-limit">${[1, 2, 3, 4, 5, 10, 15, 30].map(n => `<option value="${n * 60000}" ${n === 4 ? 'selected' : ''}>${n} minutes</option>`).join('')}</select></label></div></details>
             <details class="join-options"><summary>JOIN ANOTHER LOBBY</summary><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false" placeholder="AB7K4"/><button id="join-room" title="Join room" aria-label="Join room code">↗</button></div></label><button id="create-room" class="secondary-button">CREATE NEW LOBBY</button></details>
           </div>
           <div class="lobby-actions"><button id="deploy" class="deploy-button"><span id="deploy-label">CREATE LOBBY</span><span id="deploy-icon" aria-hidden="true">↗</span></button><button id="force-start" class="secondary-button hidden">HOST: START EARLY</button><div class="deploy-note" id="deploy-note">SEND A LINK. GET EVERYONE READY.</div></div>
@@ -80,8 +81,8 @@ export class UI {
         $('chat-form').addEventListener('submit', e => {
             e.preventDefault();
             const text = chatInput.value.trim();
-            if (text && (this.net.status !== 'CONNECTED' || performance.now() - this.lastChatAt < 800)) {
-                $('chat-status').textContent = this.net.status !== 'CONNECTED' ? 'Reconnecting…' : 'Wait a moment…';
+            if (text && (!['CONNECTED', 'CONNECTION SLOW'].includes(this.net.status) || performance.now() - this.lastChatAt < 800)) {
+                $('chat-status').textContent = !['CONNECTED', 'CONNECTION SLOW'].includes(this.net.status) ? `${this.net.status}…` : 'Wait a moment…';
                 $('chat-status').classList.remove('hidden');
                 return;
             }
@@ -140,7 +141,7 @@ export class UI {
     private deploy() {
         const net = this.net;
         if (!net.ws) { this.onRoom(); return; }
-        if (!net.local || net.status !== 'CONNECTED') return;
+        if (!net.local || !['CONNECTED', 'CONNECTION SLOW'].includes(net.status)) return;
         this.saveProfile();
         if (net.round?.phase === 'lobby' || net.round?.phase === 'countdown') {
             // Lobby actions must not depend on audio, WebGL, or pointer-lock setup.

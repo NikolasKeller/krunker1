@@ -1811,3 +1811,8 @@ td small {
   .communication-hud { width:43vw; }
   .kill-notice span { font-size:46px; }
 }
+
+.bot-settings { padding:12px 0; border-bottom:1px solid #ffffff12; }
+.bot-settings .label-row { margin-bottom:10px; }
+.bot-settings #bot-settings-status { color:var(--muted); font-size:9px; }
+.bot-settings p { margin:8px 0 0; color:var(--muted); font-size:11px; }

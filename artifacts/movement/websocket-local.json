@@ -1,0 +1,46 @@
+[
+  {
+    "stallMs": 1000,
+    "origin": "http://127.0.0.1:8123",
+    "simulationSteps": 60,
+    "frozenSteps": 0,
+    "movedMetres": 10.129203361592449,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0,
+      "max": 3.779999999999994
+    },
+    "correctionsOver1cm": 2,
+    "maxSnapshotCameraJumpMetres": 1.7763568394002505e-15,
+    "visibleCorrectionMetresPerSecond": {
+      "p50": 2.976996770984185e-19,
+      "p95": 6,
+      "max": 6.000000000000001
+    },
+    "remainingVisualCorrectionMetres": 8.747736818312752e-40,
+    "maxInFlight": 30,
+    "maxOutgoing": 12
+  },
+  {
+    "stallMs": 2000,
+    "origin": "http://127.0.0.1:8123",
+    "simulationSteps": 120,
+    "frozenSteps": 0,
+    "movedMetres": 20.92920336159243,
+    "rawCorrectionMetres": {
+      "p50": 0,
+      "p95": 0,
+      "max": 15.11999999999998
+    },
+    "correctionsOver1cm": 2,
+    "maxSnapshotCameraJumpMetres": 1.7763568394002505e-15,
+    "visibleCorrectionMetresPerSecond": {
+      "p50": 1.6954319869949073e-8,
+      "p95": 6,
+      "max": 6.000000000000001
+    },
+    "remainingVisualCorrectionMetres": 2.790335968324582e-25,
+    "maxInFlight": 29,
+    "maxOutgoing": 12
+  }
+]

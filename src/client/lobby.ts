@@ -61,11 +61,11 @@ export class LobbyPanel {
     update(team: Team) {
         this.polls++;
         const before = this.writes, net = this.net, round = net.round, local = net.local;
-        const connected = !!local && net.status === 'CONNECTED', host = connected && net.host === net.id;
+        const connected = !!local && ['CONNECTED', 'CONNECTION SLOW'].includes(net.status), host = connected && net.host === net.id;
         const active = round?.phase === 'playing', countdown = round?.phase === 'countdown', results = round?.phase === 'results';
         const seconds = Math.max(0, Math.ceil(((round?.nextAt ?? 0) - net.serverNow) / 1000));
         const ready = local?.ready ?? false, deploy = this.node('deploy') as HTMLButtonElement;
-        const label = !net.ws ? 'CREATE LOBBY' : !connected ? 'CONNECTING…' : active ? 'JOIN MATCH' : results ? `NEXT ROUND IN ${seconds}` : ready ? '✓ READY · CLICK TO UNREADY' : 'READY UP';
+        const label = !net.ws ? 'CREATE LOBBY' : !connected ? `${net.status}…` : active ? 'JOIN MATCH' : results ? `NEXT ROUND IN ${seconds}` : ready ? '✓ READY · CLICK TO UNREADY' : 'READY UP';
         this.label('connection', net.status === 'CONNECTED' ? `${net.room} · CONNECTED` : net.status);
         this.disabled(deploy, results || (!!net.ws && !connected));
         this.toggle(deploy, 'is-ready', ready && !active);
@@ -74,13 +74,14 @@ export class LobbyPanel {
         this.label('deploy-icon', countdown ? String(seconds) : '↗');
         this.toggle(this.node('force-start'), 'hidden', !host || round?.phase !== 'lobby');
         this.label('deploy-note', active ? 'MATCH IN PROGRESS · SPAWN AND PLAY' : countdown ? `EVERYONE DEPLOYS IN ${seconds}…` : 'MATCH STARTS WHEN EVERY PLAYER IS READY');
-        this.label('lobby-heading', net.room && net.id ? `LOBBY / ${net.room}` : 'YOUR NEXT ROUND');
+        this.label('lobby-heading', net.room && net.id ? `FURO LOBBY / ${net.room}` : 'YOUR NEXT FURO ROUND');
         // Lobby ordering is independent of in-match scores, so movement and combat cannot reorder it.
         const players = [...net.players.values()].sort((a, b) => Number(a.bot) - Number(b.bot) || a.id.localeCompare(b.id));
         const humans = players.filter(p => !p.bot);
-        this.label('lobby-status', !net.ws ? 'Create a lobby, then invite your friends.' : !connected ? net.status : countdown ? `MATCH STARTING IN ${seconds}…` : active ? 'Round live. You can join at any time.' : results ? 'Good game! Getting the lobby ready…' : `${humans.filter(p => p.ready).length} / ${humans.length} ready · Pick a team and ready up.`);
+        this.label('lobby-status', !net.ws ? 'Create a lobby, then invite your friends.' : !connected ? net.status : net.status === 'CONNECTION SLOW' ? 'Connection slow · waiting for updates…' : countdown ? `MATCH STARTING IN ${seconds}…` : active ? 'Round live. You can join at any time.' : results ? 'Good game! Getting the lobby ready…' : `${humans.filter(p => p.ready).length} / ${humans.length} ready · Pick a team and ready up.`);
         this.toggle(this.node('lobby-status'), 'counting', countdown);
         this.label('host-label', host ? 'YOU ARE THE HOST' : 'HOST CONTROLS');
+        this.label('bot-settings-status', !connected ? 'CREATE OR JOIN A LOBBY' : active || results ? 'APPLIES NEXT ROUND TOO' : host ? 'YOU ARE THE HOST' : 'SET BY THE HOST');
         for (const b of this.modes) {
             this.toggle(b, 'selected', b.dataset.mode === round?.mode);
             this.disabled(b, !host || active || results);

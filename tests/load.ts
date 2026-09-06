@@ -3,7 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { writeFile } from 'node:fs/promises';
 import { WebSocket } from 'ws';
 import { brain, botInput } from '../src/server/bots';
-import { predictInput, reconcile } from '../src/client/prediction';
+import { predictInput, PredictionHistory } from '../src/client/prediction';
 import { CLASS_IDS } from '../src/shared/weapons';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../src/shared/protocol';
 import { InputBuffer } from '../src/shared/input-buffer';
@@ -49,6 +49,7 @@ class Client {
     desyncs = 0; errors: string[] = []; corrections: number[] = []; ackLag: number[] = []; gaps: number[] = [];
     serverGaps: number[] = []; deliveryJitter: number[] = []; snapshotTime = 0;
     inputs = new InputBuffer();
+    predictionHistory = new PredictionHistory();
     get pending() { return this.inputs.pending; }
     set pending(value: Input[]) { this.inputs.pending = value; }
     get outgoing() { return this.inputs.outgoing; }
@@ -106,8 +107,8 @@ class Client {
         for (const p of this.players.values()) if (![p.x, p.y, p.z, p.yaw, p.pitch, p.hp].every(Number.isFinite) || Math.abs(p.x) > 38 || Math.abs(p.z) > 38 || p.y < -.1) this.desyncs++;
         this.inputs.acknowledge(local.ack);
         const old = this.predicted;
-        const replay = reconcile(local, this.pending, this.round?.phase === 'playing');
-        this.predicted = replay.predicted; this.pending = replay.remaining;
+        this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
+        this.pending = this.pending.filter(i => i.seq > local.ack);
         this.seq = Math.max(this.seq, local.ack);
         if (old?.life === local.life) {
             if (this.measured) {
@@ -119,7 +120,7 @@ class Client {
                 }
                 this.ackLag.push(this.seq - local.ack);
             }
-        } else { this.pending = []; this.outgoing = []; }
+        } else { this.pending = []; this.outgoing = []; this.predictionHistory.clear(); }
         if (this.measured) compareReplicas(m.n, this);
     }
     start() {
@@ -148,11 +149,10 @@ class Client {
                 let p = this.predicted;
                 let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
                 i.seq = ++this.seq; i.shotTime = Date.now() + this.offset - 100;
-                const dropped = this.inputs.dropped, prev = { x: p.x, z: p.z };
-                i = this.inputs.enqueue(i);
-                if (this.inputs.dropped !== dropped)
-                    p = this.predicted = reconcile(this.players.get(this.id)!, this.pending, true).predicted;
-                else predictInput(p, i, true);
+                const prev = { x: p.x, z: p.z };
+                i = this.inputs.enqueue({ ...i, life: p.life });
+                this.predictionHistory.add(i);
+                predictInput(p, i, true);
                 if (this.measured) this.moved += Math.hypot(p.x - prev.x, p.z - prev.z);
 
                 if (this.pending.length > 240) { this.desyncs++; this.pending = []; this.send({ type: 'sync' }); }
