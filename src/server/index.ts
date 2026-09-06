@@ -9,7 +9,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Room, type Actor } from './simulation';
 import { wirePlayer, playerDelta } from '../shared/snapshot';
 import { CLASS_IDS } from '../shared/weapons';
-import { decodeClientMessage, encodeServerMessage, MAX_CLIENT_PAYLOAD, WIRE_PROTOCOL } from '../shared/protocol';
+import { decodeClientMessage, encodeServerMessage, MAX_CLIENT_PAYLOAD, WIRE_PROTOCOL, LEGACY_WIRE_PROTOCOL } from '../shared/protocol';
 import { MAX_HUMANS, MAX_BOTS, TICK_RATE, SNAPSHOT_RATE, type ClientMessage, type PlayerPatch, type ServerMessage } from '../shared/types';
 interface Connection {
     id: string;
@@ -85,7 +85,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { id: connectionId, binary: ws.protocol === WIRE_PROTOCOL, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
+        const c: Connection = { id: connectionId, binary: ws.protocol === WIRE_PROTOCOL || ws.protocol === LEGACY_WIRE_PROTOCOL, ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -269,7 +269,7 @@ export function createGameServer() {
         } });
     });
     let snapshotId = 0;
-    function snapshot(c: Connection, force = false) {
+    function snapshot(c: Connection, force = false, now = Date.now()) {
         if (!c.room || !c.actor)
             return;
         if (c.ws.readyState !== WebSocket.OPEN || c.ws.bufferedAmount > 0) {
@@ -277,7 +277,6 @@ export function createGameServer() {
             // Retain the last transmitted baseline; the next delta skips obsolete states.
             return;
         }
-        const now = Date.now();
         if (c.lastSnapshotAt) transport.maxSnapshotSendGapMs = Math.max(transport.maxSnapshotSendGapMs, now - c.lastSnapshotAt);
         c.lastSnapshotAt = now;
         transport.snapshots++;
@@ -296,7 +295,7 @@ export function createGameServer() {
             }
         const metadata = { round: c.room.round, host: c.room.host, difficulty: c.room.difficulty, bots: c.room.botCount };
         const encoded = JSON.stringify(metadata);
-        send(c, { type: 'snapshot', n: snapshotId, base: full ? 0 : c.snapshot, time: Date.now(), full, players: patches, removed, ...(full || encoded !== c.metadata ? metadata : {}) });
+        send(c, { type: 'snapshot', n: snapshotId, base: full ? 0 : c.snapshot, time: now, full, players: patches, removed, ...(full || encoded !== c.metadata ? metadata : {}) });
         c.metadata = encoded;
         c.snapshot = snapshotId;
     }
@@ -306,11 +305,23 @@ export function createGameServer() {
         const begin = performance.now(), now = Date.now();
         for (const r of rooms.values())
             if ([...r.players.values()].some(a => !a.state.bot && a.connected))
-                r.tick(now);
+                r.tick(now, false);
         if (tick++ % (TICK_RATE / SNAPSHOT_RATE) === 0) {
             snapshotId++;
+            // Rewind the exact 20 Hz timeline clients interpolate. Recording
+            // intermediate 60 Hz poses exposes packet-batch movement steps that
+            // are never drawn, even when the shot timestamp matches perfectly.
+            for (const r of rooms.values()) if (r.round.phase === 'playing' && [...r.players.values()].some(a => !a.state.bot && a.connected))
+                r.history.record(now, [...r.players.values()].map(a => a.state));
             for (const c of connections)
-                snapshot(c);
+                snapshot(c, false, now);
+            for (const c of connections) {
+                const rejection = c.actor && c.room?.shotRejections.get(c.actor.state.id);
+                if (rejection && c.ws.readyState === WebSocket.OPEN && c.ws.bufferedAmount === 0) {
+                    send(c, rejection);
+                    c.room!.shotRejections.delete(c.actor!.state.id);
+                }
+            }
             for (const r of rooms.values()) {
                 if (r.events.length) {
                     for (const c of connections)

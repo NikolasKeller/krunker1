@@ -2,7 +2,9 @@ export const TICK_RATE = 60;
 export const STEP = 1 / TICK_RATE;
 export const SNAPSHOT_RATE = 20;
 export const INTERPOLATION_MS = 100;
-export const MAX_REWIND_MS = 250;
+// Combat history is deliberately shorter than the ten-second movement queue.
+export const MAX_REWIND_MS = 1500;
+export const MAX_INTERPOLATION_DELAY_MS = 1000;
 export const MAX_HUMANS = 10;
 export const MAX_BOTS = 7;
 export const MAX_PLAYERS = MAX_HUMANS + MAX_BOTS;
@@ -47,6 +49,9 @@ export interface Input {
     reload: boolean;
     slot: 1 | 2 | 3;
     shotTime: number;
+    // Age of the rendered opponent at input sampling, including downlink delay.
+    // Optional for older clients; never recompute this when flushing a backlog.
+    interpolationDelay?: number;
 }
 export interface PlayerState extends MoveState {
     id: string;
@@ -169,6 +174,10 @@ export type ClientMessage = {
     type: 'sync';
 };
 export type ServerMessage = {
+    type: 'shot-rejected';
+    seq: number;
+    reason: 'expired';
+} | {
     type: 'chat';
     player: string;
     name: string;

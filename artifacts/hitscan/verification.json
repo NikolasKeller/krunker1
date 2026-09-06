@@ -1,0 +1,40 @@
+{
+  "baseRevision": "1d6e3badaf75f6cf6722ec9b79f78e4f44408fe1",
+  "deployed": false,
+  "headlessHarnessSha256": "14b436bee941c6deef1a89e8c7d47f20017b06a9f4ae4b27e065981bad7f115b",
+  "beforeHits": [
+    24,
+    1,
+    1
+  ],
+  "afterHits": [
+    24,
+    24,
+    24
+  ],
+  "shotsPerRttProfile": 24,
+  "rttProfilesMs": [
+    0,
+    100,
+    350
+  ],
+  "allCandidateHitEventsReceivedByBothClients": true,
+  "maxCandidateTimestampDifferenceMs": 0,
+  "maxCandidateTargetDifferenceMetres": 0.004676733991900051,
+  "unitTests": {
+    "passed": 190,
+    "failed": 0
+  },
+  "build": "passed",
+  "typecheck": "passed",
+  "integration": "passed",
+  "collisionAudit": {
+    "objects": 77,
+    "mismatches": 0
+  },
+  "candidateLoadMatrices": "passed",
+  "retainedInitialBaselineLoadFailure": "load-before-0-initial.json",
+  "baselineTenHumanRetry": "passed",
+  "badLinkDeterministicSessions": 12,
+  "badLinkWebSocket": "passed"
+}

@@ -149,6 +149,7 @@ class Client {
                 let p = this.predicted;
                 let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
                 i.seq = ++this.seq; i.shotTime = Date.now() + this.offset - 100;
+                i.interpolationDelay = 100; // Exercise the current wire format and bounded timing path.
                 const prev = { x: p.x, z: p.z };
                 i = this.inputs.enqueue({ ...i, life: p.life });
                 this.predictionHistory.add(i);

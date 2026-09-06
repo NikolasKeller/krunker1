@@ -298,12 +298,12 @@ test('inputs remain ordered and bounded while the socket is blocked, and seriali
 });
 
 
-test('cached arena-v1 clients retain JSON snapshots while current clients negotiate precise binary snapshots', async () => {
+test('cached arena-v1 clients retain JSON and arena-v2/v3 clients retain binary snapshots', async () => {
     const app = createGameServer();
     await new Promise<void>(resolve => app.server.listen(0, '127.0.0.1', resolve));
     const address = app.server.address(); assert.ok(address && typeof address === 'object');
     try {
-        for (const protocol of ['arena-v1', WIRE_PROTOCOL]) {
+        for (const protocol of ['arena-v1', 'arena-v2', WIRE_PROTOCOL]) {
             const ws = new RealWebSocket(`ws://127.0.0.1:${address.port}/ws`, protocol);
             try {
                 await new Promise<void>((resolve, reject) => {
@@ -311,7 +311,7 @@ test('cached arena-v1 clients retain JSON snapshots while current clients negoti
                     ws.once('open', () => ws.send(JSON.stringify({ ...config, type: 'join' })));
                     ws.on('message', (data, binary) => {
                         if (!binary && JSON.parse(data.toString()).type !== 'snapshot') return;
-                        try { assert.equal(binary, protocol === WIRE_PROTOCOL); resolve(); } catch (error) { reject(error); }
+                        try { assert.equal(binary, protocol !== 'arena-v1'); resolve(); } catch (error) { reject(error); }
                     });
                 });
             } finally { ws.terminate(); }

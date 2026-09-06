@@ -1,7 +1,8 @@
 import type { ClientMessage, GameEvent, Input, PlayerPatch, PlayerState, ServerMessage } from './types';
 
 // Control/lobby messages stay JSON. Versioned binary frames carry the frequent traffic.
-export const WIRE_PROTOCOL = 'arena-v2';
+export const WIRE_PROTOCOL = 'arena-v3';
+export const LEGACY_WIRE_PROTOCOL = 'arena-v2';
 export const INPUT_RATE = 20;
 export const INPUT_SEND_MS = 1000 / INPUT_RATE;
 export const MAX_INPUT_BATCH = 12;
@@ -113,7 +114,8 @@ export function encodeClientMessage(m: ClientMessage): string | Uint8Array {
     const w = new Writer(); w.u8(INPUT); w.u8(m.inputs.length);
     for (const i of m.inputs) {
         w.u32(i.seq); w.u32(i.life ?? 0xffffffff); w.f32(i.forward); w.f32(i.strafe); w.f32(i.yaw); w.f32(i.pitch); w.f64(i.shotTime);
-        w.u8(+i.jump | +i.slide << 1 | +i.fire << 2 | +i.aim << 3 | +i.reload << 4 | (i.slot - 1) << 5);
+        w.u8(+i.jump | +i.slide << 1 | +i.fire << 2 | +i.aim << 3 | +i.reload << 4 | (i.slot - 1) << 5 | +(i.interpolationDelay !== undefined) << 7);
+        if (i.interpolationDelay !== undefined) w.f32(i.interpolationDelay);
     }
     return w.finish();
 }
@@ -126,8 +128,9 @@ export function decodeClientMessage(data: WireData): ClientMessage {
     const inputs: Input[] = [];
     for (let n = 0; n < count; n++) {
         const seq = r.u32(), life = r.u32(), forward = r.f32(), strafe = r.f32(), yaw = r.f32(), pitch = r.f32(), shotTime = r.f64(), flags = r.u8();
-        if (flags & 128 || (flags >> 5) === 3) throw new Error('Invalid input flags');
-        inputs.push({ seq, life: life === 0xffffffff ? undefined : life, forward, strafe, yaw, pitch: Math.abs(pitch) === Math.fround(Math.PI / 2) ? Math.sign(pitch) * Math.PI / 2 : pitch, shotTime, jump: !!(flags & 1), slide: !!(flags & 2), fire: !!(flags & 4), aim: !!(flags & 8), reload: !!(flags & 16), slot: ((flags >> 5) + 1) as 1 | 2 | 3 });
+        if ((flags >> 5 & 3) === 3) throw new Error('Invalid input flags');
+        const timing = flags & 128 ? { interpolationDelay: r.f32() } : {};
+        inputs.push({ seq, life: life === 0xffffffff ? undefined : life, forward, strafe, yaw, pitch: Math.abs(pitch) === Math.fround(Math.PI / 2) ? Math.sign(pitch) * Math.PI / 2 : pitch, shotTime, ...timing, jump: !!(flags & 1), slide: !!(flags & 2), fire: !!(flags & 4), aim: !!(flags & 8), reload: !!(flags & 16), slot: ((flags >> 5 & 3) + 1) as 1 | 2 | 3 });
     }
     r.done(); return { type: 'input', inputs };
 }
@@ -162,5 +165,5 @@ export function decodeServerMessage(data: WireData): ServerMessage {
 }
 // Prediction uses exactly the floats sent over the wire.
 export function wireInput(i: Input): Input {
-    return { ...i, forward: Math.fround(i.forward), strafe: Math.fround(i.strafe), yaw: Math.fround(i.yaw), pitch: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, Math.fround(i.pitch))) };
+    return { ...i, ...(i.interpolationDelay !== undefined ? { interpolationDelay: Math.fround(i.interpolationDelay) } : {}), forward: Math.fround(i.forward), strafe: Math.fround(i.strafe), yaw: Math.fround(i.yaw), pitch: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, Math.fround(i.pitch))) };
 }

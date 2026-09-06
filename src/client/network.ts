@@ -1,7 +1,7 @@
-import { type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
+import { MAX_INTERPOLATION_DELAY_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { correctedPosition, predictInput, PredictionHistory, preserveLocalMotion, smoothCorrection } from './prediction';
 import { RemoteInterpolation } from './interpolation';
-import { lerp } from '../shared/math';
+import { clamp, lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
 import { InputBuffer } from '../shared/input-buffer';
 export const JOIN_RETRY_MS = 2000;
@@ -189,10 +189,16 @@ export class Network {
         this.ws.send(encodeClientMessage(message)); }
     get serverNow() { return Date.now() + this.offset; }
     get interpolationDelay() { return this.interpolation.delay(this.ping); }
+    shotTiming(shotTime = this.interpolation.playbackTime ?? this.serverNow - this.interpolationDelay) {
+        // Playback converges gradually when jitter changes. Its actual age, not
+        // just the desired reserve, is the timestamp's matching rewind budget.
+        return { shotTime, interpolationDelay: clamp(this.serverNow - shotTime, 0, MAX_INTERPOLATION_DELAY_MS) };
+    }
     get local() { return this.players.get(this.id); }
     input(input: Input) {
         if (!this.predicted) return;
-        const i = this.inputs.enqueue({ ...input, life: this.predicted.life });
+        const timing = input.interpolationDelay === undefined ? this.shotTiming(input.shotTime) : {};
+        const i = this.inputs.enqueue({ ...input, ...timing, life: this.predicted.life });
         this.predictionHistory.add(i);
         predictInput(this.predicted, i, this.round?.phase === 'playing');
     }
@@ -241,6 +247,7 @@ export class Network {
             this.status = m.message;
             this.onNotice(m.message);
         }
+        if (m.type === 'shot-rejected') this.onNotice('Shot expired during connection delay. Fire again.');
         if (m.type === 'events')
             this.onEvents(m.events);
         if (m.type === 'snapshot') {

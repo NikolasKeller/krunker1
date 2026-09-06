@@ -1,5 +1,5 @@
 import type { Input, MoveState } from './types';
-import { STEP } from './types';
+import { STEP, MAX_INTERPOLATION_DELAY_MS } from './types';
 import { SOLID_BOXES as BOXES, RAMPS, MAP_SIZE, rampHeight } from './map';
 import { clamp } from './math';
 export const RADIUS = 0.38, HEIGHT = 1.88, EYE = 1.62;
@@ -10,6 +10,7 @@ export function validInput(v: unknown): v is Input {
     if (!v || typeof v !== 'object')
         return false;
     const i = v as Input;
+    if (i.interpolationDelay !== undefined && (!Number.isFinite(i.interpolationDelay) || i.interpolationDelay < 0 || i.interpolationDelay > MAX_INTERPOLATION_DELAY_MS)) return false;
     return (i.life === undefined || (Number.isSafeInteger(i.life) && i.life >= 0)) && Number.isSafeInteger(i.seq) && i.seq >= 0 && i.seq < 2 ** 31 && Number.isFinite(i.forward) && Math.abs(i.forward) <= 1 && Number.isFinite(i.strafe) && Math.abs(i.strafe) <= 1 && Number.isFinite(i.yaw) && Math.abs(i.yaw) < 1e7 && Number.isFinite(i.pitch) && Math.abs(i.pitch) <= Math.PI / 2 && Number.isFinite(i.shotTime) && ['jump', 'slide', 'fire', 'aim', 'reload'].every(k => typeof (i as unknown as Record<string, unknown>)[k] === 'boolean') && [1, 2, 3].includes(i.slot);
 }
 export function eyeHeight(p: Pick<MoveState, 'slide'>) { return p.slide > 0 ? 1.08 : EYE; }

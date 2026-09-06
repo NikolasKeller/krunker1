@@ -51,7 +51,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     net.onNotice = text => ui.notice(text);
     net.onChat = message => ui.chat(message);
     let phase = '';
-    let pendingFireAim: Pick<Input, 'seq' | 'yaw' | 'pitch' | 'shotTime'> | undefined;
+    let pendingFireAim: Pick<Input, 'seq' | 'yaw' | 'pitch' | 'shotTime' | 'interpolationDelay'> | undefined;
     const welcomed = net.onWelcome;
     net.onWelcome = () => { shots.clear(); shotClock.reset(0); lastLife = -1; phase = ''; welcomed(); };
     net.onEvents = events => {
@@ -82,7 +82,8 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         }
     };
     function sampleInput(seq: number) {
-        const input = controls.sample(seq, net.interpolation.playbackTime ?? net.serverNow - net.interpolationDelay);
+        const timing = net.shotTiming();
+        const input = { ...controls.sample(seq, timing.shotTime), ...timing };
         // A shot shown between physics ticks keeps its original aim on the next
         // command even though the camera recoil has already responded this frame.
         if (pendingFireAim?.seq === seq) Object.assign(input, pendingFireAim);
@@ -146,7 +147,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
                 if (index !== undefined) {
                     const recoil = shots.fire(p, fireInput, index, renderer.viewmodel.aim, renderer.shotMuzzle(p, fireInput, net.correction));
                     if (recoil) {
-                        if (fireInput.seq > net.seq) pendingFireAim = { seq: fireInput.seq, yaw: fireInput.yaw, pitch: fireInput.pitch, shotTime: fireInput.shotTime };
+                        if (fireInput.seq > net.seq) pendingFireAim = { seq: fireInput.seq, yaw: fireInput.yaw, pitch: fireInput.pitch, shotTime: fireInput.shotTime, interpolationDelay: fireInput.interpolationDelay };
                         controls.pitch = clamp(controls.pitch + recoil[0], -1.54, 1.54);
                         controls.yaw += recoil[1];
                     }

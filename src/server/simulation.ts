@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { CLASS_IDS, CLASSES, damageFor, shotRays, WEAPONS } from '../shared/weapons';
-import { STEP, MAX_PLAYERS, COUNTDOWN_MS, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
+import { STEP, MAX_PLAYERS, COUNTDOWN_MS, MAX_REWIND_MS, type ServerMessage, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import { SPAWNS } from '../shared/map';
 import { eyeHeight, move, moveState, validInput } from '../shared/movement';
 import { distance, hitPlayer, worldHit } from '../shared/math';
@@ -9,6 +9,9 @@ import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
 import { MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../shared/protocol';
 import { summarizeLineup } from '../shared/lobby';
+// Measured from firing, not from the older rendered-world timestamp. Four-second
+// stalls preserve movement but expire combat explicitly; never kill in the past
+// after an outage. Total target history remains bounded independently at 1.5 s.
 export const MAX_QUEUED_SHOT_AGE_MS = 1000;
 export interface Actor {
     state: PlayerState;
@@ -19,6 +22,7 @@ export interface Actor {
     nextShot: number;
     recoilIndex: number;
     lastShot: number;
+    lastShotRejection?: number;
     aimTime: number;
     ammo: Record<WeaponId, number>;
     botBrain?: BotBrain;
@@ -32,6 +36,7 @@ export class Room {
     round = newRound();
     history = new History();
     events: GameEvent[] = [];
+    shotRejections = new Map<string, Extract<ServerMessage, { type: 'shot-rejected' }>>();
     host = '';
     difficulty: Difficulty = 'normal';
     botCount = 5;
@@ -93,9 +98,11 @@ export class Room {
         this.spawn(a, Date.now());
         return a;
     }
-    remove(id: string) { this.players.delete(id); if (this.host === id)
+    remove(id: string) { this.shotRejections.delete(id); this.players.delete(id); if (this.host === id)
         this.host = [...this.players.values()].find(p => !p.state.bot && p.connected)?.state.id ?? ''; }
     spawn(a: Actor, now: number) {
+        this.shotRejections.delete(a.state.id);
+        a.lastShotRejection = undefined;
         if (a.pendingClass) {
             a.state.classId = a.pendingClass;
             a.pendingClass = undefined;
@@ -161,7 +168,7 @@ export class Room {
         a.lastInputAt = now;
         return true;
     }
-    tick(now: number) {
+    tick(now: number, recordHistory = true) {
         if (this.round.phase === 'results' && now >= this.round.nextAt) {
             this.round.phase = 'lobby';
             this.round.nextAt = 0;
@@ -215,9 +222,13 @@ export class Room {
                 move(p, i, CLASSES[p.classId].speed * (weapon === 'knife' ? 1.16 : 1));
                 if (i.reload && weapon !== 'knife' && !p.reloadEnd && p.ammo < WEAPONS[weapon].magazine)
                     p.reloadEnd = now + WEAPONS[weapon].reload;
-                // Preserve old movement, but never turn a multi-second recovery
-                // backlog into shots at today's targets from yesterday's aim.
-                if (i.fire && now - i.shotTime <= MAX_QUEUED_SHOT_AGE_MS && !p.reloadEnd && now >= a.nextShot) {
+                const shotAge = now - i.shotTime - (i.interpolationDelay ?? 0);
+                const expired = shotAge > MAX_QUEUED_SHOT_AGE_MS || now - i.shotTime > MAX_REWIND_MS;
+                if (i.fire && expired && now - (a.lastShotRejection ?? -Infinity) >= 1000) {
+                    a.lastShotRejection = now;
+                    this.shotRejections.set(p.id, { type: 'shot-rejected', seq: i.seq, reason: 'expired' });
+                }
+                if (i.fire && !expired && !p.reloadEnd && now >= a.nextShot) {
                     if (p.ammo > 0 || weapon === 'knife')
                         this.fire(a, i, now);
                     else
@@ -228,7 +239,7 @@ export class Room {
             // unacknowledged neutral physics here changes the replay origin and
             // makes even a complete input history diverge after upload silence.
         }
-        if (this.round.phase === 'playing') this.history.record(now, states);
+        if (recordHistory && this.round.phase === 'playing') this.history.record(now, states);
         if (checkRound(this.round, states, now)) this.resetReady();
     }
     fire(a: Actor, i: Input, now: number) {
@@ -250,14 +261,15 @@ export class Room {
                 z: number;
             };
         }>();
-        const time = a.botBrain ? now : rewindTime(i.shotTime, now, a.rtt);
+        const time = a.botBrain ? now : rewindTime(i.shotTime, now, a.rtt, i.interpolationDelay);
         const ends = dirs.map(d => {
             let nearest = worldHit(origin, d, w.range), target: Actor | undefined, zone: 'head' | 'body' | 'legs' = 'body';
             for (const other of this.players.values()) {
                 const q = other.state;
                 if (q.id === p.id || !q.alive || q.protectionEnd > now || (this.round.mode === 'tdm' && q.team === p.team))
                     continue;
-                const rewound = this.history.rewind(q.id, time) ?? q;
+                // Bots aim at the current simulation; humans aim at snapshots.
+                const rewound = a.botBrain ? q : this.history.rewind(q.id, time) ?? q;
                 if (!rewound.alive || rewound.life !== q.life)
                     continue;
                 const hit = hitPlayer(origin, d, rewound);
