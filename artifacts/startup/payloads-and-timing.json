@@ -1,0 +1,64 @@
+{
+  "baseRevision": "76136cfc6e607b18ecbfe1f450678d7eb58d90b7",
+  "before": {
+    "origin": "https://krunker1-production.up.railway.app",
+    "browserFirstVisibleContentMs": 8710,
+    "browserMeasurementSource": "User-provided cold-cache browser measurement; 500 ms sampling, no throttling",
+    "javascriptAsset": "/assets/index-wKSYu9_8.js",
+    "javascriptBytes": 611305,
+    "contentEncoding": null,
+    "cacheControl": "public, max-age=31536000, immutable",
+    "physicsWasmAssets": [],
+    "physicsFinding": "Rapier 0.12.0 is only a transitive development dependency of @types/three, not in the client module graph or live entry bundle."
+  },
+  "after": {
+    "origin": "http://localhost:8089",
+    "browserFirstVisibleContentMs": null,
+    "browserLobbyUsableMs": null,
+    "browserMeasurementStatus": "Pending calling-agent browser measurement. No browser or CDP was used in this sandbox.",
+    "assets": [
+      {
+        "file": "assets/game-BJbdpTwG.js",
+        "bytes": 33214,
+        "brotliBytes": 11304,
+        "gzipBytes": 12785
+      },
+      {
+        "file": "assets/index-Cnt3x9cw.js",
+        "bytes": 2101,
+        "brotliBytes": 932,
+        "gzipBytes": 1077
+      },
+      {
+        "file": "assets/lobby-app-C_-L-E-7.js",
+        "bytes": 63931,
+        "brotliBytes": 20169,
+        "gzipBytes": 22696
+      },
+      {
+        "file": "assets/lobby-app-Clj0fvLV.css",
+        "bytes": 37832,
+        "brotliBytes": 7975,
+        "gzipBytes": 8909
+      },
+      {
+        "file": "assets/three-CdvxYpJo.js",
+        "bytes": 514288,
+        "brotliBytes": 106126,
+        "gzipBytes": 127923
+      },
+      {
+        "file": "fonts/squada-one.ttf",
+        "bytes": 19072,
+        "brotliBytes": 8545,
+        "gzipBytes": 9320
+      },
+      {
+        "file": "index.html",
+        "bytes": 6276,
+        "brotliBytes": 1840,
+        "gzipBytes": 2382
+      }
+    ]
+  }
+}

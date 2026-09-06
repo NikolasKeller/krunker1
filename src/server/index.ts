@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { connectionInfo } from './connection';
 import { randomBytes } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
+import { serveClient } from './static';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
@@ -61,35 +61,7 @@ export function createGameServer() {
             res.end(JSON.stringify([...rooms.values()].map(r => ({ id: r.id, players: [...r.players.values()].filter(a => !a.state.bot && a.connected).length, phase: r.round.phase, mode: r.round.mode }))));
             return;
         }
-        try {
-            let requestPath: string;
-            try {
-                requestPath = decodeURIComponent(url.pathname);
-            }
-            catch {
-                res.writeHead(400);
-                res.end();
-                return;
-            }
-            let file = path.resolve(root, '.' + requestPath);
-            if (file !== root && !file.startsWith(root + path.sep)) {
-                res.writeHead(403);
-                res.end();
-                return;
-            }
-            if (!path.extname(file))
-                file = path.join(root, 'index.html');
-            const info = await stat(file);
-            if (!info.isFile())
-                throw new Error('Not a file');
-            const body = await readFile(file), mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.png': 'image/png', '.json': 'application/json' };
-            res.writeHead(200, { 'content-type': mime[path.extname(file)] ?? 'application/octet-stream', 'cache-control': file.includes('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache', 'x-content-type-options': 'nosniff' });
-            res.end(body);
-        }
-        catch {
-            res.writeHead(404, { 'content-type': 'text/plain' });
-            res.end('Client not built. Development: http://localhost:5173 · Production: npm run build && npm start');
-        }
+        await serveClient(req, res, root);
     });
     const socketLog = (event: string, details: Record<string, unknown>) => console.log(JSON.stringify({ event: `ws.${event}`, ...details }));
     server.on('upgrade', req => socketLog('upgrade', { requestId: req.headers['x-railway-request-id'], path: req.url }));

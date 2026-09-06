@@ -60,22 +60,23 @@ export class LobbyPanel {
             if (parent.children[index] !== row) { parent.insertBefore(row, parent.children[index] ?? null); this.writes++; }
         });
     }
-    update(team: Team) {
+    update(team: Team, gameReady = true) {
         this.polls++;
         const before = this.writes, net = this.net, round = net.round, local = net.local;
         const connected = !!local && ['CONNECTED', 'CONNECTION SLOW'].includes(net.status), host = connected && net.host === net.id;
         const active = round?.phase === 'playing', countdown = round?.phase === 'countdown', results = round?.phase === 'results';
         const seconds = Math.max(0, Math.ceil(((round?.nextAt ?? 0) - net.serverNow) / 1000));
         const ready = local?.ready ?? false, deploy = this.node('deploy') as HTMLButtonElement;
-        const label = !net.ws ? 'CREATE LOBBY' : !connected ? `${net.status}…` : active ? 'JOIN MATCH' : results ? `NEXT ROUND IN ${seconds}` : ready ? '✓ READY · CLICK TO UNREADY' : 'READY UP';
+        const label = !net.ws ? 'CREATE LOBBY' : !connected ? `${net.status}…` : !gameReady ? 'LOADING ARENA…' : active ? 'JOIN MATCH' : results ? `NEXT ROUND IN ${seconds}` : ready ? '✓ READY · CLICK TO UNREADY' : 'READY UP';
         this.label('connection', net.status === 'CONNECTED' ? `${net.room} · CONNECTED` : net.status);
-        this.disabled(deploy, results || (!!net.ws && !connected));
+        this.disabled(deploy, results || (!!net.ws && (!connected || !gameReady)));
         this.toggle(deploy, 'is-ready', ready && !active);
         this.attribute(deploy, 'aria-pressed', String(ready));
         this.label('deploy-label', label);
         this.label('deploy-icon', countdown ? String(seconds) : '↗');
         this.toggle(this.node('force-start'), 'hidden', !host || round?.phase !== 'lobby');
-        this.label('deploy-note', active ? 'MATCH IN PROGRESS · SPAWN AND PLAY' : countdown ? `EVERYONE DEPLOYS IN ${seconds}…` : 'MATCH STARTS WHEN EVERY PLAYER IS READY');
+        this.disabled(this.node('force-start') as Field, !gameReady);
+        this.label('deploy-note', !gameReady ? 'PREPARING THE ARENA · PICK YOUR CLASS WHILE YOU WAIT' : active ? 'MATCH IN PROGRESS · SPAWN AND PLAY' : countdown ? `EVERYONE DEPLOYS IN ${seconds}…` : 'MATCH STARTS WHEN EVERY PLAYER IS READY');
         this.label('lobby-heading', net.room && net.id ? `FURO LOBBY / ${net.room}` : 'YOUR NEXT FURO ROUND');
         // Keep your card in view, then humans before bots. Combat never reorders the lobby.
         const players = [...net.players.values()].sort((a, b) => Number(b.id === net.id) - Number(a.id === net.id) || Number(a.bot) - Number(b.bot) || a.id.localeCompare(b.id));

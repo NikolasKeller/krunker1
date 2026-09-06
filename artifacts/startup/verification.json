@@ -1,0 +1,78 @@
+{
+  "baseRevision": "76136cfc6e607b18ecbfe1f450678d7eb58d90b7",
+  "unitTests": {
+    "passed": 154,
+    "failed": 0
+  },
+  "checks": {
+    "build": {
+      "passed": true,
+      "summary": [
+        "\u2713 built in 786ms"
+      ]
+    },
+    "tests": {
+      "passed": true,
+      "summary": [
+        "\u2139 pass 154"
+      ]
+    },
+    "integration": {
+      "passed": true,
+      "summary": [
+        "PASS: two real WebSocket clients see authoritative movement",
+        "PASS: hunter fires and damages another real client (100 damage)",
+        "PASS: headshot, killfeed, score, timed respawn and spawn protection",
+        "PASS: triggerman fires and damages another real client (25 damage)",
+        "PASS: vince fires and damages another real client (173 damage)",
+        "PASS: runngun fires and damages another real client (18 damage)",
+        "PASS: hitscan rewind hits the target at the historical visible position",
+        "PASS: malformed speed input rejected",
+        "PASS: score limit, results, lobby return, ready countdown and score reset",
+        "PASS: reconnect restores existing identity without duplicate players"
+      ]
+    },
+    "lobby": {
+      "passed": true,
+      "summary": [
+        "PASS: invite codes, duplicate names, live team/ready roster, host-only settings, synchronized countdown/cancellation, late join, reconnect, host handover, results/lobby/rematch, 10 humans + 7 bots, full-room replacement, LAN discovery"
+      ]
+    },
+    "lobby-flow": {
+      "passed": true,
+      "summary": [
+        "PASS http://127.0.0.1:53450: 10 lobby polls in one second, zero idle DOM writes, no render loop",
+        "PASS http://127.0.0.1:53450: room 8XQXD, invite URLs updated, 2 connected players; two isolated Node clients click CREATE/JOIN/READY; server records and broadcasts 1/2 then 2/2; both enter playing after the same countdown (1788704290530)",
+        "PASS http://127.0.0.1:53450: START EARLY starts both unready clients; nonhost start rejected; host departure migrates ownership"
+      ]
+    },
+    "soak": {
+      "passed": true,
+      "summary": []
+    },
+    "lifecycle": {
+      "passed": true,
+      "summary": [
+        "PASS: disconnected identity removed after the grace period",
+        "PASS: empty room and its bots removed"
+      ]
+    },
+    "production": {
+      "passed": true,
+      "summary": [
+        "PASS: initial loader, split JS/CSS, Brotli and hashed-asset caching at http://127.0.0.1:8091",
+        "PASS: two independent production clients navigate using inputs and register a headshot kill",
+        "PRODUCTION METRICS {\"ok\":true,\"tickRate\":60,\"tickMs\":0.126,\"peakTickMs\":0.493,\"tickP95Ms\":0.387,\"tickP99Ms\":0.464,\"totalTickMs\":704.2388930001885,\"overBudgetTicks\":0,\"ticks\":5086,\"bytesOut\":608806,\"players\":2,\"rooms\":1,\"transport\":{\"snapshots\":1988,\"skippedSnapshots\":0,\"maxSnapshotSendGapMs\":78,\"maxSendCallbackMs\":6.127,\"maxBufferedBytes\":0,\"maxMessageBytes\":2655,\"maxInputMessageBytes\":223,\"maxInputArrivalGapMs\":49,\"maxInputQueue\":3},\"configuredTickRate\":60,\"connections\":2,\"queuedBytes\":0}"
+      ]
+    }
+  },
+  "browserTiming": "Pending calling agent; no browser launch or CDP connection attempted.",
+  "loadMatrices": {
+    "passed": true,
+    "reports": [
+      "load-local-0.json",
+      "load-local-80.json"
+    ],
+    "initialTimingFailureRetained": "load-local-0-first.json"
+  }
+}

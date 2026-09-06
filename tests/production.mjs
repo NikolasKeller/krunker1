@@ -12,13 +12,24 @@ assert.equal((await healthcheck.json()).ok, true);
 const connection = await (await fetch(origin + '/api/connection')).json();
 assert.ok(Array.isArray(connection.lan));
 assert.match(html, /<canvas id="game">/);
-const assets = [...html.matchAll(/(?:src|href)="(\/assets\/[^\"]+)"/g)].map(m => m[1]);
+assert.match(html, /id="startup-progress"/);
+assert.match(html, /id="startup-reload"/);
+assert.doesNotMatch(html, /<link[^>]+rel="stylesheet"/, 'first paint must not wait for external CSS');
+const manifest = await (await fetch(origin + '/.vite/manifest.json')).json();
+const assets = [...new Set(Object.values(manifest).flatMap(chunk => ['/' + chunk.file, ...(chunk.css ?? []).map(file => '/' + file)]))];
 for (const asset of [...assets, '/fonts/squada-one.ttf', '/favicon.svg']) {
-    const response = await fetch(origin + asset);
+    const response = await fetch(origin + asset, { headers: { 'accept-encoding': 'br' } });
     assert.equal(response.status, 200, asset);
     assert.ok((await response.arrayBuffer()).byteLength > 100);
+    assert.equal(response.headers.get('content-encoding'), 'br', asset);
+    assert.equal(response.headers.get('vary'), 'Accept-Encoding', asset);
+    if (asset.startsWith('/assets/')) {
+        assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+        const cached = await fetch(origin + asset, { headers: { 'accept-encoding': 'br', 'if-none-match': response.headers.get('etag') } });
+        assert.equal(cached.status, 304, asset);
+    }
 }
-console.log(`PASS: production HTML, JS, CSS and self-hosted assets at ${origin}`);
+console.log(`PASS: initial loader, split JS/CSS, Brotli and hashed-asset caching at ${origin}`);
 const wait = async (fn, label, ms = 5000) => { const t = Date.now(); while (!fn()) {
     if (Date.now() - t > ms)
         throw new Error(label);
@@ -49,7 +60,8 @@ class Client {
     send(m) { if (this.ws.readyState === 1)
         this.ws.send(JSON.stringify(m)); }
     get p() { return this.players.get(this.id); }
-    start(targetZ) { const p = this.p; const side = Math.abs(p.x) > 25 ? Math.sign(p.x) * 35 : p.x; const edge = targetZ === 12 ? 34 : -34; this.waypoints = [[side, p.z], [side, edge], [35, edge], [35, targetZ]]; let next = Date.now(); const loop = () => { const p = this.p; if (!p)
+    // The z=±34 lamp posts are solid; the outer lane at ±36 is clear.
+    start(targetZ) { const p = this.p; const side = Math.abs(p.x) > 25 ? Math.sign(p.x) * 35 : p.x; const edge = targetZ === 12 ? 36 : -36; this.waypoints = [[side, p.z], [side, edge], [35, edge], [35, targetZ]]; let next = Date.now(); const loop = () => { const p = this.p; if (!p)
         return; while (this.waypoints.length && Math.hypot(this.waypoints[0][0] - p.x, this.waypoints[0][1] - p.z) < .7)
         this.waypoints.shift(); const goal = this.waypoints[0]; const target = [...this.players.values()].find(q => q.id !== this.id && !q.bot); let yaw = goal ? Math.atan2(-(goal[0] - p.x), -(goal[1] - p.z)) : target ? Math.atan2(-(target.x - p.x), -(target.z - p.z)) : 0; const pitch = target ? Math.atan2(target.y + 1.58 - (p.y + 1.62), Math.hypot(target.x - p.x, target.z - p.z)) : 0; this.send({ type: 'input', inputs: [{ seq: ++this.seq, forward: goal ? 1 : 0, strafe: 0, yaw, pitch, jump: false, slide: false, fire: this.shoot, aim: !goal, reload: false, slot: 1, shotTime: Date.now() - 100 }] }); next += 1000 / 60; this.timer = setTimeout(loop, Math.max(0, next - Date.now())); }; loop(); }
     close() { clearTimeout(this.timer); this.ws.close(); }

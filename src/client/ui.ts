@@ -10,6 +10,7 @@ export const escapeHTML = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&am
 export function gunIcon(id: WeaponId) { const paths: Record<WeaponId, string> = { sniper: 'M3 29h20v-5h25v-7h14v-5h30v7h-5v5h30v5h37v4h-38v4H71l-7 17H54l3-17H32L12 47H3z M60 16h25v-6H60z', rifle: 'M4 25h21v-5h62v5h25v4h39v5h-48v7H72l9 17-14 6-15-23H32L9 49H4z M74 18h16v-6h-9z', shotgun: 'M4 27h22l10-6h63v4h51v5H99v4h51v5H75l-13 13H48l7-13H31L8 49H4z', smg: 'M9 25h20v-7h71v5h29v6h20v5h-30v6H82v23H67V40H48l-7 15H29V39H9z', pistol: 'M31 14h90v23H76L63 62H39l9-25H31z', knife: 'M15 47l35-11 3-10 14 8 65-22-37 31-27 5-8 13-14-9-28 10z' }; return `<svg viewBox="0 0 160 72" aria-hidden="true"><path d="${paths[id]}" fill="currentColor"/></svg>`; }
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 export class UI {
+    gameReady = true;
     menu = true;
     paused = false;
     scoreOpen = false;
@@ -129,7 +130,7 @@ export class UI {
         $('player-name').onkeydown = e => { if (e.key === 'Enter') { this.saveProfile(); $<HTMLInputElement>('player-name').blur(); } };
         $('room-code').onkeydown = e => { if (e.key === 'Enter') this.onRoom(); };
         $('create-room').onclick = () => { $<HTMLInputElement>('room-code').value = ''; this.onRoom(); };
-        $('force-start').onclick = () => { this.saveProfile(); net.send({ type: 'start' }); };
+        $('force-start').onclick = () => { if (!this.gameReady) return; this.saveProfile(); net.send({ type: 'start' }); };
         $('copy-link').onclick = () => void this.copyLink();
         $('deploy').onclick = () => this.deploy();
         $('join-room').onclick = () => this.onRoom();
@@ -161,6 +162,7 @@ export class UI {
     private deploy() {
         const net = this.net;
         if (!net.ws) { this.onRoom(); return; }
+        if (!this.gameReady) return;
         if (!net.local || !['CONNECTED', 'CONNECTION SLOW'].includes(net.status)) return;
         this.saveProfile();
         if (net.round?.phase === 'lobby' || net.round?.phase === 'countdown') {
@@ -258,7 +260,7 @@ export class UI {
     updateLobby() {
         const team = this.net.local?.team;
         if (team && team !== this.team) { this.team = team; localStorage.setItem('arena-team', team); }
-        this.lobby.update(this.team);
+        this.lobby.update(this.team, this.gameReady);
     }
     update(now: number, renderer: Renderer, aiming: boolean, remotes = this.net.remotePlayers()) {
         const net = this.net, p = net.predicted, round = net.round, serverNow = net.serverNow;

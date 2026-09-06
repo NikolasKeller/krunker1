@@ -30,7 +30,11 @@ export class Renderer {
     private preview: Character;
     private selected: ClassId = 'hunter';
     constructor(canvas: HTMLCanvasElement) {
-        this.gl = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+        try {
+            this.gl = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+        } catch (cause) {
+            throw new Error('WebGL could not start. Enable hardware acceleration in your browser and reload.', { cause });
+        }
         this.gl.setPixelRatio(Math.min(devicePixelRatio, 1.35));
         this.gl.outputColorSpace = THREE.SRGBColorSpace;
         this.gl.toneMapping = THREE.NoToneMapping;

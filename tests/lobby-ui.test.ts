@@ -17,6 +17,33 @@ function setup() {
     return { ...env, net, ui, a, b };
 }
 
+test('while gameplay loads, classes and room controls work but ready and host start wait for the first game frame', () => {
+    const { dom, restore, ui, net } = setup();
+    try {
+        const sent: ClientMessage[] = []; net.send = message => { sent.push(message); };
+        ui.gameReady = false; ui.updateLobby();
+        const deploy = document.getElementById('deploy') as HTMLButtonElement;
+        const start = document.getElementById('force-start') as HTMLButtonElement;
+        assert.equal(deploy.disabled, true); assert.equal(start.disabled, true);
+        assert.match(deploy.textContent!, /LOADING ARENA/);
+        assert.match(document.getElementById('deploy-note')!.textContent!, /PICK YOUR CLASS/);
+        // Dispatch directly too: handlers must enforce readiness independently of disabled styling.
+        deploy.dispatchEvent(new dom.window.MouseEvent('click'));
+        start.dispatchEvent(new dom.window.MouseEvent('click'));
+        assert.deepEqual(sent, []);
+        (document.querySelector('[data-class="vince"]') as HTMLButtonElement).click();
+        assert.equal(ui.selected, 'vince');
+        assert.deepEqual(sent.at(-1), { type: 'class', classId: 'vince' });
+        let joins = 0; ui.onRoom = () => joins++;
+        (document.getElementById('join-room') as HTMLButtonElement).click();
+        assert.equal(joins, 1);
+        ui.gameReady = true; ui.updateLobby();
+        assert.equal(deploy.disabled, false); assert.equal(start.disabled, false);
+        deploy.click(); assert.deepEqual(sent.at(-1), { type: 'ready', ready: true });
+        start.click(); assert.deepEqual(sent.at(-1), { type: 'start' });
+    } finally { restore(); }
+});
+
 test('idle lobby polls produce no DOM mutations and preserve every control and text target', () => {
     const { dom, restore, net, ui } = setup();
     try {

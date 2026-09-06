@@ -1,2 +1,122 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#161b20"/><meta name="description" content="A fast, local multiplayer arena FPS. Pick your class and jump in."/><title>FURO / Local Arena</title><link rel="preload" href="/fonts/squada-one.ttf" as="font" type="font/ttf" crossorigin/><link rel="icon" href="/favicon.svg"/></head><body><canvas id="game"></canvas><div id="ui"></div><script type="module" src="/src/client/main.ts"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#161b20"/>
+  <meta name="description" content="A fast, local multiplayer arena FPS. Pick your class and jump in."/>
+  <title>FURO / Local Arena</title>
+  <link rel="icon" href="/favicon.svg"/>
+  <!-- This screen must paint without a stylesheet, font, module, or WebGL. -->
+  <style>
+    html,body { margin:0; background:#161b20; color:#f5f3e9; }
+    #startup { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; padding:24px; background:#161b20; font:16px/1.6 Arial,sans-serif; opacity:1; transition:opacity .18s ease; }
+    #startup[hidden] { display:none; }
+    #startup.leaving { opacity:0; pointer-events:none; }
+    #startup .startup-card { width:min(420px,100%); }
+    #startup .startup-brand { margin:0; color:#c7f451; font:italic 900 76px/1 Impact,'Arial Narrow',Arial,sans-serif; letter-spacing:2px; }
+    #startup .startup-kicker { margin:12px 0 32px; color:#9da8a8; font-size:11px; letter-spacing:4px; }
+    #startup h1 { margin:0 0 10px; font-size:24px; line-height:1.2; }
+    #startup p { overflow-wrap:anywhere; }
+    #startup-room { color:#c7f451; }
+    #startup-detail { color:#bbc4c4; }
+    #startup progress { display:block; width:100%; height:6px; margin:24px 0 12px; border:0; border-radius:0; background:#303a40; color:#c7f451; accent-color:#c7f451; }
+    #startup progress::-webkit-progress-bar { background:#303a40; }
+    #startup progress::-webkit-progress-value { background:#c7f451; }
+    #startup progress::-moz-progress-bar { background:#c7f451; }
+    #startup button { padding:12px 24px; border:0; background:#c7f451; color:#161b20; font:bold 16px Arial,sans-serif; cursor:pointer; }
+    #startup button:focus-visible { outline:2px solid white; outline-offset:4px; }
+    #startup [hidden] { display:none; }
+    @media(prefers-reduced-motion:reduce) { #startup { transition:none; } }
+  </style>
+  <script>
+    // Install before the module tag: even a failed entry download has a way out.
+    (() => {
+      let failed = false, finished = false, fade, timeout;
+      const node = id => document.getElementById(id);
+      const whenParsed = fn => {
+        if (document.readyState !== 'loading') { fn(); return; }
+        // Interactive precedes deferred modules; room text must not wait for them.
+        const parsed = () => {
+          if (document.readyState === 'loading') return;
+          document.removeEventListener('readystatechange', parsed); fn();
+        };
+        document.addEventListener('readystatechange', parsed);
+      };
+      const fail = error => {
+        if (finished || failed) return;
+        failed = true;
+        clearTimeout(timeout); clearTimeout(fade);
+        const webgl = /WebGL/i.test(String(error && (error.message || error)));
+        whenParsed(() => {
+          const screen = node('startup');
+          screen.hidden = false; screen.classList.remove('leaving');
+          node('startup-title').textContent = webgl ? 'WebGL could not start' : 'Furo could not finish loading';
+          node('startup-detail').textContent = webgl
+            ? 'WebGL could not start. Enable hardware acceleration in your browser and reload.'
+            : 'A game file could not load or the game could not initialise. Check your connection and reload to try again.';
+          node('startup-progress').hidden = true;
+          node('startup-reload').hidden = false;
+          node('startup-reload').focus();
+        });
+      };
+      const resourceError = event => {
+        const target = event.target;
+        if (target === window || target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK' && target.rel === 'stylesheet')) fail(event.error);
+      };
+      const rejection = event => fail(event.reason);
+      addEventListener('error', resourceError, true);
+      addEventListener('unhandledrejection', rejection);
+      const armTimeout = () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fail(new Error('Startup timed out')), 90000);
+      };
+      window.__furoStartup = {
+        fail,
+        get failed() { return failed; },
+        lobbyReady() {
+          if (failed) return;
+          performance.mark('furo-lobby-ready');
+          node('startup-progress').value = 2;
+          node('startup-detail').textContent = 'Lobby ready · Preparing the arena';
+          node('startup').classList.add('leaving');
+          fade = setTimeout(() => { node('startup').hidden = true; }, 180);
+          armTimeout();
+        },
+        gameReady() {
+          if (failed) return;
+          finished = true;
+          performance.mark('furo-game-ready');
+          clearTimeout(timeout);
+          node('startup-progress').value = 3;
+          removeEventListener('error', resourceError, true);
+          removeEventListener('unhandledrejection', rejection);
+        }
+      };
+      whenParsed(() => {
+        const room = (new URLSearchParams(location.search).get('room') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0,18);
+        node('startup-room').textContent = room ? 'Joining room ' + room : 'Your next round is on its way.';
+        node('startup-reload').onclick = () => location.reload();
+        if (!failed) armTimeout();
+      });
+    })();
+  </script>
+</head>
+<body>
+  <section id="startup" aria-labelledby="startup-title">
+    <div class="startup-card">
+      <div class="startup-brand" aria-label="Furo">FURO</div>
+      <div class="startup-kicker">LOCAL ARENA / 01</div>
+      <h1 id="startup-title">Getting your lobby ready</h1>
+      <p id="startup-room">Your next round is on its way.</p>
+      <progress id="startup-progress" max="3" value="1" aria-label="Startup steps complete"></progress>
+      <p id="startup-detail" role="status" aria-live="polite">Document ready · Loading the lobby</p>
+      <button id="startup-reload" type="button" hidden>Reload game</button>
+      <noscript><p>JavaScript is disabled. Enable JavaScript in your browser and reload to play Furo.</p></noscript>
+    </div>
+  </section>
+  <canvas id="game"></canvas>
+  <div id="ui"></div>
+  <script type="module" src="/src/client/main.ts"></script>
+</body>
+</html>

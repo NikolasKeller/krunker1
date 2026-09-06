@@ -1,0 +1,10 @@
+PASS: initial loader, split JS/CSS, Brotli and hashed-asset caching at http://127.0.0.1:8091
+file:///private/tmp/furo-startup-production-probe.mjs:35
+        throw new Error(label + JSON.stringify({ a: a.p, b: b.p, waypointsA: a.waypoints, waypointsB: b.waypoints }));
+              ^
+
+Error: navigate to firing lane{"a":{"x":27.545,"y":0,"z":34.455,"vx":0,"vy":0,"vz":0,"grounded":true,"slide":0,"slideHeld":false,"jumpHeld":false,"groundTime":26.01666666666647,"jumpBuffer":0,"coyote":0.07,"slideAge":26.01666666666647,"id":"c02b85ef","name":"Alpha","classId":"hunter","team":"blue","bot":false,"ready":false,"yaw":-1.5098390767053227,"pitch":-0.0011613887242307357,"hp":60,"maxHp":60,"alive":true,"kills":0,"deaths":0,"score":0,"weapon":"sniper","ammo":3,"reloadEnd":0,"respawnAt":0,"protectionEnd":1788704409831,"ack":1500,"aiming":false,"bloom":0,"streak":0,"life":2},"b":{"x":35.000299159716114,"y":0,"z":0.8256163744454704,"vx":7.637115059878453e-63,"vy":0,"vz":2.1076792443181073e-59,"grounded":true,"slide":0,"slideHeld":false,"jumpHeld":false,"groundTime":26.01666666666647,"jumpBuffer":0,"coyote":0.07,"slideAge":26.01666666666647,"id":"5e42183c","name":"Bravo","classId":"hunter","team":"red","bot":false,"ready":false,"yaw":2.923604022396331,"pitch":-0.001161114159074168,"hp":60,"maxHp":60,"alive":true,"kills":0,"deaths":0,"score":0,"weapon":"sniper","ammo":3,"reloadEnd":0,"respawnAt":0,"protectionEnd":1788704409831,"ack":1500,"aiming":true,"bloom":0,"streak":0,"life":2},"waypointsA":[[35,34],[35,12]],"waypointsB":[]}
+    at wait (file:///private/tmp/furo-startup-production-probe.mjs:35:15)
+    at async file:///private/tmp/furo-startup-production-probe.mjs:76:5
+
+Node.js v25.9.0
