@@ -1,0 +1,121 @@
+{
+  "date": "2026-09-06T16:48:55.473Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "vantage": "workstation; not inside Railway or the affected player network",
+  "durationSeconds": 120.020430333,
+  "protocol": "arena-v4",
+  "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+  "revisionAfter": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+  "attribution": "unknown: arrival bursts do not prove TCP retransmission; no parallel deployed UDP channel or packet capture",
+  "summary": {
+    "received": 2400,
+    "applied": 2400,
+    "rejected": 0,
+    "bytes": 608317,
+    "appliedGapMs": {
+      "samples": 2399,
+      "p50": 50.03766699999687,
+      "p95": 58.92804099999921,
+      "p99": 97.20612499999697,
+      "max": 334.1374580000047
+    },
+    "sourceGapMs": {
+      "samples": 2399,
+      "p50": 50,
+      "p95": 51,
+      "p99": 51,
+      "max": 55
+    },
+    "deliveryGapExcessMs": {
+      "samples": 2399,
+      "p50": 0.040791999999783,
+      "p95": 9.066958000010345,
+      "p99": 47.40687500000058,
+      "max": 284.1374580000047
+    },
+    "frame60HzGapMs": {
+      "samples": 2356,
+      "p50": 50,
+      "p95": 66.66666666666667,
+      "p99": 100,
+      "max": 333.3333333333333
+    },
+    "maxSilenceIncludingEdgesMs": 334.1374580000047,
+    "burstGapsUnder5Ms": 43
+  },
+  "rttMs": {
+    "samples": 471,
+    "p50": 677,
+    "p95": 1988,
+    "p99": 2560,
+    "max": 3060
+  },
+  "baselineErrors": 0,
+  "errors": [],
+  "healthBefore": {
+    "data": {
+      "ok": true,
+      "tickRate": 60,
+      "tickMs": 0.142,
+      "peakTickMs": 0.488,
+      "tickP95Ms": 0.431,
+      "tickP99Ms": 0.45,
+      "totalTickMs": 6395.869535001334,
+      "overBudgetTicks": 0,
+      "ticks": 17684,
+      "bytesOut": 1404990,
+      "players": 2,
+      "rooms": 3,
+      "transport": {
+        "snapshots": 14557,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 59,
+        "maxSendCallbackMs": 4.873,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1310,
+        "maxInputMessageBytes": 306,
+        "maxInputArrivalGapMs": 2455,
+        "maxInputQueue": 8
+      },
+      "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+      "configuredTickRate": 60,
+      "connections": 2,
+      "queuedBytes": 0
+    },
+    "edge": "cdg1"
+  },
+  "healthAfter": {
+    "data": {
+      "ok": true,
+      "tickRate": 60.1,
+      "tickMs": 0.419,
+      "peakTickMs": 1.184,
+      "tickP95Ms": 0.812,
+      "tickP99Ms": 1.075,
+      "totalTickMs": 10372.28876100072,
+      "overBudgetTicks": 0,
+      "ticks": 25447,
+      "bytesOut": 2451983,
+      "players": 3,
+      "rooms": 3,
+      "transport": {
+        "snapshots": 22270,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 59,
+        "maxSendCallbackMs": 4.915,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1310,
+        "maxInputMessageBytes": 306,
+        "maxInputArrivalGapMs": 2455,
+        "maxInputQueue": 8
+      },
+      "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+      "configuredTickRate": 60,
+      "connections": 3,
+      "queuedBytes": 0
+    },
+    "edge": "cdg1"
+  },
+  "arrivalsFile": "live-websocket-repeat.arrivals.ndjson",
+  "nodeVersion": "v25.9.0"
+}

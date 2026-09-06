@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-06T16:54:01.266Z",
+  "url": "ws://127.0.0.1:64674/probe",
+  "local": true,
+  "seconds": 10,
+  "evidence": "loopback diagnostic only, no link impairment; not deployment or poor-link acceptance evidence",
+  "payload": "identical full reconstructed snapshots; larger than production delta snapshots",
+  "connected": true,
+  "ordered": false,
+  "maxRetransmits": 0,
+  "selected": [
+    {
+      "protocol": "udp",
+      "localType": "host",
+      "remoteType": "host"
+    }
+  ],
+  "blocked": false,
+  "closedAtMs": 5002.098666999999,
+  "websocket": {
+    "received": 200,
+    "applied": 200,
+    "rejected": 0,
+    "bytes": 209400,
+    "appliedGapMs": {
+      "samples": 199,
+      "p50": 50.00233300000036,
+      "p95": 51.49720800000068,
+      "p99": 52.429667000000336,
+      "max": 52.74812500000007
+    },
+    "sourceGapMs": {
+      "samples": 199,
+      "p50": 50,
+      "p95": 51,
+      "p99": 52,
+      "max": 52
+    },
+    "deliveryGapExcessMs": {
+      "samples": 199,
+      "p50": 0.05341699999917182,
+      "p95": 1.4802500000005239,
+      "p99": 1.8435410000001866,
+      "max": 2.556083999999828
+    },
+    "frame60HzGapMs": {
+      "samples": 199,
+      "p50": 50,
+      "p95": 50,
+      "p99": 50,
+      "max": 50
+    },
+    "maxSilenceIncludingEdgesMs": 52.74812500000007,
+    "burstGapsUnder5Ms": 0
+  },
+  "webrtc": {
+    "received": 100,
+    "applied": 100,
+    "rejected": 0,
+    "bytes": 104700,
+    "appliedGapMs": {
+      "samples": 99,
+      "p50": 50.00837500000125,
+      "p95": 51.79362500000025,
+      "p99": 52.45387499999924,
+      "max": 52.71404099999927
+    },
+    "sourceGapMs": {
+      "samples": 99,
+      "p50": 50,
+      "p95": 51,
+      "p99": 52,
+      "max": 52
+    },
+    "deliveryGapExcessMs": {
+      "samples": 99,
+      "p50": -0.006416000000172062,
+      "p95": 1.5343749999992724,
+      "p99": 1.8581670000003214,
+      "max": 2.5592079999996713
+    },
+    "frame60HzGapMs": {
+      "samples": 99,
+      "p50": 50,
+      "p95": 50,
+      "p99": 50,
+      "max": 50
+    },
+    "maxSilenceIncludingEdgesMs": 5030.134875000002,
+    "burstGapsUnder5Ms": 0
+  },
+  "compared": 100,
+  "mismatches": 0,
+  "errors": [],
+  "arrivalsFile": "paired-closed-udp.arrivals.ndjson",
+  "nodeVersion": "v25.9.0"
+}

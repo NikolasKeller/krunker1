@@ -1,0 +1,147 @@
+{
+  "date": "2026-09-06T16:58:14.396Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "vantage": "workstation; not inside Railway or the affected player network",
+  "durationSeconds": 120.005576708,
+  "protocol": "arena-v4",
+  "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+  "revisionAfter": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+  "attribution": "unknown: arrival bursts do not prove TCP retransmission; no parallel deployed UDP channel or packet capture",
+  "summary": {
+    "received": 2407,
+    "applied": 2407,
+    "rejected": 0,
+    "bytes": 616480,
+    "appliedGapMs": {
+      "samples": 2406,
+      "p50": 43.4172499999986,
+      "p95": 141.79099999999744,
+      "p99": 378.6983340000006,
+      "max": 2043.0138749999896
+    },
+    "sourceGapMs": {
+      "samples": 2406,
+      "p50": 50,
+      "p95": 51,
+      "p99": 51,
+      "max": 53
+    },
+    "deliveryGapExcessMs": {
+      "samples": 2406,
+      "p50": -6.4479169999976875,
+      "p95": 91.79099999999744,
+      "p99": 328.6983340000006,
+      "max": 1993.0138749999896
+    },
+    "frame60HzGapMs": {
+      "samples": 1587,
+      "p50": 50,
+      "p95": 166.66666666666666,
+      "p99": 416.6666666666667,
+      "max": 2033.3333333333333
+    },
+    "maxSilenceIncludingEdgesMs": 2043.0138749999896,
+    "burstGapsUnder5Ms": 816
+  },
+  "rttMs": {
+    "samples": 474,
+    "p50": 686,
+    "p95": 2046,
+    "p99": 3754,
+    "max": 4925
+  },
+  "baselineErrors": 0,
+  "errors": [],
+  "eventLoopDelayMs": {
+    "p99": 11.780095,
+    "max": 39.550975
+  },
+  "tcp": {
+    "available": true,
+    "errors": [],
+    "status": "optional per-socket OS counters",
+    "sampleIntervalMs": 50,
+    "txRetransmitPackets": 30,
+    "txRetransmitBytes": 2808,
+    "rxOutOfOrderBytes": 218796,
+    "tcpRttMs": {
+      "samples": 2287,
+      "p50": 1248,
+      "p95": 3777,
+      "p99": 4796,
+      "max": 5218
+    },
+    "gapsOver100Ms": 257,
+    "gapsNearTxRetransmission": 8,
+    "gapsNearRxOutOfOrderActivity": 251,
+    "gapsWithInteriorRxOutOfOrderActivity": 215,
+    "gapsWithInteriorTxRetransmission": 1,
+    "samplesFile": "live-websocket.tcp.ndjson"
+  },
+  "healthBefore": {
+    "data": {
+      "ok": true,
+      "tickRate": 60,
+      "tickMs": 0.162,
+      "peakTickMs": 0.943,
+      "tickP95Ms": 0.423,
+      "tickP99Ms": 0.518,
+      "totalTickMs": 14090.112776998536,
+      "overBudgetTicks": 0,
+      "ticks": 50843,
+      "bytesOut": 2996291,
+      "players": 2,
+      "rooms": 2,
+      "transport": {
+        "snapshots": 38908,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 59,
+        "maxSendCallbackMs": 4.915,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1310,
+        "maxInputMessageBytes": 306,
+        "maxInputArrivalGapMs": 2455,
+        "maxInputQueue": 8
+      },
+      "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+      "configuredTickRate": 60,
+      "connections": 2,
+      "queuedBytes": 0
+    },
+    "edge": "cdg1"
+  },
+  "healthAfter": {
+    "data": {
+      "ok": true,
+      "tickRate": 60,
+      "tickMs": 0.508,
+      "peakTickMs": 1.021,
+      "tickP95Ms": 0.967,
+      "tickP99Ms": 0.972,
+      "totalTickMs": 18293.751166998863,
+      "overBudgetTicks": 0,
+      "ticks": 58989,
+      "bytesOut": 4078296,
+      "players": 3,
+      "rooms": 3,
+      "transport": {
+        "snapshots": 46930,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 59,
+        "maxSendCallbackMs": 7.693,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1310,
+        "maxInputMessageBytes": 306,
+        "maxInputArrivalGapMs": 2455,
+        "maxInputQueue": 8
+      },
+      "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+      "configuredTickRate": 60,
+      "connections": 3,
+      "queuedBytes": 0
+    },
+    "edge": "cdg1"
+  },
+  "arrivalsFile": "live-websocket.arrivals.ndjson",
+  "nodeVersion": "v25.9.0"
+}

@@ -1,0 +1,346 @@
+{
+  "date": "2026-09-06T16:46:26.680Z",
+  "evidence": "synthetic sensitivity analysis only; not acceptance evidence",
+  "cases": [
+    {
+      "profile": "matched-quantiles",
+      "cause": "loss-recovery",
+      "synthetic": true,
+      "durationSeconds": 120,
+      "tcpRttMs": {
+        "samples": 480,
+        "p50": 350,
+        "p95": 1121,
+        "p99": 1908,
+        "max": 2158
+      },
+      "tcp": {
+        "received": 2400,
+        "applied": 2400,
+        "rejected": 0,
+        "bytes": 2457600,
+        "appliedGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 1858
+        },
+        "sourceGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 50
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2399,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 1808
+        },
+        "frame60HzGapMs": {
+          "samples": 2015,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 1850
+        },
+        "maxSilenceIncludingEdgesMs": 1858,
+        "burstGapsUnder5Ms": 384
+      },
+      "unreliable": {
+        "received": 2380,
+        "applied": 2380,
+        "rejected": 0,
+        "bytes": 2437120,
+        "appliedGapMs": {
+          "samples": 2379,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 100
+        },
+        "sourceGapMs": {
+          "samples": 2379,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 100
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2379,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 0
+        },
+        "frame60HzGapMs": {
+          "samples": 2379,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 100
+        },
+        "maxSilenceIncludingEdgesMs": 175,
+        "burstGapsUnder5Ms": 0
+      }
+    },
+    {
+      "profile": "matched-quantiles",
+      "cause": "shared-queue",
+      "synthetic": true,
+      "durationSeconds": 120,
+      "tcpRttMs": {
+        "samples": 480,
+        "p50": 350,
+        "p95": 1121,
+        "p99": 1908,
+        "max": 2158
+      },
+      "tcp": {
+        "received": 2400,
+        "applied": 2400,
+        "rejected": 0,
+        "bytes": 2457600,
+        "appliedGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 1858
+        },
+        "sourceGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 50
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2399,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 1808
+        },
+        "frame60HzGapMs": {
+          "samples": 2015,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 1850
+        },
+        "maxSilenceIncludingEdgesMs": 1858,
+        "burstGapsUnder5Ms": 384
+      },
+      "unreliable": {
+        "received": 2400,
+        "applied": 2400,
+        "rejected": 0,
+        "bytes": 2457600,
+        "appliedGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 1858
+        },
+        "sourceGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 50
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2399,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 1808
+        },
+        "frame60HzGapMs": {
+          "samples": 2015,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 1850
+        },
+        "maxSilenceIncludingEdgesMs": 1858,
+        "burstGapsUnder5Ms": 384
+      }
+    },
+    {
+      "profile": "blackout-stress",
+      "cause": "loss-recovery",
+      "synthetic": true,
+      "durationSeconds": 120,
+      "tcpRttMs": {
+        "samples": 480,
+        "p50": 350,
+        "p95": 1600,
+        "p99": 2925,
+        "max": 4175
+      },
+      "tcp": {
+        "received": 2400,
+        "applied": 2400,
+        "rejected": 0,
+        "bytes": 2457600,
+        "appliedGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 3875
+        },
+        "sourceGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 50
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2399,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 3825
+        },
+        "frame60HzGapMs": {
+          "samples": 1863,
+          "p50": 50,
+          "p95": 50,
+          "p99": 1050,
+          "max": 3866.6666666666665
+        },
+        "maxSilenceIncludingEdgesMs": 3875,
+        "burstGapsUnder5Ms": 536
+      },
+      "unreliable": {
+        "received": 2301,
+        "applied": 2301,
+        "rejected": 0,
+        "bytes": 2356224,
+        "appliedGapMs": {
+          "samples": 2300,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 4050
+        },
+        "sourceGapMs": {
+          "samples": 2300,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 4050
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2300,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 0
+        },
+        "frame60HzGapMs": {
+          "samples": 2300,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 4050
+        },
+        "maxSilenceIncludingEdgesMs": 4050,
+        "burstGapsUnder5Ms": 0
+      }
+    },
+    {
+      "profile": "blackout-stress",
+      "cause": "shared-queue",
+      "synthetic": true,
+      "durationSeconds": 120,
+      "tcpRttMs": {
+        "samples": 480,
+        "p50": 350,
+        "p95": 1600,
+        "p99": 2925,
+        "max": 4175
+      },
+      "tcp": {
+        "received": 2400,
+        "applied": 2400,
+        "rejected": 0,
+        "bytes": 2457600,
+        "appliedGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 3875
+        },
+        "sourceGapMs": {
+          "samples": 2399,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 50
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2399,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 3825
+        },
+        "frame60HzGapMs": {
+          "samples": 1863,
+          "p50": 50,
+          "p95": 50,
+          "p99": 1050,
+          "max": 3866.6666666666665
+        },
+        "maxSilenceIncludingEdgesMs": 3875,
+        "burstGapsUnder5Ms": 536
+      },
+      "unreliable": {
+        "received": 2320,
+        "applied": 2320,
+        "rejected": 0,
+        "bytes": 2375680,
+        "appliedGapMs": {
+          "samples": 2319,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 4050
+        },
+        "sourceGapMs": {
+          "samples": 2319,
+          "p50": 50,
+          "p95": 50,
+          "p99": 50,
+          "max": 4050
+        },
+        "deliveryGapExcessMs": {
+          "samples": 2319,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "max": 2000
+        },
+        "frame60HzGapMs": {
+          "samples": 1859,
+          "p50": 50,
+          "p95": 50,
+          "p99": 1050,
+          "max": 4050
+        },
+        "maxSilenceIncludingEdgesMs": 4050,
+        "burstGapsUnder5Ms": 460
+      }
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-06T16:53:43.231Z",
+  "url": "ws://127.0.0.1:64667/probe",
+  "local": true,
+  "seconds": 10,
+  "evidence": "loopback diagnostic only, no link impairment; not deployment or poor-link acceptance evidence",
+  "payload": "identical full reconstructed snapshots; larger than production delta snapshots",
+  "connected": false,
+  "ordered": false,
+  "maxRetransmits": 0,
+  "selected": [],
+  "blocked": true,
+  "closedAtMs": null,
+  "websocket": {
+    "received": 200,
+    "applied": 200,
+    "rejected": 0,
+    "bytes": 210000,
+    "appliedGapMs": {
+      "samples": 199,
+      "p50": 49.958833000000595,
+      "p95": 51.67841600000065,
+      "p99": 52.833583000001454,
+      "max": 53.403957999998966
+    },
+    "sourceGapMs": {
+      "samples": 199,
+      "p50": 50,
+      "p95": 51,
+      "p99": 52,
+      "max": 52
+    },
+    "deliveryGapExcessMs": {
+      "samples": 199,
+      "p50": -0.003125000000181899,
+      "p95": 1.41204099999959,
+      "p99": 1.7581669999999576,
+      "max": 2.424292000000605
+    },
+    "frame60HzGapMs": {
+      "samples": 199,
+      "p50": 50,
+      "p95": 50,
+      "p99": 50,
+      "max": 50
+    },
+    "maxSilenceIncludingEdgesMs": 53.403957999998966,
+    "burstGapsUnder5Ms": 0
+  },
+  "webrtc": {
+    "received": 0,
+    "applied": 0,
+    "rejected": 0,
+    "bytes": 0,
+    "appliedGapMs": {
+      "samples": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "sourceGapMs": {
+      "samples": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "deliveryGapExcessMs": {
+      "samples": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "frame60HzGapMs": {
+      "samples": 0,
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "maxSilenceIncludingEdgesMs": 9999.547833,
+    "burstGapsUnder5Ms": 0
+  },
+  "compared": 0,
+  "mismatches": 0,
+  "errors": [],
+  "arrivalsFile": "paired-no-udp.arrivals.ndjson",
+  "nodeVersion": "v25.9.0"
+}

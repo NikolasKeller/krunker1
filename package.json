@@ -24,6 +24,9 @@
     "test:lobby": "tsx tests/lobby.ts",
     "test:lobby:flow": "tsx tests/lobby-flow.ts",
     "test:load": "tsx tests/load.ts",
+    "probe:transport:live": "tsx tests/transport/live.ts",
+    "probe:transport:model": "tsx tests/transport/model-report.ts",
+    "probe:transport:pair": "tsx tests/transport/paired.ts",
     "preview:geometry": "tsx tests/geometry-preview.ts",
     "preview:hud": "tsx tests/hud-preview.ts",
     "preview:lobby": "tsx tests/lobby-preview.ts",
@@ -45,7 +48,8 @@
     "jsdom": "^29.1.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "werift": "0.24.4"
   },
   "engines": {
     "node": ">=22"

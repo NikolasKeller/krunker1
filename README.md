@@ -102,6 +102,8 @@ LOAD_COUNTS=10 LOAD_LATENCY_MS=40 LOAD_REPORT=artifacts/load-latency.json npm ru
 
 The load runner shares the production binary codec and input buffer; its original acceptance thresholds are unchanged. See [NETCODE.md](NETCODE.md) and [raw network measurements](artifacts/netcode) for public-deployment verification.
 
+The [transport investigation](artifacts/transport/README.md) records live state-arrival measurements, a headless WebSocket/WebRTC comparison, and the remaining evidence needed before changing gameplay transport. Its standalone probes are development tools; the game still uses WebSockets.
+
 The default run measures 2, 5, and 10 independent simulated clients, each alongside **seven server bots**, for 30 seconds per case. Override `GAME_URL`, `LOAD_SECONDS`, `LOAD_COUNTS`, and `LOAD_BOTS` as needed. Use an isolated server with no other human connections during measurements. The clients predict movement, navigate and shoot through real packets; the test checks replica agreement, snapshot continuity, input backlog, prediction error, movement, combat, server tick cost, and inbound/outbound bandwidth (including WebSocket framing). `LOAD_LATENCY_MS` adds application-level one-way delay in both directions. Death corrections are reported separately from continuous movement prediction.
 
 `npm run preview:geometry` generates `artifacts/geometry-preview.png` with a small software rasterizer. It helps inspect geometry and weapon framing without a browser, but does **not** verify WebGL lighting, shadows, HUD layout, pointer lock, audio, or GPU FPS.

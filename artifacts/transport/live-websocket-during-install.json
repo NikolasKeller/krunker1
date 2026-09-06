@@ -1,0 +1,121 @@
+{
+  "date": "2026-09-06T16:46:25.490Z",
+  "origin": "https://krunker1-production.up.railway.app",
+  "vantage": "workstation; not inside Railway or the affected player network",
+  "durationSeconds": 120.0006005,
+  "protocol": "arena-v4",
+  "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+  "revisionAfter": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+  "attribution": "unknown: arrival bursts do not prove TCP retransmission; no parallel deployed UDP channel or packet capture",
+  "summary": {
+    "received": 2399,
+    "applied": 2399,
+    "rejected": 0,
+    "bytes": 615999,
+    "appliedGapMs": {
+      "samples": 2398,
+      "p50": 49.932583000001614,
+      "p95": 57.678916999997455,
+      "p99": 137.1488750000026,
+      "max": 918.9359580000018
+    },
+    "sourceGapMs": {
+      "samples": 2398,
+      "p50": 50,
+      "p95": 51,
+      "p99": 51,
+      "max": 55
+    },
+    "deliveryGapExcessMs": {
+      "samples": 2398,
+      "p50": -0.07454200000211131,
+      "p95": 7.604749999998603,
+      "p99": 87.14887500000259,
+      "max": 868.9359580000018
+    },
+    "frame60HzGapMs": {
+      "samples": 2257,
+      "p50": 50,
+      "p95": 66.66666666666667,
+      "p99": 133.33333333333334,
+      "max": 916.6666666666666
+    },
+    "maxSilenceIncludingEdgesMs": 918.9359580000018,
+    "burstGapsUnder5Ms": 139
+  },
+  "rttMs": {
+    "samples": 475,
+    "p50": 658,
+    "p95": 1772,
+    "p99": 2926,
+    "max": 4178
+  },
+  "baselineErrors": 0,
+  "errors": [],
+  "healthBefore": {
+    "data": {
+      "ok": true,
+      "tickRate": 60,
+      "tickMs": 0.141,
+      "peakTickMs": 0.964,
+      "tickP95Ms": 0.359,
+      "tickP99Ms": 0.433,
+      "totalTickMs": 1348.8148850004845,
+      "overBudgetTicks": 0,
+      "ticks": 8633,
+      "bytesOut": 171448,
+      "players": 2,
+      "rooms": 2,
+      "transport": {
+        "snapshots": 5230,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 59,
+        "maxSendCallbackMs": 2.698,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1043,
+        "maxInputMessageBytes": 0,
+        "maxInputArrivalGapMs": 0,
+        "maxInputQueue": 0
+      },
+      "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+      "configuredTickRate": 60,
+      "connections": 2,
+      "queuedBytes": 0
+    },
+    "edge": "cdg1"
+  },
+  "healthAfter": {
+    "data": {
+      "ok": true,
+      "tickRate": 60,
+      "tickMs": 0.529,
+      "peakTickMs": 1.097,
+      "tickP95Ms": 0.891,
+      "tickP99Ms": 1.014,
+      "totalTickMs": 6196.82685400108,
+      "overBudgetTicks": 0,
+      "ticks": 16453,
+      "bytesOut": 1373636,
+      "players": 3,
+      "rooms": 3,
+      "transport": {
+        "snapshots": 13726,
+        "skippedSnapshots": 0,
+        "maxSnapshotSendGapMs": 59,
+        "maxSendCallbackMs": 4.873,
+        "maxBufferedBytes": 0,
+        "maxMessageBytes": 1310,
+        "maxInputMessageBytes": 306,
+        "maxInputArrivalGapMs": 2455,
+        "maxInputQueue": 8
+      },
+      "revision": "ea08e6c66f55bb44fb3b667f29cb748e9f399073",
+      "configuredTickRate": 60,
+      "connections": 3,
+      "queuedBytes": 0
+    },
+    "edge": "cdg1"
+  },
+  "arrivalsFile": "live-websocket-during-install.arrivals.ndjson",
+  "nodeVersion": "v25.9.0"
+}
