@@ -27,7 +27,7 @@ for (const state of ['lobby', 'ffa', 'tdm', 'body-hit', 'headshot', 'multikill']
         room.round.phase = state === 'lobby' ? 'lobby' : 'playing';
         room.round.endsAt = 139000;
         room.round.red = 13; room.round.blue = 17;
-        const net = { id: a.id, host: a.id, room: room.id, status: 'CONNECTED', round: room.round,
+        const net = { id: a.id, host: a.id, room: room.id, ws: {}, status: 'CONNECTED', round: room.round,
             players: new Map([[a.id, a], [b.id, b]]), local: a, predicted: a, serverNow: 1000, ping: 15,
             difficulty: 'normal', bots: 0, remotePlayers: () => [], send() {} } as unknown as Network;
         const renderer = { fps: 144, viewmodel: { aim: 0 }, project: () => ({ x: 512, y: 280, visible: true }) } as unknown as Renderer;

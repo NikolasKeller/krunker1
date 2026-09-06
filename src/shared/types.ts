@@ -155,7 +155,11 @@ export type ClientMessage = {
 } | {
     type: 'class';
     classId: ClassId;
+    team?: Team;
+} | {
+    type: 'team';
     team: Team;
+    playerId?: string;
 } | {
     type: 'start';
 } | {

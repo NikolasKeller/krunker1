@@ -8,6 +8,7 @@ import { History, rewindTime } from './history';
 import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
 import { MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../shared/protocol';
+import { summarizeLineup } from '../shared/lobby';
 export interface Actor {
     state: PlayerState;
     queue: Input[];
@@ -64,11 +65,22 @@ export class Room {
         this.round.nextAt = now + COUNTDOWN_MS;
     }
     updateLobby(now: number) {
-        const humans = [...this.players.values()].filter(a => !a.state.bot && a.connected);
-        const ready = humans.length > 0 && humans.every(a => a.state.ready);
-        if (!humans.length || (!ready && !this.forcedCountdown)) this.cancelCountdown();
-        if (this.round.phase === 'lobby' && ready) this.countdown(now);
+        const lineup = summarizeLineup([...this.players.values()].filter(a => a.connected).map(a => a.state));
+        if (!lineup.humans || (!lineup.allReady && !this.forcedCountdown)) this.cancelCountdown();
+        if (this.round.phase === 'lobby' && lineup.allReady) this.countdown(now);
         if (this.round.phase === 'countdown' && now >= this.round.nextAt) this.start(now);
+    }
+    moveTeam(requesterId: string, playerId: string, team: Team, now: number) {
+        const requester = this.players.get(requesterId), player = this.players.get(playerId);
+        if (!requester?.connected || requester.state.bot || !player?.connected ||
+            (requesterId !== playerId && this.host !== requesterId) ||
+            !['lobby', 'countdown'].includes(this.round.phase) || !['blue', 'red'].includes(team)) return false;
+        if (player.state.team === team) return true;
+        player.state.team = team;
+        player.state.ready = false;
+        this.cancelCountdown();
+        this.spawn(player, now);
+        return true;
     }
     add(name: string, classId: ClassId, team: Team, bot = false): Actor {
         const id = randomUUID().slice(0, 8), c = CLASSES[classId];

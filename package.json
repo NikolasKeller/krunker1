@@ -21,7 +21,8 @@
     "test:lobby:flow": "tsx tests/lobby-flow.ts",
     "test:load": "tsx tests/load.ts",
     "preview:geometry": "tsx tests/geometry-preview.ts",
-    "preview:hud": "tsx tests/hud-preview.ts"
+    "preview:hud": "tsx tests/hud-preview.ts",
+    "preview:lobby": "tsx tests/lobby-preview.ts"
   },
   "dependencies": {
     "three": "0.185.1",

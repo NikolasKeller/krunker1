@@ -51,25 +51,38 @@ export class UI {
         $('ui').innerHTML = `
       <div id="menu" class="menu">
         <header class="menu-header"><div class="brand"><span class="brand-mark">F</span><div>FURO<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
-        <section class="class-detail"><div class="eyebrow"><span class="small-line"></span> SELECT YOUR LOADOUT</div><h1>CHOOSE<br>YOUR CLASS<span class="lime">.</span></h1><div class="class-index"><span id="class-num">01</span><span>/ 04</span><span id="class-role">PRECISION</span></div><h2 id="class-name">HUNTER</h2><div class="weapon-label"><span class="tiny-cross">+</span><span id="weapon-name">TRIANGLE .50</span></div><p id="class-description"></p><div class="class-stats" id="class-stats"></div><div class="class-health"><span>+</span><strong id="class-hp">60</strong><small>STARTING HEALTH</small></div></section>
-        <div class="preview-label"><span class="status-dot"></span><span>READY TO DROP</span><small>STANDARD ISSUE / DEFAULT</small></div>
-        <aside class="room-panel">
-          <div class="panel-heading"><span id="lobby-heading">YOUR NEXT FURO ROUND</span><span class="tag">10 FRIENDS + BOTS</span></div>
+        <main class="room-panel">
+          <section class="lineup-panel" aria-labelledby="lineup-title">
+            <div class="lineup-heading">
+              <div class="eyebrow"><span class="small-line"></span><span id="lobby-heading">YOUR NEXT FURO ROUND</span></div>
+              <div class="lineup-title-row"><h1><span id="lineup-title">CHOOSE YOUR SIDE</span><span class="lime">.</span></h1><div class="readiness"><strong id="ready-count">0 / 0</strong><span id="readiness-label">PLAYERS READY</span></div></div>
+              <div id="lobby-status" role="status" aria-live="polite">Create a lobby, then invite your friends.</div>
+              <div id="waiting-players" class="waiting-players" role="status" aria-live="polite"></div>
+            </div>
+            <div id="roster" class="lineup-teams" aria-label="Match lineup">
+              ${(['blue', 'red'] as const).map(team => `<section id="team-${team}" class="team-column ${team}" aria-labelledby="${team}-title"><button class="team-heading" data-team="${team}" aria-describedby="${team}-summary"><span class="team-title"><strong id="${team}-title">${team.toUpperCase()} TEAM</strong><span id="${team}-count" class="team-count">0</span></span><span class="team-meta"><span id="${team}-summary">0 PLAYERS</span><span id="${team}-action">JOIN TEAM ↗</span></span></button><div id="${team}-roster" class="team-roster" role="list" aria-label="${team} team players"></div><p id="${team}-empty" class="team-empty">An open side. Make it yours.</p></section>`).join('')}
+              <section id="team-ffa" class="team-column ffa hidden" aria-labelledby="ffa-title"><div class="team-heading"><span class="team-title"><strong id="ffa-title">FREE FOR ALL</strong><span id="ffa-count" class="team-count">0</span></span><span class="team-meta"><span id="ffa-summary"></span><span>EVERY PLAYER FOR THEMSELVES</span></span></div><div id="ffa-roster" class="team-roster" role="list" aria-label="Free for all players"></div><p id="ffa-empty" class="team-empty">Your friends belong here. Send them an invite.</p></section>
+            </div>
+            <div class="lineup-caption"><span id="lineup-help">Click a team to join it.</span><span id="player-count">0 / 10 + 0 BOTS</span></div>
+
+            <div class="lobby-actions"><button id="deploy" class="deploy-button"><span id="deploy-label">CREATE LOBBY</span><span id="deploy-icon" aria-hidden="true">↗</span></button><button id="force-start" class="secondary-button hidden">HOST: START EARLY</button><div class="deploy-note" id="deploy-note">SEND A LINK. GET EVERYONE READY.</div></div>
+          </section>
+          <aside class="room-sidebar" aria-label="Lobby setup">
+          <div class="panel-heading"><span>MATCH SETUP</span><span class="tag">CUSTOM GAME</span></div>
           <div class="map-thumb"><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div>
           <div class="room-options">
-            <div id="lobby-status" role="status" aria-live="polite">Create a lobby, then invite your friends.</div>
             <div id="lobby-results" class="hidden"><strong id="result-winner"></strong><span id="result-round"></span><div id="result-list" class="result-list"></div></div>
             <label>YOUR CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name" autocomplete="nickname"/></label>
             <div class="lobby-sharing hidden" id="lobby-sharing"><div class="share-heading"><strong id="share-code"></strong><button id="copy-link" class="copy-button">COPY INVITE LINK</button></div><label>INVITE URL<input id="share-url" readonly aria-label="Lobby invite URL"/></label><div id="lan-links"></div><div id="copy-status" role="status" aria-live="polite"></div></div>
-            <div id="team-select" class="team-select visible"><button data-team="blue">● BLUE TEAM</button><button data-team="red">● RED TEAM</button></div>
+            <section class="class-picker"><div class="picker-heading"><span>YOUR LOADOUT</span><small>SELECT A CLASS</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
             <section class="bot-settings" aria-label="Room bot settings"><div class="label-row"><span>ROOM BOTS</span><span id="bot-settings-status">CREATE A LOBBY TO CONFIGURE</span></div><div class="two-fields"><label>BOT DIFFICULTY<select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><label>BOT COUNT<select id="bot-count">${Array.from({ length: 8 }, (_, i) => `<option value="${i}" ${i === 5 ? 'selected' : ''}>${i === 0 ? 'No bots (friends only)' : `${i} bots`}</option>`).join('')}</select></label></div><p>Choose No bots to play only with your friends.</p></section>
-            <div class="label-row roster-label"><span>PLAYERS / TEAM / READY</span><span id="player-count">0 / 10</span></div><div id="roster" aria-live="polite"></div>
             <details id="host-options"><summary>MATCH SETTINGS <span id="host-label">HOST CONTROLS</span></summary><div class="segmented" id="mode-select"><button data-mode="ffa" class="selected">FREE FOR ALL</button><button data-mode="tdm">TEAM DM</button></div><div class="two-fields"><label>SCORE LIMIT<input id="score-limit" type="number" min="5" max="200" value="25"/></label><label>TIME LIMIT<select id="time-limit">${[1, 2, 3, 4, 5, 10, 15, 30].map(n => `<option value="${n * 60000}" ${n === 4 ? 'selected' : ''}>${n} minutes</option>`).join('')}</select></label></div></details>
+            <details class="loadout-details"><summary>LOADOUT DETAILS</summary><section class="class-detail"><div class="class-index"><span id="class-num">01</span><span>/ 04</span><span id="class-role">PRECISION</span></div><h2 id="class-name">HUNTER</h2><div class="weapon-label"><span class="tiny-cross">+</span><span id="weapon-name">TRIANGLE .50</span></div><p id="class-description"></p><div class="class-stats" id="class-stats"></div><div class="class-health"><span>+</span><strong id="class-hp">60</strong><small>STARTING HEALTH</small></div></section></details>
             <details class="join-options"><summary>JOIN ANOTHER LOBBY</summary><label>ROOM CODE<div class="input-button"><input id="room-code" maxlength="18" spellcheck="false" placeholder="AB7K4"/><button id="join-room" title="Join room" aria-label="Join room code">↗</button></div></label><button id="create-room" class="secondary-button">CREATE NEW LOBBY</button></details>
           </div>
-          <div class="lobby-actions"><button id="deploy" class="deploy-button"><span id="deploy-label">CREATE LOBBY</span><span id="deploy-icon" aria-hidden="true">↗</span></button><button id="force-start" class="secondary-button hidden">HOST: START EARLY</button><div class="deploy-note" id="deploy-note">SEND A LINK. GET EVERYONE READY.</div></div>
-        </aside>
-        <section class="class-picker"><div class="picker-heading"><span>THE LINEUP</span><small>4 CLASSES <span> / </span> FIND YOUR PLAYSTYLE</small></div><div class="class-cards">${CLASS_IDS.map((id, i) => `<button class="class-card" data-class="${id}" style="--class-color:${CLASSES[id].color}"><span class="card-number">0${i + 1}</span><span class="card-check">✓</span><div class="card-weapon">${gunIcon(CLASSES[id].weapon)}</div><strong>${CLASSES[id].name}</strong><small>${CLASSES[id].role}</small></button>`).join('')}</div></section>
+          </aside>
+        </main>
+
         <footer class="menu-footer"><span><kbd>W A S D</kbd> MOVE <kbd>SPACE</kbd> HOP <kbd>SHIFT</kbd> SLIDE <kbd>R</kbd> RELOAD</span><span>60 Hz <i> / </i> SERVER AUTHORITY <i> / </i> BUILT TO MOVE</span></footer>
       </div>
       <div id="hud" class="hud hidden"><div class="match-hud"><div class="timer-box"><span class="timer-icon">◷</span><strong id="timer">04:00</strong></div><div id="team-scores" class="team-scores hidden" aria-label="Team scores"></div><div class="match-mode" id="match-mode">FREE FOR ALL<span>on SANDYARD</span></div><canvas id="minimap" class="${this.minimapEnabled ? '' : 'hidden'}" width="300" height="300" aria-label="Minimap"></canvas></div><div class="score-top" id="score-top"></div><div class="performance" id="performance"></div><div id="mini-board"></div><div class="communication-hud"><div class="killfeed" id="killfeed" aria-label="Kill feed"></div><div id="chat-log" class="chat-log" role="log" aria-label="Room messages" aria-live="polite"></div><form id="chat-form" class="chat-form"><input id="chat-input" aria-label="Room message" placeholder="Enter Message" maxlength="160" autocomplete="off" spellcheck="false"/><svg class="chat-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M6 10v3a6 6 0 0 0 12 0v-3M12 19v4M8 23h8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="chat-status" class="hidden" role="status"></span></form></div><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div id="hitmarker" class="hitmarker">×</div><div id="scope" class="scope hidden"><div class="scope-ring"><div class="scope-line horizontal"></div><div class="scope-line vertical"></div><i></i></div></div><div id="damage-vignette"></div><div id="damage-direction"><span></span></div><div id="damage-numbers"></div><div id="nameplates"></div><div class="kill-notice" id="kill-notice"></div><div id="notice" class="notice"></div><div class="health-hud"><div class="health-content"><strong id="health">100</strong><span class="health-max" id="health-max">|100</span></div><div class="health-track"><i id="health-bar"></i></div><div class="health-sub"><span id="health-status">READY</span><span id="speed">0 KM/H</span></div></div><div class="ammo-hud"><div class="weapon-slots" id="weapon-slots"></div><div class="ammo-line" id="ammo-line"><strong id="ammo">3</strong><span>|</span><b id="ammo-max">3</b><i id="ammo-alert" class="hidden">!!!</i></div><div id="hud-weapon">TRIANGLE .50</div></div><div class="reload-prompt" id="reload-prompt"></div><div class="bottom-hint"><kbd>TAB</kbd> SCOREBOARD <span>·</span> <kbd>ESC</kbd> MENU</div><div id="death-card" class="death-card hidden"><span>BACK IN THE FIGHT</span><strong id="respawn-time">2.2</strong><small>AUTOMATIC RESPAWN</small></div><div id="network-warning" class="network-warning hidden"></div></div>
@@ -100,7 +113,13 @@ export class UI {
         $('room-code').setAttribute('value', room);
         document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => b.onclick = () => this.choose(b.dataset.class as ClassId));
         document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => net.send({ type: 'configure', mode: b.dataset.mode as 'ffa' | 'tdm' }));
-        document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'class', classId: this.selected, team: this.team }); });
+        document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => {
+            b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'team', team: this.team }); };
+            b.closest('.team-column')!.addEventListener('click', event => {
+                const target = event.target as HTMLElement;
+                if (!target.closest('button')) b.click();
+            });
+        });
         $('difficulty').onchange = () => net.send({ type: 'configure', difficulty: $<HTMLSelectElement>('difficulty').value as 'easy' | 'normal' | 'hard' });
         $('bot-count').onchange = () => net.send({ type: 'configure', bots: Number($<HTMLSelectElement>('bot-count').value) });
         $('score-limit').onchange = () => net.send({ type: 'configure', scoreLimit: Number($<HTMLInputElement>('score-limit').value) });
@@ -183,7 +202,7 @@ export class UI {
         } catch { $('lan-links').textContent = ''; }
     }
     choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); const c = CLASSES[id]; $('class-num').textContent = `0${CLASS_IDS.indexOf(id) + 1}`; $('class-name').textContent = c.name; $('class-role').textContent = c.role; $('weapon-name').textContent = WEAPONS[c.weapon].name; $('class-description').textContent = c.description; $('class-hp').textContent = String(c.hp); $('class-stats').innerHTML = ['DAMAGE', 'FIRE RATE', 'RANGE'].map((s, i) => `<div><span>${s}</span><div class="stat-bar"><i style="width:${c.stats[i]}%"></i></div></div>`).join(''); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
-        this.net.send({ type: 'class', classId: id, team: this.team }); }
+        this.net.send({ type: 'class', classId: id }); }
     visibility() { $('menu').classList.toggle('hidden', !this.menu); $('hud').classList.toggle('hidden', this.menu); $('pause').classList.toggle('hidden', !this.paused || this.menu); if (this.menu || this.paused) $('chat-input').blur(); }
     focusChat() { if (!this.menu && !this.paused) $<HTMLInputElement>('chat-input').focus(); }
     chat(message: Extract<ServerMessage, { type: 'chat' }>) {
@@ -235,7 +254,11 @@ export class UI {
         if (e.type === 'notice')
             this.notice(e.text);
     }
-    updateLobby() { this.lobby.update(this.team); }
+    updateLobby() {
+        const team = this.net.local?.team;
+        if (team && team !== this.team) { this.team = team; localStorage.setItem('arena-team', team); }
+        this.lobby.update(this.team);
+    }
     update(now: number, renderer: Renderer, aiming: boolean) {
         const net = this.net, p = net.predicted, round = net.round, serverNow = net.serverNow;
         $('hitmarker').style.opacity = now < this.hitUntil ? '1' : '0';

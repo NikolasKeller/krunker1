@@ -243,14 +243,19 @@ export function createGameServer() {
                 if (!m.ready) r.cancelCountdown();
                 r.updateLobby(now);
             }
-            if (m.type === 'class' && CLASS_IDS.includes(m.classId) && ['blue', 'red'].includes(m.team)) {
+            if (m.type === 'team' && (m.playerId === undefined || typeof m.playerId === 'string'))
+                r.moveTeam(a.state.id, m.playerId ?? a.state.id, m.team, now);
+            if (m.type === 'class' && CLASS_IDS.includes(m.classId) && (m.team === undefined || ['blue', 'red'].includes(m.team))) {
                 if (r.round.phase !== 'playing') {
-                    if (a.state.classId !== m.classId || a.state.team !== m.team) {
+                    // Older clients bundle team and class. New class-only requests retain host assignments,
+                    // including a team change whose snapshot has not reached the choosing player yet.
+                    const team = m.team ?? a.state.team;
+                    if (a.state.classId !== m.classId || a.state.team !== team) {
                         a.state.ready = false;
                         r.cancelCountdown();
                     }
                     a.state.classId = m.classId;
-                    a.state.team = m.team;
+                    a.state.team = team;
                     r.spawn(a, now);
                 }
                 else {

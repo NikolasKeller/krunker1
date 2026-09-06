@@ -146,3 +146,72 @@ test('bot selectors are visible outside collapsed settings and send zero and eve
         assert.equal(bots.disabled, false); assert.equal(bots.value, '2');
     } finally { restore(); }
 });
+
+test('team cards retain identity across moves and FFA, with visible class, self, host, bot and ready states', () => {
+    const { restore, ui, net, a, b } = setup();
+    try {
+        const bot = { ...b, id: 'bot', name: 'Kilo', bot: true, classId: 'runngun' as const };
+        net.players.set(bot.id, bot); net.round!.mode = 'tdm'; a.ready = true;
+        ui.updateLobby();
+        const card = (id: string) => document.querySelector<HTMLElement>(`[data-player-id="${id}"]`)!;
+        const self = card(a.id), friend = card(b.id), botCard = card(bot.id);
+        assert.equal(document.querySelector('#blue-roster')!.children.length, 1);
+        assert.equal(document.querySelector('#red-roster')!.children.length, 2);
+        assert.equal(document.getElementById('red-count')!.textContent, '2');
+        assert.equal(document.getElementById('ready-count')!.textContent, '1 / 2');
+        assert.match(document.getElementById('waiting-players')!.textContent!, /Bravo/);
+        assert.ok(self.classList.contains('is-self'));
+        assert.ok(!self.querySelector('.you-badge')!.classList.contains('hidden'));
+        assert.ok(!self.querySelector('.host-badge')!.classList.contains('hidden'));
+        assert.ok(!botCard.querySelector('.bot-badge')!.classList.contains('hidden'));
+        assert.match(botCard.querySelector('.player-class')!.textContent!, /RUN N GUN · MOBILITY/);
+        assert.equal(botCard.querySelector('.ready-state')!.textContent, '✓ READY');
+        assert.equal(friend.querySelector('.ready-state')!.textContent, '○ NOT READY');
+        b.team = 'blue'; b.classId = 'vince'; b.ready = true; ui.updateLobby();
+        assert.equal(card(b.id), friend);
+        assert.equal(friend.parentElement!.id, 'blue-roster');
+        assert.match(friend.querySelector('.player-class')!.textContent!, /VINCE/);
+        assert.equal(document.getElementById('ready-count')!.textContent, '2 / 2');
+        assert.match(document.getElementById('waiting-players')!.textContent!, /EVERYONE IS READY/);
+        net.round!.mode = 'ffa'; ui.updateLobby();
+        assert.equal(card(a.id), self); assert.equal(card(b.id), friend);
+        assert.equal(document.getElementById('ffa-roster')!.children.length, 3);
+        assert.equal(document.getElementById('ffa-count')!.textContent, '3');
+        assert.ok(document.getElementById('team-blue')!.classList.contains('hidden'));
+        assert.ok(!document.getElementById('team-ffa')!.classList.contains('hidden'));
+        assert.ok(friend.querySelector('.move-player')!.classList.contains('hidden'));
+        net.players.delete(b.id); ui.updateLobby();
+        assert.equal(friend.isConnected, false);
+        assert.equal(document.getElementById('ffa-count')!.textContent, '2');
+    } finally { restore(); }
+});
+
+test('team click and host move controls use distinct targets and class changes retain a host-assigned team', () => {
+    const { dom, restore, ui, net, a, b } = setup();
+    try {
+        net.round!.mode = 'tdm'; ui.updateLobby();
+        const sent: ClientMessage[] = []; net.send = message => { sent.push(message); };
+        document.getElementById('red-empty')!.click();
+        assert.deepEqual(sent.pop(), { type: 'team', team: 'red' });
+        const move = document.querySelector<HTMLButtonElement>(`[data-player-id="${b.id}"] .move-player`)!;
+        move.click();
+        assert.deepEqual(sent, [{ type: 'team', playerId: b.id, team: 'blue' }], 'move does not bubble into self switch');
+        move.focus(); b.team = 'blue'; ui.updateLobby();
+        assert.equal(document.activeElement, move, 'host can keep using the moved card with a keyboard');
+        a.team = 'red';
+        ui.choose('vince');
+        assert.deepEqual(sent.at(-1), { type: 'class', classId: 'vince' }, 'class selection cannot overwrite a host assignment with stale client state');
+        ui.updateLobby(); assert.equal(ui.team, 'red');
+        net.host = b.id; ui.updateLobby();
+        assert.ok(move.classList.contains('hidden'));
+        sent.length = 0; move.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+        assert.deepEqual(sent, [], 'stale host control cannot move another player');
+        net.host = a.id; net.round!.phase = 'playing'; ui.updateLobby();
+        assert.equal(move.disabled, true);
+        assert.equal(document.querySelector<HTMLButtonElement>('[data-team="blue"]')!.disabled, true);
+        assert.equal(document.getElementById('deploy-label')!.textContent, 'JOIN MATCH');
+        net.round!.phase = 'lobby'; ui.updateLobby();
+        assert.equal(move.disabled, false);
+        assert.equal(document.getElementById('deploy-label')!.textContent, 'READY UP');
+    } finally { restore(); }
+});
