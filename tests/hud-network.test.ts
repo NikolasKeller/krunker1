@@ -48,6 +48,7 @@ test('an authoritative headshot travels over the live binary socket into the sho
         shooter.connect({ name: 'Alpha', room: '', classId: 'hunter', team: 'blue', create: true });
         await wait(() => shooter.status === 'CONNECTED', 'shooter joins');
         const room = app.rooms.get(shooter.room)!;
+        room.configureMap(shooter.id, 'sandyard', Date.now());
         room.botCount = 0; room.fillBots(Date.now());
         // A second browser tab has its own session storage and must not resume Alpha's token.
         sessionStorage.clear();

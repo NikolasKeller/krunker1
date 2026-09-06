@@ -5,7 +5,7 @@ import { UI } from '../src/client/ui';
 import { Controls } from '../src/client/input';
 import type { Network } from '../src/client/network';
 import type { Renderer } from '../src/client/renderer';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { CLASS_IDS } from '../src/shared/weapons';
 import { installDOM } from './dom';
 const out = new URL('../artifacts/mobile-preview/', import.meta.url);

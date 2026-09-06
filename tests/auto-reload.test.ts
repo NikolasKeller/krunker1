@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { WeaponPrediction } from '../src/client/weapon-prediction';
 import { neutralInput } from '../src/shared/movement';
 import { WEAPONS } from '../src/shared/weapons';
@@ -58,7 +58,7 @@ test('manual reload still starts a partial magazine, cannot fire during reload, 
 });
 test('lobby, countdown, results, death and old-life inputs cannot start an automatic reload', () => {
     for (const phase of ['lobby', 'countdown', 'results'] as const) {
-        const { room, actor } = fixture(); room.round.phase = phase;
+        const { room, actor } = fixture(); room.round.phase = phase; room.round.nextAt = 10000;
         room.enqueue(actor, [input(1, 1000, { fire: true })], 1000); room.tick(1000);
         assert.equal(actor.state.ammo, 1); assert.equal(actor.state.reloadEnd, 0);
     }

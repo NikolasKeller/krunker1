@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RemoteInterpolation, MAX_EXTRAPOLATION_MS, type RemoteFrame } from '../src/client/interpolation';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState } from '../src/shared/movement';
 import { UI } from '../src/client/ui';
 import type { Network } from '../src/client/network';

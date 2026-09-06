@@ -1,6 +1,6 @@
 import { Network } from '../src/client/network';
 import { correctedPosition, predictInput, previewInput } from '../src/client/prediction';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState, neutralInput } from '../src/shared/movement';
 import { decodeClientMessage, encodeServerMessage, wireInput } from '../src/shared/protocol';
 import { STEP, type ClientMessage, type PlayerState, type ServerMessage, type Vec3 } from '../src/shared/types';

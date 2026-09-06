@@ -4,7 +4,7 @@ import { decodeClientMessage, decodeServerMessage, encodeClientMessage, encodeSe
 import { neutralInput, validInput, moveState } from '../src/shared/movement';
 import { wirePlayer, playerDelta } from '../src/shared/snapshot';
 import { reconcile, predictInput } from '../src/client/prediction';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import type { GameEvent, Input, PlayerState, ServerMessage } from '../src/shared/types';
 
 test('binary input preserves sequence/life, button edges and the exact prediction floats', () => {

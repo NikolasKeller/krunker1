@@ -1,3 +1,4 @@
+import { getClientMap, type MapId } from '../shared/map';
 import * as THREE from 'three';
 import { correctedPosition } from './prediction';
 import { orientCamera } from './camera';
@@ -20,6 +21,9 @@ export class Renderer {
     drawCalls = 0;
     triangles = 0;
     private sun: THREE.DirectionalLight;
+    private ambient: THREE.HemisphereLight;
+    private mapScene = new THREE.Scene();
+    private mapId?: MapId;
     private quality = 'balanced';
     private resolutionScale = 1;
     private width = 1;
@@ -45,7 +49,8 @@ export class Renderer {
         this.gl.info.autoReset = false;
         this.scene.background = new THREE.Color(0xcdbfbe);
         this.scene.fog = new THREE.Fog(0xcdbfbe, 75, 160);
-        this.scene.add(new THREE.HemisphereLight(0xf4f9ff, 0xaaa5a0, 1.7));
+        this.ambient = new THREE.HemisphereLight(0xf4f9ff, 0xaaa5a0, 1.7);
+        this.scene.add(this.ambient);
         const sun = this.sun = new THREE.DirectionalLight(0xfff0d4, 2.2);
         sun.position.set(-30, 55, 20);
         sun.castShadow = true;
@@ -54,11 +59,32 @@ export class Renderer {
         sun.shadow.bias = -0.0005;
         sun.shadow.normalBias = 0.025;
         this.scene.add(sun);
-        buildMap(this.scene);
+        this.scene.add(this.mapScene);
+        this.updateMap();
         this.effects = new Effects(this.scene);
         this.camera.rotation.order = 'YXZ';
         addEventListener('resize', () => this.resize());
         this.resize();
+    }
+    private updateMap() {
+        const map = getClientMap();
+        if (this.mapId === map.id) return;
+        // Only merged map buffers and map-specific materials are owned here.
+        // Shared box geometry/materials are retained by the model cache.
+        this.mapScene.traverse(o => {
+            if (!(o instanceof THREE.Mesh)) return;
+            const mat = o.material as THREE.MeshLambertMaterial;
+            if (o.geometry.hasAttribute('color')) o.geometry.dispose();
+            if (mat instanceof THREE.MeshBasicMaterial) { mat.map?.dispose(); mat.dispose(); }
+            else if (mat.userData.mapOwned) mat.dispose();
+        });
+        this.mapScene.clear(); this.mapId = map.id;
+        buildMap(this.mapScene, { map });
+        this.scene.background = new THREE.Color(map.palette.sky);
+        this.scene.fog = new THREE.Fog(map.palette.sky, this.touch ? 70 : 75, this.touch ? 120 : 160);
+        this.ambient.color.setHex(map.palette.ambient);
+        this.ambient.groundColor.setHex(map.palette.floor);
+        this.sun.color.setHex(map.palette.sun); this.sun.intensity = map.palette.intensity;
     }
     setTouch(touch: boolean) { this.touch = touch; this.applyQuality(); }
     setResolutionScale(scale: number) { this.resolutionScale = scale; this.applyQuality(); }
@@ -78,7 +104,7 @@ export class Renderer {
         }
         // The complete arena remains in range; only distant background is culled.
         this.camera.far = this.touch ? 120 : 220;
-        this.scene.fog = new THREE.Fog(0xcdbfbe, this.touch ? 70 : 75, this.touch ? 120 : 160);
+        this.scene.fog = new THREE.Fog(getClientMap().palette.sky, this.touch ? 70 : 75, this.touch ? 120 : 160);
         this.resize();
     }
     private resize() { this.width = innerWidth; this.height = innerHeight; this.gl.setSize(this.width, this.height); this.camera.aspect = this.width / this.height; this.camera.updateProjectionMatrix(); this.viewmodel.resize(this.width, this.height); }
@@ -101,6 +127,7 @@ export class Renderer {
         yaw: number;
         pitch: number;
     }, correction: Vec3, menu: boolean, aiming: boolean, serverNow: number, mode: string) {
+        this.updateMap();
         this.frames++;
         if (!this.fpsTime)
             this.fpsTime = time;

@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { SOLID_BOXES, RAMPS } from '../src/shared/map';
 import { moveState, neutralInput, eyeHeight } from '../src/shared/movement';
 import { random } from '../src/shared/math';

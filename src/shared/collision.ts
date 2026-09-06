@@ -1,4 +1,4 @@
-import { SOLID_BOXES, RAMPS, MAP_SIZE } from './map';
+import { getClientMap } from './map';
 import { HEIGHT, RADIUS } from './movement';
 import type { Vec3 } from './types';
 
@@ -20,7 +20,8 @@ function entry(from: Vec3, delta: Vec3, planes: Plane[]) {
 }
 // Render previews, reconciliation offsets and remote extrapolation must never
 // draw a body/camera through a solid even when both endpoints are legal.
-export function clipPlayerMotion(from: Vec3, to: Vec3, height = HEIGHT, radius = RADIUS): Vec3 {
+export function clipPlayerMotion(from: Vec3, to: Vec3, height = HEIGHT, radius = RADIUS, map = getClientMap()): Vec3 {
+    const { boxes: SOLID_BOXES, ramps: RAMPS, size: MAP_SIZE } = map;
     const d = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z };
     if (!d.x && !d.y && !d.z) return { ...to };
     let t = 1;

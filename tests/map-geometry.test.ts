@@ -1,14 +1,32 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
-import { BOXES, SOLID_BOXES } from '../src/shared/map';
+import { BOXES, SOLID_BOXES, MAPS, getMap } from '../src/shared/map';
 import { auditMap, colliderBounds, headlessMap } from './map-geometry';
 
-test('every rendered map object fits its real collider in world space, including attached details and roofs', () => {
-    const { scene, objects } = headlessMap();
-    const failures = auditMap(scene, objects);
+for (const map of MAPS) test(`${map.name}: every rendered object fits its collider and the entire outer shell is sealed`, () => {
+    const { scene, objects } = headlessMap(false, map);
+    const failures = auditMap(scene, objects, map);
     assert.deepEqual(failures, [], `Rendered geometry exceeds collision (metres):\n${failures.join('\n')}`);
-    console.log(`Map geometry: ${objects.length} objects, ${SOLID_BOXES.length} solid boxes; tolerance 0.0001 m`);
+    console.log(`${map.name} geometry: ${objects.length} objects, ${map.boxes.length} solid boxes; tolerance 0.0001 m`);
+});
+
+test('the audit rejects a 0.2 mm slit above a viewport, even between ordinary sample heights', () => {
+    const original = getMap('orbital');
+    const map = { ...original, boxes: original.boxes.map(b => ({ ...b })) };
+    const pane = map.boxes.find(b => b.surface === 'glass')!;
+    pane.h -= .0002; pane.y -= .0001;
+    const { scene, objects } = headlessMap(false, map);
+    assert.ok(auditMap(scene, objects, map).some(f => f.includes('outer shell gap')));
+});
+
+test('the audit rejects an oversized collider as well as protruding theme geometry', () => {
+    const original = getMap('abyss');
+    const map = { ...original, boxes: original.boxes.map(b => ({ ...b })) };
+    const { scene, objects } = headlessMap(false, map);
+    const pane = map.boxes.find(b => b.surface === 'glass')!;
+    pane.w += .1;
+    assert.ok(auditMap(scene, objects, map).some(f => f.includes('exactly match')));
 });
 
 test('the audit rejects unsupported rotated trim, upper walls, unowned props and roofs over empty ground', () => {
@@ -57,6 +75,15 @@ test('production batching preserves every audited triangle and textured sign in 
     for (const textured of [false, true]) {
         assert.deepEqual(renderedVertices(production.scene, textured), renderedVertices(audit.scene, textured));
     }
+});
+
+for (const map of MAPS.filter(m => m.id !== 'sandyard')) test(`${map.name}: production batching preserves audited triangles, glass and emitters`, () => {
+    const triangles = (scene: THREE.Scene) => {
+        const vertices = renderedVertices(scene, false), result: string[] = [];
+        for (let i = 0; i < vertices.length; i += 9) result.push(vertices.slice(i, i + 9).map(n => Math.round(n * 10000)).join(','));
+        return result.sort();
+    };
+    assert.deepEqual(triangles(headlessMap(true, map).scene), triangles(headlessMap(false, map).scene));
 });
 
 test('all six facade signs remain visible in front of their buildings and containers', () => {

@@ -1,7 +1,7 @@
 // Deterministic render-loop/DOM timing, with authority held back by simulated RTT.
 // This is not a browser paint or GPU measurement.
 import { mkdir, writeFile } from 'node:fs/promises';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { WeaponPrediction } from '../src/client/weapon-prediction';
 import { LocalMotion } from '../src/client/local-motion';
 import { UI } from '../src/client/ui';

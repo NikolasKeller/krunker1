@@ -2,7 +2,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { UI } from '../src/client/ui';
 import type { Network } from '../src/client/network';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { CLASS_IDS } from '../src/shared/weapons';
 import { installDOM } from './dom';
 

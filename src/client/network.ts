@@ -1,3 +1,4 @@
+import { setClientMap } from '../shared/map';
 import { MAX_INTERPOLATION_DELAY_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { correctedPosition, predictInput, PredictionHistory, preserveLocalMotion, smoothCorrection } from './prediction';
 import { RemoteInterpolation } from './interpolation';
@@ -331,7 +332,15 @@ export class Network {
             this.interpolation.observe(m.time, performance.now());
             this.lastSnapshot = m.n;
             if (m.host !== undefined) this.host = m.host;
-            if (m.round) this.round = m.round;
+            if (m.round) {
+                if (m.round.mapId !== this.round?.mapId) {
+                    this.frames = []; this.interpolation.reset(); this.predictionHistory.clear();
+                    this.pending = []; this.outgoing = []; this.predicted = undefined;
+                    this.correction = { x: 0, y: 0, z: 0 };
+                }
+                setClientMap(m.round.mapId ?? 'sandyard');
+                this.round = m.round;
+            }
             if (m.difficulty) this.difficulty = m.difficulty;
             if (m.bots !== undefined) this.bots = m.bots;
             if (m.full)

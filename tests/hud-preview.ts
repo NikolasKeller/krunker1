@@ -6,7 +6,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { UI } from '../src/client/ui';
 import type { Network } from '../src/client/network';
 import type { Renderer } from '../src/client/renderer';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import type { GameEvent } from '../src/shared/types';
 import { installDOM } from './dom';
 import { assertVisibleWeapon, createViewmodelFixture, VIEWMODEL_POSES, type ViewmodelPose } from './viewmodel-fixture';

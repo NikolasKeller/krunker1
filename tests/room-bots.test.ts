@@ -4,7 +4,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { WebSocket } from 'ws';
 import { Network } from '../src/client/network';
 import { createGameServer } from '../src/server/index';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { botInput, brain } from '../src/server/bots';
 import { moveState } from '../src/shared/movement';
 import type { Difficulty } from '../src/shared/types';

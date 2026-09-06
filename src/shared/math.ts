@@ -1,4 +1,4 @@
-import { SOLID_BOXES, RAMPS } from './map';
+import { getClientMap, type Ramp } from './map';
 import type { Vec3, PlayerState } from './types';
 export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -25,7 +25,7 @@ export function rayBox(o: Vec3, d: Vec3, min: Vec3, max: Vec3): number | null {
     return near;
 }
 // Clip a ray against the five planes of the solid wedge, including its sloped top.
-export function rayRamp(o: Vec3, d: Vec3, r: typeof RAMPS[number]): number | null {
+export function rayRamp(o: Vec3, d: Vec3, r: Ramp): number | null {
     const slope = r.sign * r.h / (r.axis === 'x' ? r.w : r.d);
     const n = r.axis === 'x' ? { x: -slope, y: 1, z: 0 } : { x: 0, y: 1, z: -slope };
     const planes: [
@@ -48,7 +48,8 @@ export function rayRamp(o: Vec3, d: Vec3, r: typeof RAMPS[number]): number | nul
     }
     return near;
 }
-export function worldHit(o: Vec3, d: Vec3, range = 150): number {
+export function worldHit(o: Vec3, d: Vec3, range = 150, map = getClientMap()): number {
+    const { boxes: SOLID_BOXES, ramps: RAMPS } = map;
     let best = range;
     for (const b of SOLID_BOXES) {
         const t = rayBox(o, d, { x: b.x - b.w / 2, y: b.y - b.h / 2, z: b.z - b.d / 2 }, { x: b.x + b.w / 2, y: b.y + b.h / 2, z: b.z + b.d / 2 });

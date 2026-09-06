@@ -1,3 +1,4 @@
+import { getMap } from '../shared/map';
 import { MAX_HUMANS, type Team } from '../shared/types';
 import type { Network } from './network';
 import { CLASSES } from '../shared/weapons';
@@ -95,10 +96,17 @@ export class LobbyPanel {
             this.toggle(b, 'selected', b.dataset.mode === round?.mode);
             this.disabled(b, !host || active || results);
         }
-        for (const id of ['difficulty', 'bot-count', 'score-limit', 'time-limit']) this.disabled(this.node(id) as Field, !host || active || results);
+        for (const id of ['difficulty', 'bot-count', 'score-limit', 'time-limit', 'map-choice']) this.disabled(this.node(id) as Field, !host || active || results);
         this.disabled(this.node('player-name') as Field, active);
         if (local && local.name !== this.lastName) { this.value('player-name', local.name); this.lastName = local.name; }
         if (!local) this.lastName = '';
+        const map = getMap(round?.mapId);
+        this.value('map-choice', round?.mapChoice ?? 'random');
+        this.label('map-name', round?.mapId ? map.name : 'RANDOM');
+        this.label('map-current', round?.mapId ? `THIS ROUND · ${map.name}` : 'FIVE WORLDS. ONE MORE ROUND.');
+        this.label('map-description', round?.mapId ? map.tagline : 'FIVE WORLDS. ONE MORE ROUND.');
+        this.label('map-tag', round?.mapChoice === 'random' || !round?.mapChoice ? '⚄ RANDOM · THIS ROUND' : 'SELECTED MAP');
+        this.attribute(this.node('map-thumb'), 'data-map', round?.mapId ?? 'random');
         this.value('difficulty', net.difficulty);
         this.value('bot-count', String(net.bots));
         if (round) { this.value('score-limit', String(round.scoreLimit)); this.value('time-limit', String(round.duration)); }

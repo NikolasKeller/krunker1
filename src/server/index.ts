@@ -179,7 +179,7 @@ export function createGameServer() {
                     c.token = randomBytes(24).toString('hex');
                     sessions.set(c.token, { room: r, actor: c.actor, expires: Infinity, connection: c });
                     r.fillBots(now);
-                    r.events.push({ type: 'notice', text: `${c.actor.state.name} joined the yard` });
+                    r.events.push({ type: 'notice', text: `${c.actor.state.name} joined the arena` });
                 }
                 c.room!.lastActive = now;
                 c.room!.updateLobby(now);
@@ -238,7 +238,8 @@ export function createGameServer() {
                 // If this socket is blocked the regular snapshot retains the ACK.
                 snapshot(c);
             }
-            if (m.type === 'configure' && r.host === a.state.id && r.round.phase !== 'playing') {
+            if (m.type === 'configure' && r.host === a.state.id && ['lobby', 'countdown'].includes(r.round.phase)) {
+                if (m.map !== undefined) r.configureMap(a.state.id, m.map, now);
                 r.resetReady();
                 if (Number.isInteger(m.scoreLimit)) r.round.scoreLimit = Math.max(5, Math.min(200, m.scoreLimit!));
                 if (Number.isInteger(m.duration)) r.round.duration = Math.max(60000, Math.min(1800000, m.duration!));

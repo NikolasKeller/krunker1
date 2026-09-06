@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Scene } from 'three';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { Effects } from '../src/client/effects';
 import { ShotFeedback } from '../src/client/shot-feedback';
 import { Network } from '../src/client/network';

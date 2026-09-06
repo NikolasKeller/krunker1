@@ -2232,3 +2232,14 @@ html, body { overscroll-behavior:none; }
 @media (prefers-reduced-motion:reduce) {
   .home-screen button { transition:none; }
 }
+
+/* Map controls remain visible on touch layouts even when artwork is hidden. */
+.map-picker { display:block; padding:12px 18px; font-size:11px; font-weight:800; letter-spacing:.08em; }
+.map-picker select { display:block; width:100%; margin-top:6px; }
+.map-picker small { display:block; margin-top:6px; font-size:10px; color:var(--muted); letter-spacing:.04em; }
+@media (pointer:coarse) and (orientation:landscape) { .map-picker { padding:6px 12px; } }
+.map-thumb[data-map="orbital"] { background:linear-gradient(135deg,#182745,#607b9d); }
+.map-thumb[data-map="abyss"] { background:linear-gradient(135deg,#174d64,#64aea6); }
+.map-thumb[data-map="wildroot"] { background:linear-gradient(135deg,#46674b,#acb77c); }
+.map-thumb[data-map="catacomb"] { background:linear-gradient(135deg,#383049,#a48578); }
+.map-thumb[data-map="random"] { background:linear-gradient(135deg,#4d556d,#858b5b); }

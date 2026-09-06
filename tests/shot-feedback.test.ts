@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { ShotFeedback } from '../src/client/shot-feedback';
 import { Effects } from '../src/client/effects';
 import { Viewmodel } from '../src/client/viewmodel';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState, neutralInput } from '../src/shared/movement';
 import { WEAPONS } from '../src/shared/weapons';
 import type { WeaponId } from '../src/shared/types';

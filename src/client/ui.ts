@@ -1,5 +1,5 @@
 import { CLASS_IDS, CLASSES, WEAPONS } from '../shared/weapons';
-import { BOXES, RAMPS, MAP_NAME } from '../shared/map';
+import { MAPS, getMap, type MapChoice } from '../shared/map';
 import { type ClassId, type GameEvent, type PlayerState, type Team, type WeaponId } from '../shared/types';
 import type { Network } from './network';
 import { LobbyPanel } from './lobby';
@@ -82,7 +82,7 @@ export class UI {
           </section>
           <aside class="room-sidebar" aria-label="Lobby setup">
           <div class="panel-heading"><span>MATCH SETUP</span><span class="tag">CUSTOM GAME</span></div>
-          <div class="map-thumb"><span class="map-tag">MAP 01</span><strong>SANDYARD</strong><span>THREE LANES. NO SLOW DAYS.</span></div>
+          <div class="map-thumb" id="map-thumb"><span class="map-tag" id="map-tag">⚄ RANDOM EACH ROUND</span><strong id="map-name">RANDOM</strong><span id="map-description">FIVE WORLDS. ONE MORE ROUND.</span></div><label class="map-picker">MAP<select id="map-choice" aria-describedby="map-current"><option value="random">⚄ Random each round</option>${MAPS.map(map => `<option value="${map.id}">${map.name}</option>`).join('')}</select><small id="map-current" aria-live="polite">FIVE WORLDS. ONE MORE ROUND.</small></label>
           <div class="room-options">
             <div id="lobby-results" class="hidden"><strong id="result-winner"></strong><span id="result-round"></span><div id="result-list" class="result-list"></div></div>
             <label>YOUR CALLSIGN<input id="player-name" maxlength="16" spellcheck="false" placeholder="Your name" autocomplete="nickname"/></label>
@@ -137,6 +137,7 @@ export class UI {
                 if (!target.closest('button')) b.click();
             });
         });
+        $('map-choice').onchange = () => net.send({ type: 'configure', map: $<HTMLSelectElement>('map-choice').value as MapChoice });
         $('difficulty').onchange = () => net.send({ type: 'configure', difficulty: $<HTMLSelectElement>('difficulty').value as 'easy' | 'normal' | 'hard' });
         $('bot-count').onchange = () => net.send({ type: 'configure', bots: Number($<HTMLSelectElement>('bot-count').value) });
         $('score-limit').onchange = () => net.send({ type: 'configure', scoreLimit: Number($<HTMLInputElement>('score-limit').value) });
@@ -425,7 +426,7 @@ export class UI {
         const time = Math.max(0, Math.ceil((round.endsAt - serverNow) / 1000));
         $('timer').textContent = `${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')}`;
         $('timer').classList.toggle('urgent', time < 30);
-        $('match-mode').innerHTML = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'}<span>on ${MAP_NAME}</span>`;
+        $('match-mode').innerHTML = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'}<span>on ${getMap(round.mapId).name}</span>`;
         $('team-scores').classList.toggle('hidden', round.mode !== 'tdm');
         $('team-scores').innerHTML = `<div class="red" aria-label="Red team ${round.red}"><i></i><b>${round.red}</b></div><div class="blue" aria-label="Blue team ${round.blue}"><i></i><b>${round.blue}</b></div>`;
         $('score-top').innerHTML = `<strong>${net.local?.kills ?? 0}</strong><span>/ ${round.scoreLimit}<small>ELIMINATIONS</small></span>`;
@@ -440,7 +441,7 @@ export class UI {
         }
         else {
             $('board-eyebrow').textContent = 'LIVE SCOREBOARD';
-            $('board-title').textContent = MAP_NAME;
+            $('board-title').textContent = getMap(round.mapId).name;
             $('board-subtitle').textContent = `${round.mode === 'ffa' ? 'FREE FOR ALL' : 'TEAM DEATHMATCH'} / FIRST TO ${round.scoreLimit} KILLS`;
             $('board-footer').textContent = this.touchMode ? 'LIVE STANDINGS' : 'HOLD TAB TO VIEW';
         }
@@ -495,10 +496,10 @@ export class UI {
         ctx.fillStyle = 'rgba(22,29,32,.66)';
         ctx.fillRect(0, 0, 300, 300);
         ctx.fillStyle = '#888675';
-        for (const b of BOXES)
+        for (const b of getMap(this.net.round?.mapId).boxes)
             ctx.fillRect(ox + (b.x - b.w / 2) * scale, oy + (b.z - b.d / 2) * scale, b.w * scale, b.d * scale);
         ctx.fillStyle = '#aaa485';
-        for (const r of RAMPS)
+        for (const r of getMap(this.net.round?.mapId).ramps)
             ctx.fillRect(ox + (r.x - r.w / 2) * scale, oy + (r.z - r.d / 2) * scale, r.w * scale, r.d * scale);
         for (const q of players) {
             if (!q.alive || q.id === p.id)

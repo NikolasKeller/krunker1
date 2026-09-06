@@ -4,7 +4,7 @@ import { SOLID_BOXES, RAMPS, BOXES, type MapBox } from '../src/shared/map';
 import { move, moveState, neutralInput, MAX_SPEED, RADIUS, HEIGHT } from '../src/shared/movement';
 import { clipPlayerMotion } from '../src/shared/collision';
 import { correctedPosition, predictInput, reconcile, previewInput } from '../src/client/prediction';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { STEP } from '../src/shared/types';
 import { wireInput } from '../src/shared/protocol';
 

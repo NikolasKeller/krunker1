@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState, neutralInput } from '../src/shared/movement';
 
 function fixture() {

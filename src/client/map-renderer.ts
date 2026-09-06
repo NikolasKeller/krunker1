@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { buildThemedMap } from './themed-map-renderer';
+import { SANDYARD } from '../shared/map';
 import { BOXES, DETAIL_BOXES, FENCE_BOXES, BUILDING_ROOFS, ROOF_VENTS, RAMPS, type MapBox, type Ramp } from '../shared/map';
 import { batchMeshes, box, material } from './models';
 export interface MapObject {
@@ -38,7 +40,8 @@ function sign(scene: THREE.Object3D, text: string, x: number, y: number, z: numb
     mesh.rotation.y = rotation;
     scene.add(mesh);
 }
-export function buildMap(scene: THREE.Scene, { batch = true } = {}) {
+export function buildMap(scene: THREE.Scene, { batch = true, map = SANDYARD } = {}) {
+    if (map.id !== 'sandyard') return buildThemedMap(scene, map, batch);
     // Keep object ownership until batching so headless audits measure the very
     // same meshes (including signs and rotated details) that the game renders.
     const objects: MapObject[] = [];

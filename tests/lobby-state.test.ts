@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { COUNTDOWN_MS } from '../src/shared/types';
 
 function lobby() {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { predictInput } from '../src/client/prediction';
 import { moveState, neutralInput } from '../src/shared/movement';
 import { MAX_INPUT_BATCH, MAX_PENDING_INPUTS } from '../src/shared/protocol';

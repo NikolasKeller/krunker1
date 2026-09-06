@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { botInput, brain } from '../src/server/bots';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState } from '../src/shared/movement';
 
 function fixture() {

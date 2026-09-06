@@ -3,7 +3,7 @@ import test, { after, type TestContext } from 'node:test';
 import { writeFileSync } from 'node:fs';
 import { Network } from '../src/client/network';
 import { previewInput, MAX_CORRECTION_SPEED } from '../src/client/prediction';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState, neutralInput } from '../src/shared/movement';
 import { decodeClientMessage, encodeServerMessage, MAX_IN_FLIGHT_INPUTS, MAX_PENDING_INPUTS } from '../src/shared/protocol';
 import { STEP, type ClientMessage, type ServerMessage } from '../src/shared/types';

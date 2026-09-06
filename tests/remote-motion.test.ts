@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RemoteInterpolation, MAX_EXTRAPOLATION_METRES, type RemoteFrame } from '../src/client/interpolation';
 import { runRemoteSession, type RemoteProfile } from './remote-session';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState } from '../src/shared/movement';
 
 for (const profile of ['stable', 'matched-quantiles', 'one-second-stalls', 'four-second-blackout'] as RemoteProfile[]) {

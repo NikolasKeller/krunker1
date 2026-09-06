@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene } from 'three';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { RemoteHealth } from '../src/client/remote-health';
 import { Network } from '../src/client/network';
 import { ShotFeedback, type ProvisionalHit } from '../src/client/shot-feedback';

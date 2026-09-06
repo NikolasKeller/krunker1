@@ -6,7 +6,7 @@ import { assistedLook } from '../src/client/aim-assist';
 import { FrameBudget } from '../src/client/frame-budget';
 import { move, moveState, neutralInput } from '../src/shared/movement';
 import { wireInput } from '../src/shared/protocol';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { installDOM } from './dom';
 
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-7, `${a} != ${b}`);

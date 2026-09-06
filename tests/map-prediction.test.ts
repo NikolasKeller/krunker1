@@ -6,7 +6,7 @@ import { STEP, type Input, type PlayerState } from '../src/shared/types';
 import { CLASS_IDS } from '../src/shared/weapons';
 import { decodeClientMessage, encodeClientMessage, wireInput } from '../src/shared/protocol';
 import { predictInput, reconcile } from '../src/client/prediction';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 
 const fields = [...Object.keys(moveState()), 'yaw', 'pitch'] as (keyof PlayerState)[];
 function movement(p: PlayerState) { return Object.fromEntries(fields.map(k => [k, p[k]])); }

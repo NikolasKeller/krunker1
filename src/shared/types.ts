@@ -1,3 +1,4 @@
+import type { MapId, MapChoice } from './map';
 export const TICK_RATE = 60;
 export const STEP = 1 / TICK_RATE;
 export const SNAPSHOT_RATE = 20;
@@ -83,6 +84,8 @@ export interface PlayerState extends MoveState {
     life: number;
 }
 export interface RoundState {
+    mapId?: MapId;
+    mapChoice?: MapChoice;
     phase: 'lobby' | 'countdown' | 'playing' | 'results';
     mode: Mode;
     endsAt: number;
@@ -155,6 +158,7 @@ export type ClientMessage = {
     inputs: Input[];
 } | {
     type: 'configure';
+    map?: MapChoice;
     mode?: Mode;
     difficulty?: Difficulty;
     bots?: number;

@@ -1,3 +1,4 @@
+import { getClientMap } from './map';
 import { hitPlayer, worldHit } from './math';
 import { WEAPONS, damageFor } from './weapons';
 import { STEP, type Input, type Mode, type PlayerState, type Vec3, type WeaponId } from './types';
@@ -40,10 +41,10 @@ export type RayTarget = Pick<PlayerState, 'id' | 'x' | 'y' | 'z' | 'slide'>;
 export type RayHit = { victim: string; damage: number; zone: 'head' | 'body' | 'legs'; point: Vec3 };
 // Shared pellet aggregation, world occlusion, hitboxes, falloff and nearest-hit
 // selection. The caller owns eligibility and the timeline of target poses.
-export function traceShot(weapon: WeaponId, origin: Vec3, dirs: Vec3[], targets: RayTarget[]) {
+export function traceShot(weapon: WeaponId, origin: Vec3, dirs: Vec3[], targets: RayTarget[], map = getClientMap()) {
     const hits = new Map<string, RayHit>();
     const ends = dirs.map(d => {
-        let nearest = worldHit(origin, d, WEAPONS[weapon].range), victim: string | undefined, zone: RayHit['zone'] = 'body';
+        let nearest = worldHit(origin, d, WEAPONS[weapon].range, map), victim: string | undefined, zone: RayHit['zone'] = 'body';
         for (const target of targets) {
             const hit = hitPlayer(origin, d, target);
             if (hit && hit.distance < nearest) { nearest = hit.distance; victim = target.id; zone = hit.zone; }

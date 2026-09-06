@@ -2,9 +2,9 @@ import { canDamage, CombatClock, traceShot } from '../shared/combat';
 import { randomUUID } from 'node:crypto';
 import { CLASS_IDS, CLASSES, shotRays, WEAPONS } from '../shared/weapons';
 import { STEP, MAX_PLAYERS, COUNTDOWN_MS, MAX_REWIND_MS, type ServerMessage, type ClassId, type Difficulty, type GameEvent, type Input, type PlayerState, type Team, type WeaponId } from '../shared/types';
-import { SPAWNS } from '../shared/map';
+import { chooseMap, getMap, isMapChoice, type MapChoice } from '../shared/map';
 import { eyeHeight, move, moveState, validInput } from '../shared/movement';
-import { distance } from '../shared/math';
+import { distance, worldHit } from '../shared/math';
 import { History, rewindTime } from './history';
 import { checkRound, newRound, startRound } from './round';
 import { brain, botInput, type BotBrain } from './bots';
@@ -46,7 +46,24 @@ export class Room {
     botCount = 5;
     lastActive = Date.now();
     forcedCountdown = false;
-    constructor(public id: string) { }
+    constructor(public id: string, choice: MapChoice = 'random', private mapRandom = Math.random) {
+        this.round.mapChoice = choice;
+        this.round.mapId = chooseMap(choice, mapRandom);
+    }
+    get map() { return getMap(this.round.mapId); }
+    configureMap(requester: string, choice: unknown, now: number) {
+        if (requester !== this.host || !['lobby', 'countdown'].includes(this.round.phase) || !isMapChoice(choice)) return false;
+        if (choice === this.round.mapChoice) return true;
+        this.resetReady();
+        this.round.mapChoice = choice;
+        this.prepareMap(now);
+        return true;
+    }
+    private prepareMap(now: number) {
+        this.round.mapId = chooseMap(this.round.mapChoice ?? 'random', this.mapRandom);
+        this.history.frames = [];
+        for (const a of this.players.values()) if (a.connected) this.spawn(a, now);
+    }
     uniqueName(value: unknown, exclude = '') {
         const base = String(value ?? 'Guest').replace(/[<>\x00-\x1f]/g, '').trim().slice(0, 16) || 'Guest';
         const used = new Set([...this.players.values()].filter(a => a.state.id !== exclude).map(a => a.state.name.toLowerCase()));
@@ -152,11 +169,17 @@ export class Room {
         const p = a.state;
         const occupants = [...this.players.values()].filter(a => a.state.id !== p.id && a.state.alive && a.connected).map(a => a.state);
         const enemies = occupants.filter(q => this.round.mode === 'ffa' || q.team !== p.team);
-        const candidates = SPAWNS.filter((_, i) => this.round.mode === 'ffa' || (p.team === 'blue' ? i % 2 === 0 : i % 2 === 1));
+        const candidates = this.map.spawns.filter((_, i) => this.round.mode === 'ffa' || (p.team === 'blue' ? i % 2 === 0 : i % 2 === 1));
         const safety = (point: typeof candidates[number]) => {
             const occupied = occupants.some(q => distance(point, q) < 2);
             const nearest = Math.min(100, ...enemies.map(q => distance(point, q)));
-            return (occupied ? -1000 : 0) + nearest;
+            const exposed = enemies.filter(q => {
+                const from = { x: point.x, y: point.y + 1.62, z: point.z };
+                const delta = { x: q.x - from.x, y: q.y + 1.62 - from.y, z: q.z - from.z };
+                const length = Math.hypot(delta.x, delta.y, delta.z) || 1;
+                return worldHit(from, { x: delta.x / length, y: delta.y / length, z: delta.z / length }, length, this.map) >= length - .1;
+            }).length;
+            return (occupied ? -1000 : 0) - exposed * 100 + nearest;
         };
         const spawn = [...candidates].sort((a, b) => safety(b) - safety(a))[0];
         Object.assign(p, moveState(spawn.x, spawn.y, spawn.z), { yaw: spawn.yaw, pitch: 0 });
@@ -204,6 +227,7 @@ export class Room {
         if (this.round.phase === 'results' && now >= this.round.nextAt) {
             this.round.phase = 'lobby';
             this.round.nextAt = 0;
+            this.prepareMap(now);
         }
         this.updateLobby(now);
         const states = [...this.players.values()].map(a => a.state);
@@ -226,7 +250,7 @@ export class Room {
             if (now - a.lastShot > 450)
                 a.recoilIndex = 0;
             if (a.botBrain && this.round.phase === 'playing' && p.alive)
-                a.queue = [botInput(p, a.botBrain, connectedStates, this.round.mode, this.difficulty, now)];
+                a.queue = [botInput(p, a.botBrain, connectedStates, this.round.mode, this.difficulty, now, this.map)];
             let processed = 0;
             while (a.queue.length && a.credit >= 1 && processed < MAX_INPUT_BATCH) {
                 const i = a.queue.shift()!;
@@ -261,7 +285,7 @@ export class Room {
                     a.aimTime = Math.min(1, a.aimTime + STEP * 1000 / (WEAPONS[weapon].scopeTime || 1));
                 else
                     a.aimTime = 0;
-                move(p, i, CLASSES[p.classId].speed * (weapon === 'knife' ? 1.16 : 1));
+                move(p, i, CLASSES[p.classId].speed * (weapon === 'knife' ? 1.16 : 1), STEP, this.map);
                 if (i.reload && weapon !== 'knife' && !p.reloadEnd && p.ammo < WEAPONS[weapon].magazine)
                     p.reloadEnd = now + WEAPONS[weapon].reload;
                 const shotAge = now - i.shotTime - (i.interpolationDelay ?? 0);
@@ -318,7 +342,7 @@ export class Room {
             // predates it. Never erase its hitbox or reuse an obsolete life pose.
             return [rewound.alive && rewound.life === q.life ? rewound : q];
         });
-        const trace = traceShot(p.weapon, origin, dirs, targets);
+        const trace = traceShot(p.weapon, origin, dirs, targets, this.map);
         // Resolve every hitbox on the shot's timeline before deciding damage.
         // Teams are live authority, never the historical pose's team. Teammates
         // absorb pellets silently, including a switch while a command is queued.

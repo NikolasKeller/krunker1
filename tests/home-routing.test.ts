@@ -3,7 +3,7 @@ import test from 'node:test';
 import { installDOM } from './dom';
 import { Network } from '../src/client/network';
 import { UI } from '../src/client/ui';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 
 function setup(url = 'https://furo.example/') {
     const env = installDOM(url), net = new Network(), ui = new UI(net);

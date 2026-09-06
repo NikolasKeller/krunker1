@@ -7,7 +7,7 @@ import type { Renderer } from '../src/client/renderer';
 import type { Network } from '../src/client/network';
 import type { ClientMessage, GameEvent } from '../src/shared/types';
 import { decodeServerMessage, encodeServerMessage } from '../src/shared/protocol';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState, neutralInput } from '../src/shared/movement';
 import { installDOM } from './dom';
 

@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
+import { getClientMap, setClientMap } from '../src/shared/map';
 import test, { type TestContext } from 'node:test';
 import http from 'node:http';
 import { setTimeout as delay } from 'node:timers/promises';
 import { WebSocket as RealWebSocket, WebSocketServer } from 'ws';
 import { Network, CONNECT_TIMEOUT_MS, JOIN_RETRY_MS, SLOW_CONNECTION_MS, CONNECTION_DEAD_MS, RECONNECT_BASE_MS, RECONNECT_MAX_MS, retryDelay } from '../src/client/network';
 import { createGameServer } from '../src/server/index';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { decodeClientMessage, WIRE_PROTOCOL, INPUT_SEND_MS, MAX_INPUT_BATCH, MAX_PENDING_INPUTS, MAX_IN_FLIGHT_INPUTS } from '../src/shared/protocol';
 import { neutralInput, moveState } from '../src/shared/movement';
 import type { ClientMessage, ServerMessage } from '../src/shared/types';
@@ -433,4 +434,21 @@ test('leaving for home cancels old packets and retries; joining again restarts t
     const pings = next.sent.filter(m => m.type === 'ping').length;
     t.mock.timers.tick(1500);
     assert.equal(next.sent.filter(m => m.type === 'ping').length, pings + 1, 'a fresh room still has periodic connection health checks');
+});
+test('a map-change snapshot clears old-world prediction and interpolation before installing the new spawn', t => {
+    const { net, ws } = setup(t); ws.open(); assignment(ws)();
+    t.after(() => setClientMap('sandyard'));
+    net.round!.phase = 'playing';
+    net.input({ ...neutralInput(1), forward: 1 });
+    assert.ok(net.predictionHistory.pending.length > 0);
+    net.correction = { x: 10, y: 3, z: -15 };
+    const next = { ...net.local!, ...moveState(-26, 0, 33), life: net.local!.life + 1 };
+    ws.receive({ type: 'snapshot', n: 2, base: 1, time: Date.now(), full: false, players: [next], removed: [],
+        round: { ...net.round!, phase: 'lobby', mapId: 'orbital', mapChoice: 'random' } });
+    assert.equal(getClientMap().id, 'orbital');
+    assert.equal(net.pending.length, 0); assert.equal(net.outgoing.length, 0);
+    assert.equal(net.predictionHistory.pending.length, 0); assert.equal(net.frames.length, 1);
+    assert.deepEqual(net.correction, { x: 0, y: 0, z: 0 });
+    assert.equal(net.predicted!.x, -26); assert.equal(net.predicted!.z, 33);
+    assert.equal(net.predicted!.life, next.life);
 });

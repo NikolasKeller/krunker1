@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { neutralInput } from '../src/shared/movement';
 import { STEP } from '../src/shared/types';
 const r = new Room('SOAK'), a = r.add('Observer', 'triggerman', 'blue');

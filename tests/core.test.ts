@@ -7,7 +7,7 @@ import { STEP, type PlayerState } from '../src/shared/types';
 import { BOXES, RAMPS, SPAWNS } from '../src/shared/map';
 import { History, rewindTime } from '../src/server/history';
 import { checkRound, newRound, startRound } from '../src/server/round';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { findPath } from '../src/server/bots';
 const almost = (actual: number, expected: number, e = 1e-5) => assert.ok(Math.abs(actual - expected) < e, `${actual} ≠ ${expected}`);
 function room() { const r = new Room('TEST'); r.botCount = 0; return r; }

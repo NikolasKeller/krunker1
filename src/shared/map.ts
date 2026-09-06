@@ -1,4 +1,5 @@
 import type { Vec3 } from './types';
+import { themedMaps } from './themed-maps';
 export interface MapBox {
     x: number;
     y: number;
@@ -7,6 +8,7 @@ export interface MapBox {
     h: number;
     d: number;
     color: number;
+    surface?: 'light' | 'glass';
     kind?: 'building' | 'crate' | 'wall' | 'cover' | 'platform';
 }
 export interface Ramp {
@@ -98,3 +100,35 @@ export function rampHeight(r: Ramp, x: number, z: number): number | null {
         return null;
     return Math.max(0, Math.min(r.h, (0.5 + (r.axis === 'x' ? (x - r.x) / r.w : (z - r.z) / r.d) * r.sign) * r.h));
 }
+
+export type MapId = 'sandyard' | 'orbital' | 'abyss' | 'wildroot' | 'catacomb';
+export type MapChoice = MapId | 'random';
+export interface MapDefinition {
+    id: MapId;
+    name: string;
+    tagline: string;
+    size: number;
+    boundaryHeight: number;
+    boxes: MapBox[];
+    ramps: Ramp[];
+    spawns: typeof SPAWNS;
+    palette: { sky: number; floor: number; ambient: number; sun: number; intensity: number };
+}
+export const SANDYARD: MapDefinition = {
+    id: 'sandyard', name: MAP_NAME, tagline: 'THREE LANES. NO SLOW DAYS.', size: MAP_SIZE,
+    boxes: SOLID_BOXES, ramps: RAMPS, spawns: SPAWNS, boundaryHeight: 6,
+    palette: { sky: 0xcdbfbe, floor: 0xb98065, ambient: 0xf4f9ff, sun: 0xfff0d4, intensity: 2.2 },
+};
+export const MAPS: readonly MapDefinition[] = [SANDYARD, ...themedMaps];
+export function isMapChoice(value: unknown): value is MapChoice {
+    return value === 'random' || MAPS.some(map => map.id === value);
+}
+export function getMap(id: MapId = 'sandyard'): MapDefinition { return MAPS.find(map => map.id === id) ?? SANDYARD; }
+export function chooseMap(choice: MapChoice, random = Math.random): MapId {
+    return choice === 'random' ? MAPS[Math.min(MAPS.length - 1, Math.max(0, Math.floor(random() * MAPS.length)))].id : choice;
+}
+// Only the browser uses this default. Every server room supplies its own map
+// explicitly to simulation, navigation and combat, so rooms cannot affect each other.
+let clientMap = SANDYARD;
+export function getClientMap() { return clientMap; }
+export function setClientMap(id: MapId) { clientMap = getMap(id); }

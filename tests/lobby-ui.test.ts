@@ -3,7 +3,7 @@ import test from 'node:test';
 import { UI } from '../src/client/ui';
 import { LOBBY_UPDATE_MS } from '../src/client/lobby';
 import type { Network } from '../src/client/network';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { installDOM } from './dom';
 import { Controls } from '../src/client/input';
 import type { ClientMessage } from '../src/shared/types';

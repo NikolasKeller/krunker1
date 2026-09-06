@@ -28,6 +28,8 @@
     "probe:transport:model": "tsx tests/transport/model-report.ts",
     "probe:transport:pair": "tsx tests/transport/paired.ts",
     "preview:geometry": "tsx tests/geometry-preview.ts",
+    "preview:maps": "tsx tests/maps-preview.ts",
+    "test:maps": "tsx --test tests/maps-*.test.ts tests/map-geometry.test.ts",
     "preview:hud": "tsx tests/hud-preview.ts",
     "preview:lobby": "tsx tests/lobby-preview.ts",
     "preview:home": "tsx tests/home-preview.ts",

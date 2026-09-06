@@ -6,7 +6,7 @@ import { LocalMotion } from '../src/client/local-motion';
 import { Network } from '../src/client/network';
 import { orientCamera } from '../src/client/camera';
 import { CORRECTION_DEADZONE, preserveLocalMotion, smoothCorrection, MAX_CORRECTION_SPEED } from '../src/client/prediction';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { neutralInput, moveState } from '../src/shared/movement';
 import { MAX_IN_FLIGHT_INPUTS, MAX_PENDING_INPUTS } from '../src/shared/protocol';
 import { STEP } from '../src/shared/types';

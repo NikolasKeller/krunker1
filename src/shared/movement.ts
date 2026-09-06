@@ -1,6 +1,6 @@
 import type { Input, MoveState } from './types';
 import { STEP, MAX_INTERPOLATION_DELAY_MS } from './types';
-import { SOLID_BOXES as BOXES, RAMPS, MAP_SIZE, rampHeight } from './map';
+import { getClientMap, rampHeight, type MapDefinition, type Ramp } from './map';
 import { clamp } from './math';
 export const RADIUS = 0.38, HEIGHT = 1.88, EYE = 1.62;
 export const BASE_SPEED = 10.8, MAX_SPEED = 28, GRAVITY = 24, JUMP_SPEED = 8.6;
@@ -15,7 +15,7 @@ export function validInput(v: unknown): v is Input {
     return (i.life === undefined || (Number.isSafeInteger(i.life) && i.life >= 0)) && Number.isSafeInteger(i.seq) && i.seq >= 0 && i.seq < 2 ** 31 && Number.isFinite(i.forward) && Math.abs(i.forward) <= 1 && Number.isFinite(i.strafe) && Math.abs(i.strafe) <= 1 && Number.isFinite(i.yaw) && Math.abs(i.yaw) < 1e7 && Number.isFinite(i.pitch) && Math.abs(i.pitch) <= Math.PI / 2 && Number.isFinite(i.shotTime) && ['jump', 'slide', 'fire', 'aim', 'reload'].every(k => typeof (i as unknown as Record<string, unknown>)[k] === 'boolean') && [1, 2, 3].includes(i.slot);
 }
 export function eyeHeight(p: Pick<MoveState, 'slide'>) { return p.slide > 0 ? 1.08 : EYE; }
-export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
+export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP, map = getClientMap()): void {
     p.slideAge += dt;
     if (i.jump && !p.jumpHeld)
         p.jumpBuffer = 0.12;
@@ -92,14 +92,15 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP): void {
     // slide/hop boosts. Forces and input edges still run exactly once per tick.
     const steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy), Math.abs(p.vz)) * dt / 0.1));
     const maxStepY = p.y + .34;
-    for (let step = 0; step < steps; step++) resolveMovement(p, dt / steps, maxStepY);
+    for (let step = 0; step < steps; step++) resolveMovement(p, dt / steps, maxStepY, map);
 }
-function rampFloor(r: typeof RAMPS[number], x: number, z: number) {
+function rampFloor(r: Ramp, x: number, z: number) {
     if (Math.abs(x - r.x) >= r.w / 2 + RADIUS || Math.abs(z - r.z) >= r.d / 2 + RADIUS) return null;
     return rampHeight(r, clamp(x + (r.axis === 'x' ? r.sign * RADIUS : 0), r.x - r.w / 2, r.x + r.w / 2),
         clamp(z + (r.axis === 'z' ? r.sign * RADIUS : 0), r.z - r.d / 2, r.z + r.d / 2));
 }
-function resolveMovement(p: MoveState, dt: number, maxStepY: number) {
+function resolveMovement(p: MoveState, dt: number, maxStepY: number, map: MapDefinition) {
+    const { boxes: BOXES, ramps: RAMPS, size: MAP_SIZE } = map;
     const bodyH = p.slide > 0 ? 1.26 : HEIGHT;
     const headroom = (top: number) => !BOXES.some(b =>
         Math.abs(p.x - b.x) < b.w / 2 + RADIUS - 1e-9 && Math.abs(p.z - b.z) < b.d / 2 + RADIUS - 1e-9 &&

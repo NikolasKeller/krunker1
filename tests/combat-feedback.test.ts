@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Scene } from 'three';
 import { CombatClock, traceShot, SWITCH_MS, visibleTargets } from '../src/shared/combat';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { Network } from '../src/client/network';
 import { ShotFeedback } from '../src/client/shot-feedback';
 import { WeaponPrediction } from '../src/client/weapon-prediction';

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { JSDOM } from 'jsdom';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import type { Network } from '../src/client/network';
 import type { UI } from '../src/client/ui';
 const bundle = await build({

@@ -1,5 +1,5 @@
 import { RemoteInterpolation, MAX_EXTRAPOLATION_MS, type RemoteFrame } from '../src/client/interpolation';
-import { Room } from '../src/server/simulation';
+import { Room } from './sandyard-room';
 import { moveState } from '../src/shared/movement';
 import type { PlayerState } from '../src/shared/types';
 import { distribution, separation, uploadDelay } from './bad-link-session';

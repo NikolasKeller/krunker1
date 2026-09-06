@@ -1,0 +1,257 @@
+[
+  {
+    "map": "sandyard",
+    "name": "SANDYARD",
+    "view": "overview",
+    "file": "sandyard-overview.png",
+    "camera": [
+      63,
+      70,
+      78,
+      0,
+      0,
+      0
+    ],
+    "boxes": 53,
+    "ramps": 3,
+    "boundsFailures": 0
+  },
+  {
+    "map": "sandyard",
+    "name": "SANDYARD",
+    "view": "spawn",
+    "file": "sandyard-spawn.png",
+    "camera": [
+      -19.5,
+      1.62,
+      33,
+      0,
+      3,
+      0
+    ],
+    "boxes": 53,
+    "ramps": 3,
+    "boundsFailures": 0
+  },
+  {
+    "map": "sandyard",
+    "name": "SANDYARD",
+    "view": "landmark",
+    "file": "sandyard-landmark.png",
+    "camera": [
+      28,
+      3,
+      31,
+      0,
+      4,
+      0
+    ],
+    "boxes": 53,
+    "ramps": 3,
+    "boundsFailures": 0
+  },
+  {
+    "map": "orbital",
+    "name": "ORBITAL",
+    "view": "overview",
+    "file": "orbital-overview.png",
+    "camera": [
+      63,
+      70,
+      78,
+      0,
+      0,
+      0
+    ],
+    "boxes": 64,
+    "ramps": 4,
+    "boundsFailures": 0
+  },
+  {
+    "map": "orbital",
+    "name": "ORBITAL",
+    "view": "spawn",
+    "file": "orbital-spawn.png",
+    "camera": [
+      -19.5,
+      1.62,
+      33,
+      0,
+      3,
+      0
+    ],
+    "boxes": 64,
+    "ramps": 4,
+    "boundsFailures": 0
+  },
+  {
+    "map": "orbital",
+    "name": "ORBITAL",
+    "view": "landmark",
+    "file": "orbital-landmark.png",
+    "camera": [
+      -28,
+      4.62,
+      18,
+      54,
+      13,
+      -10
+    ],
+    "boxes": 64,
+    "ramps": 4,
+    "boundsFailures": 0
+  },
+  {
+    "map": "abyss",
+    "name": "ABYSS",
+    "view": "overview",
+    "file": "abyss-overview.png",
+    "camera": [
+      63,
+      70,
+      78,
+      0,
+      0,
+      0
+    ],
+    "boxes": 75,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "abyss",
+    "name": "ABYSS",
+    "view": "spawn",
+    "file": "abyss-spawn.png",
+    "camera": [
+      -19.5,
+      1.62,
+      33,
+      0,
+      3,
+      0
+    ],
+    "boxes": 75,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "abyss",
+    "name": "ABYSS",
+    "view": "landmark",
+    "file": "abyss-landmark.png",
+    "camera": [
+      -24,
+      1.62,
+      10,
+      -39,
+      3.4,
+      -14
+    ],
+    "boxes": 75,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "wildroot",
+    "name": "WILDROOT",
+    "view": "overview",
+    "file": "wildroot-overview.png",
+    "camera": [
+      63,
+      70,
+      78,
+      0,
+      0,
+      0
+    ],
+    "boxes": 92,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "wildroot",
+    "name": "WILDROOT",
+    "view": "spawn",
+    "file": "wildroot-spawn.png",
+    "camera": [
+      -19.5,
+      1.62,
+      33,
+      0,
+      3,
+      0
+    ],
+    "boxes": 92,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "wildroot",
+    "name": "WILDROOT",
+    "view": "landmark",
+    "file": "wildroot-landmark.png",
+    "camera": [
+      13,
+      1.62,
+      26,
+      -4,
+      7,
+      -3
+    ],
+    "boxes": 92,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "catacomb",
+    "name": "CATACOMB",
+    "view": "overview",
+    "file": "catacomb-overview.png",
+    "camera": [
+      63,
+      70,
+      78,
+      0,
+      0,
+      0
+    ],
+    "boxes": 51,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "catacomb",
+    "name": "CATACOMB",
+    "view": "spawn",
+    "file": "catacomb-spawn.png",
+    "camera": [
+      -19.5,
+      1.62,
+      33,
+      0,
+      3,
+      0
+    ],
+    "boxes": 51,
+    "ramps": 2,
+    "boundsFailures": 0
+  },
+  {
+    "map": "catacomb",
+    "name": "CATACOMB",
+    "view": "landmark",
+    "file": "catacomb-landmark.png",
+    "camera": [
+      -20,
+      1.62,
+      -3,
+      0,
+      4,
+      2
+    ],
+    "boxes": 51,
+    "ramps": 2,
+    "boundsFailures": 0
+  }
+]

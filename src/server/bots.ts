@@ -1,9 +1,12 @@
-import { BOXES, RAMPS, rampHeight, SPAWNS } from '../shared/map';
+import { getMap, rampHeight, type MapDefinition } from '../shared/map';
 import { distance, worldHit, direction, angleLerp } from '../shared/math';
 import { neutralInput } from '../shared/movement';
 import { WEAPONS } from '../shared/weapons';
 import type { Difficulty, Input, PlayerState, Vec3 } from '../shared/types';
 const GRID = 2, N = 35, ORIGIN = -34, LAYER = N * N;
+const navigation = new WeakMap<MapDefinition, ReturnType<typeof buildNavigation>>();
+function buildNavigation(map: MapDefinition) {
+const { boxes: BOXES, ramps: RAMPS } = map;
 const points: Vec3[] = [], walkable = new Set<number>();
 // Two surfaces at the same X/Z retain the bridge underpass and its raised deck.
 for (let layer = 0; layer < 2; layer++) for (let cell = 0; cell < LAYER; cell++) {
@@ -30,7 +33,15 @@ for (const i of walkable) {
     }
     edges.set(i, neighbours);
 }
-function nearestNode(p: Vec3) {
+return { points, walkable, edges };
+}
+function graph(map: MapDefinition) {
+    let nav = navigation.get(map);
+    if (!nav) { nav = buildNavigation(map); navigation.set(map, nav); }
+    return nav;
+}
+function nearestNode(p: Vec3, map: MapDefinition) {
+    const { points, walkable } = graph(map);
     let best = -1, closest = Infinity;
     for (const i of walkable) {
         const q = points[i], d = (q.x - p.x) ** 2 + (q.z - p.z) ** 2 + 4 * (q.y - p.y) ** 2;
@@ -38,8 +49,9 @@ function nearestNode(p: Vec3) {
     }
     return best;
 }
-export function findPath(from: Vec3, to: Vec3): Vec3[] {
-    const start = nearestNode(from), goal = nearestNode(to);
+export function findPath(from: Vec3, to: Vec3, map = getMap()): Vec3[] {
+    const { points, edges } = graph(map);
+    const start = nearestNode(from, map), goal = nearestNode(to, map);
     const queue = [start], parent = new Map<number, number>([[start, -1]]);
     for (let cursor = 0; cursor < queue.length; cursor++) {
         const c = queue[cursor];
@@ -69,7 +81,8 @@ export interface BotBrain {
     lastSeen?: { id: string; position: Vec3; until: number };
 }
 export function brain(): BotBrain { return { target: '', seenAt: 0, nextThink: 0, path: [], waypoint: 0, strafe: 1, yawError: 0, pitchError: 0, last: { x: 0, y: 0, z: 0 }, stuck: 0, roam: 0 }; }
-export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerState>, mode: string, difficulty: Difficulty, now: number): Input {
+export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerState>, mode: string, difficulty: Difficulty, now: number, map = getMap()): Input {
+    const { boxes: BOXES, spawns: SPAWNS } = map;
     const input = neutralInput(p.ack + 1), tune = {
         easy: { reaction: 520, error: 0.07, speed: 0.62, yaw: .16, pitch: .15, height: 1.1, push: .65 },
         normal: { reaction: 420, error: 0.044, speed: 0.8, yaw: .15, pitch: .14, height: 1.05, push: .62 },
@@ -77,7 +90,7 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
     }[difficulty];
     const enemies = [...players].filter(q => q.id !== p.id && q.alive && (mode === 'ffa' || q.team !== p.team));
     const origin = { x: p.x, y: p.y + 1.55, z: p.z };
-    const visible = enemies.filter(q => { const target = { x: q.x, y: q.y + 1.05, z: q.z }, dist = distance(origin, target); const d = { x: (target.x - origin.x) / dist, y: (target.y - origin.y) / dist, z: (target.z - origin.z) / dist }; return dist < 65 && worldHit(origin, d, dist) >= dist - 0.3; }).sort((a, c) => distance(p, a) - distance(p, c));
+    const visible = enemies.filter(q => { const target = { x: q.x, y: q.y + 1.05, z: q.z }, dist = distance(origin, target); const d = { x: (target.x - origin.x) / dist, y: (target.y - origin.y) / dist, z: (target.z - origin.z) / dist }; return dist < 65 && worldHit(origin, d, dist, map) >= dist - 0.3; }).sort((a, c) => distance(p, a) - distance(p, c));
     const enemy = visible[0];
     if (enemy) b.lastSeen = { id: enemy.id, position: { x: enemy.x, y: enemy.y, z: enemy.z }, until: now + 2000 };
     else if (b.lastSeen && (now >= b.lastSeen.until || !enemies.some(q => q.id === b.lastSeen!.id))) {
@@ -108,7 +121,7 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
             b.roam = (b.roam + 1) % SPAWNS.length;
             destination = SPAWNS[b.roam];
         }
-        b.path = findPath(p, destination);
+        b.path = findPath(p, destination, map);
         b.waypoint = 0;
     }
     let aimYaw = p.yaw, aimPitch = 0;

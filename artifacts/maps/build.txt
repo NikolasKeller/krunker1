@@ -1,0 +1,25 @@
+
+> krunker-local-arena@1.0.0 build
+> npm run typecheck && vite build && node scripts/compress-client.mjs && esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js
+
+
+> krunker-local-arena@1.0.0 typecheck
+> tsc --noEmit
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 47 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/.vite/manifest.json              0.95 kB │ gzip:   0.30 kB
+dist/client/index.html                       6.30 kB │ gzip:   2.39 kB
+dist/client/assets/lobby-app-6ShA6M_y.css   55.17 kB │ gzip:  12.27 kB
+dist/client/assets/index-g-3Sqzd2.js         2.10 kB │ gzip:   1.08 kB
+dist/client/assets/game-BKU5_Y2T.js         49.84 kB │ gzip:  18.69 kB
+dist/client/assets/lobby-app-DAtVz7D-.js    96.04 kB │ gzip:  32.71 kB
+dist/client/assets/three-D-uu45BU.js       518.83 kB │ gzip: 129.73 kB
+✓ built in 1.76s
+
+  dist/server.js  83.7kb
+
+⚡ Done in 7ms
