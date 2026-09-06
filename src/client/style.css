@@ -2233,6 +2233,33 @@ html, body { overscroll-behavior:none; }
   .home-screen button { transition:none; }
 }
 
+/* Tactical tools use the HUD's charcoal plates, lime accents and condensed type. */
+.tactical-hud { position:absolute; left:50%; bottom:42px; transform:translateX(-50%); display:flex; gap:8px; }
+.tactical-card { position:relative; display:flex; align-items:center; gap:10px; min-width:164px; padding:10px 14px 13px; background:#202a30e8; border:1px solid #eee7cd35; border-left:3px solid #c7f451; }
+.tactical-card kbd { font:22px var(--heading); color:#c7f451; border:1px solid #c7f45180; padding:3px 7px; }
+.tool-name { display:block; color:#fff9e9; font:20px/1 var(--heading); letter-spacing:.5px; }
+.tool-state { display:block; margin-top:3px; color:#c7f451; font:700 11px/1.2 'Barlow',sans-serif; letter-spacing:1px; }
+.tool-track { position:absolute; bottom:0; left:0; right:0; height:3px; background:#ffffff18; }
+.tool-track b { display:block; height:100%; background:#c7f451; }
+.tactical-card[data-state=cooldown], .tactical-card[data-state=unavailable] { border-left-color:#949fa4; }
+.tactical-card[data-state=cooldown] kbd, .tactical-card[data-state=unavailable] kbd { color:#b1b9bc; border-color:#949fa4; }
+.tactical-card[data-state=cooldown] .tool-state, .tactical-card[data-state=unavailable] .tool-state { color:#d1d7da; }
+.tactical-card[data-state=active] { background:#36442be8; border-color:#c7f451; box-shadow:0 0 18px #c7f45125; }
+.ability-help { font-size:12px; line-height:1.45; color:#c6d0ca; margin:10px 0; }
+.grenade-warning { position:absolute; left:50%; top:64%; transform:translateX(-50%); padding:7px 12px; color:#fff4dd; background:#933e26e8; border:1px solid #ffb780; font:21px var(--heading); }
+#watchpoint-spots>span { position:absolute; transform:translate(-50%,-50%); color:#f0c77e; font:36px/1 var(--heading); text-shadow:0 2px 4px #000; }
+#watchpoint-spots small { display:block; font:700 9px 'Barlow',sans-serif; letter-spacing:1px; }
+.touch-device .tactical-hud { display:none; }
+.touch-tactical { position:absolute; left:calc(var(--safe-left) + 144px); width:128px; height:52px; border-radius:8px; padding:5px!important; }
+.touch-ability { bottom:calc(var(--safe-bottom) + 62px); }
+.touch-grenade { bottom:calc(var(--safe-bottom) + 120px); }
+.touch-tactical b { display:block; font:18px/1 var(--heading); }
+.touch-tactical small { display:block; margin-top:4px; font:700 10px/1 'Barlow',sans-serif; }
+.touch-tactical[data-state=ready] { border-color:#c7f451; color:#dbfa91; }
+.touch-tactical[data-state=active] { background:#43592dde; border-color:#c7f451; }
+.touch-tactical[data-state=cooldown], .touch-tactical[data-state=unavailable] { color:#c4cbcf; border-color:#778087; }
+@media (max-width:760px) { .tactical-hud { bottom:115px; } }
+
 /* Map controls remain visible on touch layouts even when artwork is hidden. */
 .map-picker { display:block; padding:12px 18px; font-size:11px; font-weight:800; letter-spacing:.08em; }
 .map-picker select { display:block; width:100%; margin-top:6px; }

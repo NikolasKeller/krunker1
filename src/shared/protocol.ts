@@ -1,7 +1,7 @@
 import type { ClientMessage, GameEvent, Input, PlayerPatch, PlayerState, ServerMessage } from './types';
 
 // Control/lobby messages stay JSON. Versioned binary frames carry the frequent traffic.
-export const WIRE_PROTOCOL = 'arena-v4';
+export const WIRE_PROTOCOL = 'arena-v5';
 export const LEGACY_WIRE_PROTOCOL = 'arena-v2';
 export const INPUT_RATE = 20;
 export const INPUT_SEND_MS = 1000 / INPUT_RATE;
@@ -57,10 +57,11 @@ class Reader {
 const boolFields = new Set<keyof PlayerState>(['bot', 'ready', 'grounded', 'slideHeld', 'jumpHeld', 'alive', 'aiming']);
 const stringFields = new Set<keyof PlayerState>(['name', 'classId', 'team', 'weapon']);
 const integerFields = new Set<keyof PlayerState>(['ack', 'life', 'kills', 'deaths', 'score', 'streak']);
-const timeFields = new Set<keyof PlayerState>(['reloadEnd', 'respawnAt', 'protectionEnd']);
+const timeFields = new Set<keyof PlayerState>(['reloadEnd', 'respawnAt', 'protectionEnd', 'abilityReadyAt', 'abilityUntil', 'grenadeReadyAt', 'grenadeUntil']);
 // Append-only field order is part of arena-v2. Two presence masks preserve sparse deltas.
-const fields = ['name', 'classId', 'team', 'bot', 'ready', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'grounded', 'slide', 'slideHeld', 'jumpHeld', 'groundTime', 'jumpBuffer', 'coyote', 'slideAge', 'yaw', 'pitch', 'hp', 'maxHp', 'alive', 'kills', 'deaths', 'score', 'weapon', 'ammo', 'reloadEnd', 'respawnAt', 'protectionEnd', 'ack', 'aiming', 'bloom', 'streak', 'life'] as const;
-function writePlayer(w: Writer, p: PlayerPatch, precise: boolean) {
+const fields = ['name', 'classId', 'team', 'bot', 'ready', 'x', 'y', 'z', 'vx', 'vy', 'vz', 'grounded', 'slide', 'slideHeld', 'jumpHeld', 'groundTime', 'jumpBuffer', 'coyote', 'slideAge', 'yaw', 'pitch', 'hp', 'maxHp', 'alive', 'kills', 'deaths', 'score', 'weapon', 'ammo', 'reloadEnd', 'respawnAt', 'protectionEnd', 'ack', 'aiming', 'bloom', 'streak', 'life', 'abilityReadyAt', 'abilityUntil', 'abilitySteps', 'grenadeReadyAt', 'grenadeUntil'] as const;
+function writePlayer(w: Writer, p: PlayerPatch, precise: boolean, tactical = true) {
+    if (!tactical) { p = { ...p }; for (const key of ['abilityReadyAt', 'abilityUntil', 'abilitySteps', 'grenadeReadyAt', 'grenadeUntil'] as const) delete p[key]; }
     w.string(p.id);
     for (let start = 0; start < fields.length; start += 32) {
         let mask = start === 32 && precise ? 0x80000000 : 0;
@@ -94,7 +95,8 @@ function writeEvent(w: Writer, e: GameEvent) {
         w.u8(1); w.string(e.shooter); w.string(e.victim); w.f32(e.damage); w.string(e.zone); vec(w, e.point); vec(w, e.from); w.u8(e.lethal ? 1 : 0);
     } else if (e.type === 'kill') {
         w.u8(2); w.string(e.killer); w.string(e.victim); w.string(e.killerName); w.string(e.victimName); w.string(e.weapon); w.u8(e.headshot ? 1 : 0); w.string(e.team);
-    } else { w.u8(3); w.string(e.text); }
+    } else if (e.type === 'notice') { w.u8(3); w.string(e.text); }
+    else { w.u8(4); w.string(JSON.stringify(e)); }
 }
 function readEvent(r: Reader): GameEvent {
     switch (r.u8()) {
@@ -105,19 +107,20 @@ function readEvent(r: Reader): GameEvent {
         case 1: return { type: 'hit', shooter: r.string(), victim: r.string(), damage: r.f32(), zone: r.string() as 'head' | 'body' | 'legs', point: readVec(r), from: readVec(r), lethal: !!r.u8() };
         case 2: return { type: 'kill', killer: r.string(), victim: r.string(), killerName: r.string(), victimName: r.string(), weapon: r.string() as Extract<GameEvent, { type: 'kill' }>['weapon'], headshot: !!r.u8(), team: r.string() as 'blue' | 'red' };
         case 3: return { type: 'notice', text: r.string() };
+        case 4: return JSON.parse(r.string());
         default: throw new Error('Invalid event');
     }
 }
 export function encodeClientMessage(m: ClientMessage): string | Uint8Array {
     if (m.type !== 'input') return JSON.stringify(m);
     if (!m.inputs.length || m.inputs.length > MAX_INPUT_BATCH) throw new Error('Invalid input batch');
-    const modern = m.inputs.some(i => i.combat !== undefined);
+    const modern = m.inputs.some(i => i.combat !== undefined || i.ability || i.grenade);
     const w = new Writer(); w.u8(modern ? COMBAT_INPUT : INPUT); w.u8(m.inputs.length);
     for (const i of m.inputs) {
         w.u32(i.seq); w.u32(i.life ?? 0xffffffff); w.f32(i.forward); w.f32(i.strafe); w.f32(i.yaw); w.f32(i.pitch); w.f64(i.shotTime);
         w.u8(+i.jump | +i.slide << 1 | +i.fire << 2 | +i.aim << 3 | +i.reload << 4 | (i.slot - 1) << 5 | +(i.interpolationDelay !== undefined) << 7);
         if (i.interpolationDelay !== undefined) w.f32(i.interpolationDelay);
-        if (modern) w.u8(i.combat === undefined ? 0 : i.combat ? 2 : 1);
+        if (modern) w.u8((i.combat === undefined ? 0 : i.combat ? 2 : 1) | (i.ability ? 4 : 0) | (i.grenade ? 8 : 0));
     }
     return w.finish();
 }
@@ -133,22 +136,22 @@ export function decodeClientMessage(data: WireData): ClientMessage {
         const seq = r.u32(), life = r.u32(), forward = r.f32(), strafe = r.f32(), yaw = r.f32(), pitch = r.f32(), shotTime = r.f64(), flags = r.u8();
         if ((flags >> 5 & 3) === 3) throw new Error('Invalid input flags');
         const timing = flags & 128 ? { interpolationDelay: r.f32() } : {};
-        const combat = kind === COMBAT_INPUT ? r.u8() : 0;
-        if (combat > 2) throw new Error('Invalid combat flag');
-        inputs.push({ ...(combat ? { combat: combat === 2 } : {}), seq, life: life === 0xffffffff ? undefined : life, forward, strafe, yaw, pitch: Math.abs(pitch) === Math.fround(Math.PI / 2) ? Math.sign(pitch) * Math.PI / 2 : pitch, shotTime, ...timing, jump: !!(flags & 1), slide: !!(flags & 2), fire: !!(flags & 4), aim: !!(flags & 8), reload: !!(flags & 16), slot: ((flags >> 5 & 3) + 1) as 1 | 2 | 3 });
+        const action = kind === COMBAT_INPUT ? r.u8() : 0, combat = action & 3;
+        if (combat > 2 || action > 15) throw new Error('Invalid combat flag');
+        inputs.push({ ...(action & 4 ? { ability: true } : {}), ...(action & 8 ? { grenade: true } : {}), ...(combat ? { combat: combat === 2 } : {}), seq, life: life === 0xffffffff ? undefined : life, forward, strafe, yaw, pitch: Math.abs(pitch) === Math.fround(Math.PI / 2) ? Math.sign(pitch) * Math.PI / 2 : pitch, shotTime, ...timing, jump: !!(flags & 1), slide: !!(flags & 2), fire: !!(flags & 4), aim: !!(flags & 8), reload: !!(flags & 16), slot: ((flags >> 5 & 3) + 1) as 1 | 2 | 3 });
     }
     r.done(); return { type: 'input', inputs };
 }
-export function encodeServerMessage(m: ServerMessage, selfId?: string): string | Uint8Array {
+export function encodeServerMessage(m: ServerMessage, selfId?: string, tactical = true): string | Uint8Array {
     if (m.type !== 'snapshot' && m.type !== 'events' && m.type !== 'combat') return JSON.stringify(m);
     const w = new Writer();
     if (m.type === 'combat') {
         w.u8(COMBAT); w.f64(m.time); w.string(m.shooter); w.u32(m.life); w.u32(m.seq); w.u8(+m.accepted); w.string(m.reason ?? '');
-        w.u8(m.players.length); for (const p of m.players) writePlayer(w, p, p.id === selfId);
+        w.u8(m.players.length); for (const p of m.players) writePlayer(w, p, p.id === selfId, tactical);
         w.u32(m.events.length); for (const e of m.events) writeEvent(w, e);
     } else if (m.type === 'snapshot') {
         w.u8(SNAPSHOT); w.u32(m.n); w.u32(m.base); w.f64(m.time); w.u8(+m.full); w.u8(m.players.length);
-        for (const p of m.players) writePlayer(w, p, p.id === selfId);
+        for (const p of m.players) writePlayer(w, p, p.id === selfId, tactical);
         w.u8(m.removed.length); for (const id of m.removed) w.string(id);
         // Infrequent round/lobby metadata includes results and arbitrary player names.
         const { round, host, difficulty, bots, selectionAck } = m;

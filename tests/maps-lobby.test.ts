@@ -61,10 +61,18 @@ test('live host selection is authoritative and broadcasts all five maps to guest
         const host = await join(), guest = await join(host.room);
         assert.equal(host.round!.mapChoice, 'random');
         assert.equal(guest.round!.mapId, host.round!.mapId);
+        const otherHost = await join();
+        otherHost.ws.send(JSON.stringify({ type: 'configure', map: 'orbital', bots: 3 }));
+        await wait(() => otherHost.round?.mapId === 'orbital' && otherHost.round.mapChoice === 'orbital');
+        const otherRoom = app.rooms.get(otherHost.room)!;
+        const otherPlayers = [...otherRoom.players.values()].map(a => ({ ...a.state }));
         for (const map of MAPS) {
             host.ws.send(JSON.stringify({ type: 'configure', map: map.id, bots: 0 }));
             await wait(() => host.round?.mapId === map.id && guest.round?.mapId === map.id && host.round.mapChoice === map.id);
             assert.equal(app.rooms.get(host.room)!.map.id, map.id);
+            assert.equal(otherHost.round!.mapId, 'orbital', 'other room keeps its own map metadata');
+            assert.deepEqual([...otherRoom.players.values()].map(a => a.state), otherPlayers, 'map changes do not respawn another room');
+            assert.equal(otherRoom.botCount, 3, 'bot settings belong to each room');
         }
         guest.ws.send(JSON.stringify({ type: 'configure', map: 'sandyard' }));
         await delay(100);

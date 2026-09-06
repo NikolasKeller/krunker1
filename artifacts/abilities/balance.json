@@ -1,0 +1,524 @@
+{
+  "health": 100,
+  "abilities": {
+    "hunter": {
+      "name": "WATCHPOINT",
+      "cooldown": 60000,
+      "duration": 10000,
+      "hint": "Aim from this position · spots clear sightlines after 0.8s"
+    },
+    "triggerman": {
+      "name": "SECOND WIND",
+      "cooldown": 70000,
+      "duration": 4000,
+      "hint": "Recover up to 30 HP · damage interrupts"
+    },
+    "vince": {
+      "name": "BREACH GUARD",
+      "cooldown": 75000,
+      "duration": 4000,
+      "hint": "35% less incoming damage · attacking ends guard"
+    },
+    "runngun": {
+      "name": "OVERRUN",
+      "cooldown": 50000,
+      "duration": 3000,
+      "hint": "+35% running speed · normal momentum limit"
+    }
+  },
+  "ttk": [
+    {
+      "weapon": "sniper",
+      "bodyDamage": 184,
+      "hits": 1,
+      "ttkMs": 0,
+      "guardHits": 1,
+      "guardTtkMs": 0,
+      "afterPeakGrenadeHits": 1,
+      "afterPeakGrenadeFollowupMs": 0
+    },
+    {
+      "weapon": "rifle",
+      "bodyDamage": 42,
+      "hits": 3,
+      "ttkMs": 266.6666666666667,
+      "guardHits": 4,
+      "guardTtkMs": 400,
+      "afterPeakGrenadeHits": 1,
+      "afterPeakGrenadeFollowupMs": 0
+    },
+    {
+      "weapon": "shotgun",
+      "bodyDamage": 416,
+      "hits": 1,
+      "ttkMs": 0,
+      "guardHits": 1,
+      "guardTtkMs": 0,
+      "afterPeakGrenadeHits": 1,
+      "afterPeakGrenadeFollowupMs": 0
+    },
+    {
+      "weapon": "smg",
+      "bodyDamage": 30,
+      "hits": 4,
+      "ttkMs": 250,
+      "guardHits": 5,
+      "guardTtkMs": 333.3333333333333,
+      "afterPeakGrenadeHits": 2,
+      "afterPeakGrenadeFollowupMs": 83.33333333333333
+    },
+    {
+      "weapon": "pistol",
+      "bodyDamage": 40,
+      "hits": 3,
+      "ttkMs": 500,
+      "guardHits": 4,
+      "guardTtkMs": 750,
+      "afterPeakGrenadeHits": 1,
+      "afterPeakGrenadeFollowupMs": 0
+    },
+    {
+      "weapon": "knife",
+      "bodyDamage": 55,
+      "hits": 2,
+      "ttkMs": 450,
+      "guardHits": 3,
+      "guardTtkMs": 900,
+      "afterPeakGrenadeHits": 1,
+      "afterPeakGrenadeFollowupMs": 0
+    }
+  ],
+  "rounds": [
+    {
+      "map": "sandyard",
+      "enabled": false,
+      "abilityUses": {
+        "hunter": 0,
+        "triggerman": 0,
+        "vince": 0,
+        "runngun": 0
+      },
+      "grenadeThrows": 0,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 8,
+          "deaths": 5,
+          "score": 850
+        },
+        {
+          "class": "triggerman",
+          "kills": 8,
+          "deaths": 6,
+          "score": 900
+        },
+        {
+          "class": "vince",
+          "kills": 2,
+          "deaths": 16,
+          "score": 300
+        },
+        {
+          "class": "runngun",
+          "kills": 14,
+          "deaths": 5,
+          "score": 1600
+        }
+      ],
+      "tickMs": {
+        "p95": 0.172458000000006,
+        "p99": 0.27104200000002265,
+        "max": 6.485583000000005
+      }
+    },
+    {
+      "map": "sandyard",
+      "enabled": true,
+      "abilityUses": {
+        "hunter": 0,
+        "triggerman": 1,
+        "vince": 0,
+        "runngun": 1
+      },
+      "grenadeThrows": 0,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 11,
+          "deaths": 9,
+          "score": 1250
+        },
+        {
+          "class": "triggerman",
+          "kills": 8,
+          "deaths": 9,
+          "score": 950
+        },
+        {
+          "class": "vince",
+          "kills": 3,
+          "deaths": 11,
+          "score": 400
+        },
+        {
+          "class": "runngun",
+          "kills": 12,
+          "deaths": 5,
+          "score": 1400
+        }
+      ],
+      "tickMs": {
+        "p95": 0.1512079999999969,
+        "p99": 0.21229199999993398,
+        "max": 2.781500000000051
+      }
+    },
+    {
+      "map": "orbital",
+      "enabled": false,
+      "abilityUses": {
+        "hunter": 0,
+        "triggerman": 0,
+        "vince": 0,
+        "runngun": 0
+      },
+      "grenadeThrows": 0,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 7,
+          "deaths": 12,
+          "score": 850
+        },
+        {
+          "class": "triggerman",
+          "kills": 21,
+          "deaths": 10,
+          "score": 2450
+        },
+        {
+          "class": "vince",
+          "kills": 2,
+          "deaths": 20,
+          "score": 250
+        },
+        {
+          "class": "runngun",
+          "kills": 22,
+          "deaths": 10,
+          "score": 2600
+        }
+      ],
+      "tickMs": {
+        "p95": 0.14762499999983447,
+        "p99": 0.2734589999997752,
+        "max": 4.505415999999968
+      }
+    },
+    {
+      "map": "orbital",
+      "enabled": true,
+      "abilityUses": {
+        "hunter": 1,
+        "triggerman": 1,
+        "vince": 1,
+        "runngun": 2
+      },
+      "grenadeThrows": 2,
+      "grenadeKills": 1,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 14,
+          "deaths": 11,
+          "score": 1750
+        },
+        {
+          "class": "triggerman",
+          "kills": 14,
+          "deaths": 11,
+          "score": 1700
+        },
+        {
+          "class": "vince",
+          "kills": 4,
+          "deaths": 14,
+          "score": 500
+        },
+        {
+          "class": "runngun",
+          "kills": 17,
+          "deaths": 13,
+          "score": 1900
+        }
+      ],
+      "tickMs": {
+        "p95": 0.19120900000007168,
+        "p99": 0.6506669999998849,
+        "max": 3.6001249999999345
+      }
+    },
+    {
+      "map": "abyss",
+      "enabled": false,
+      "abilityUses": {
+        "hunter": 0,
+        "triggerman": 0,
+        "vince": 0,
+        "runngun": 0
+      },
+      "grenadeThrows": 0,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 9,
+          "deaths": 8,
+          "score": 1050
+        },
+        {
+          "class": "triggerman",
+          "kills": 15,
+          "deaths": 6,
+          "score": 1850
+        },
+        {
+          "class": "vince",
+          "kills": 5,
+          "deaths": 10,
+          "score": 700
+        },
+        {
+          "class": "runngun",
+          "kills": 6,
+          "deaths": 11,
+          "score": 700
+        }
+      ],
+      "tickMs": {
+        "p95": 0.15745799999967858,
+        "p99": 0.22820899999987887,
+        "max": 6.151332999999795
+      }
+    },
+    {
+      "map": "abyss",
+      "enabled": true,
+      "abilityUses": {
+        "hunter": 2,
+        "triggerman": 0,
+        "vince": 1,
+        "runngun": 2
+      },
+      "grenadeThrows": 2,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 7,
+          "deaths": 6,
+          "score": 900
+        },
+        {
+          "class": "triggerman",
+          "kills": 9,
+          "deaths": 5,
+          "score": 950
+        },
+        {
+          "class": "vince",
+          "kills": 5,
+          "deaths": 19,
+          "score": 650
+        },
+        {
+          "class": "runngun",
+          "kills": 16,
+          "deaths": 7,
+          "score": 1950
+        }
+      ],
+      "tickMs": {
+        "p95": 0.17591700000002675,
+        "p99": 0.40704200000027413,
+        "max": 3.6614580000000387
+      }
+    },
+    {
+      "map": "wildroot",
+      "enabled": false,
+      "abilityUses": {
+        "hunter": 0,
+        "triggerman": 0,
+        "vince": 0,
+        "runngun": 0
+      },
+      "grenadeThrows": 0,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 8,
+          "deaths": 11,
+          "score": 900
+        },
+        {
+          "class": "triggerman",
+          "kills": 13,
+          "deaths": 12,
+          "score": 1500
+        },
+        {
+          "class": "vince",
+          "kills": 5,
+          "deaths": 14,
+          "score": 550
+        },
+        {
+          "class": "runngun",
+          "kills": 17,
+          "deaths": 6,
+          "score": 1950
+        }
+      ],
+      "tickMs": {
+        "p95": 0.16116600000077597,
+        "p99": 0.24012500000026193,
+        "max": 6.081292000000758
+      }
+    },
+    {
+      "map": "wildroot",
+      "enabled": true,
+      "abilityUses": {
+        "hunter": 2,
+        "triggerman": 0,
+        "vince": 2,
+        "runngun": 1
+      },
+      "grenadeThrows": 3,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 13,
+          "deaths": 13,
+          "score": 1600
+        },
+        {
+          "class": "triggerman",
+          "kills": 17,
+          "deaths": 11,
+          "score": 1800
+        },
+        {
+          "class": "vince",
+          "kills": 6,
+          "deaths": 18,
+          "score": 800
+        },
+        {
+          "class": "runngun",
+          "kills": 15,
+          "deaths": 9,
+          "score": 1650
+        }
+      ],
+      "tickMs": {
+        "p95": 0.19429200000013225,
+        "p99": 0.6356249999998909,
+        "max": 3.998083999999835
+      }
+    },
+    {
+      "map": "catacomb",
+      "enabled": false,
+      "abilityUses": {
+        "hunter": 0,
+        "triggerman": 0,
+        "vince": 0,
+        "runngun": 0
+      },
+      "grenadeThrows": 0,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 8,
+          "deaths": 16,
+          "score": 850
+        },
+        {
+          "class": "triggerman",
+          "kills": 21,
+          "deaths": 7,
+          "score": 2250
+        },
+        {
+          "class": "vince",
+          "kills": 3,
+          "deaths": 20,
+          "score": 450
+        },
+        {
+          "class": "runngun",
+          "kills": 19,
+          "deaths": 8,
+          "score": 2250
+        }
+      ],
+      "tickMs": {
+        "p95": 0.11083299999972951,
+        "p99": 0.21654099999977916,
+        "max": 2.544042000000445
+      }
+    },
+    {
+      "map": "catacomb",
+      "enabled": true,
+      "abilityUses": {
+        "hunter": 1,
+        "triggerman": 1,
+        "vince": 1,
+        "runngun": 1
+      },
+      "grenadeThrows": 5,
+      "grenadeKills": 0,
+      "players": [
+        {
+          "class": "hunter",
+          "kills": 6,
+          "deaths": 19,
+          "score": 650
+        },
+        {
+          "class": "triggerman",
+          "kills": 22,
+          "deaths": 12,
+          "score": 2650
+        },
+        {
+          "class": "vince",
+          "kills": 7,
+          "deaths": 17,
+          "score": 900
+        },
+        {
+          "class": "runngun",
+          "kills": 21,
+          "deaths": 8,
+          "score": 2500
+        }
+      ],
+      "tickMs": {
+        "p95": 0.2226250000003347,
+        "p99": 0.788499999999658,
+        "max": 3.0356659999997646
+      }
+    }
+  ],
+  "limitations": "Ten seeded two-minute simulations with one bot per class. Descriptive smoke test, not a human balance study. First-hit-to-kill assumes body hits at 5m (knife 2m), all shotgun pellets connect. Grenade followup excludes the 2.2s fuse."
+}

@@ -1,0 +1,19 @@
+{
+  "node": "v22.23.2",
+  "base": "dec41d6328e29d41148ae6380ba915bec01d10bf",
+  "hashes": {
+    "server.mjs": "35fbd74a840a9787f0253f6e2eb0811e80bdab3e4ab8d8f6929b4ac317db4372",
+    "load.mjs": "710a23ea69e77617c61d36b170f3ca451aae388363db6000fea7e8733cf1dc49",
+    "bad-link.mjs": "65004a744161dafa2598edde578216927f04fc18b193142a5c79f2be9f1b450b",
+    "hitscan.mjs": "7fa4a68a70ac2459ee8e812366acea166e262c5e5bcd8ab61c5e08dc4331b542",
+    "remote.mjs": "fb55395b22ed45cb3f1b774d2e39b3d6a9f316bd396441bcea45740b0b4b18dd"
+  },
+  "results": [
+    {
+      "name": "load-0",
+      "status": 0
+    }
+  ],
+  "done": false,
+  "origin": "http://127.0.0.1:33809"
+}

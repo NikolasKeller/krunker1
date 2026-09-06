@@ -95,8 +95,9 @@ for (const rtt of profiles) {
         runner.onEvents = events => { victimHitEvents += events.filter(e => e.type === 'hit' && e.shooter === shooter.id && e.victim === runner.id).length; };
         shooter.connect({ name: 'Aim at rendered opponent', room: '', create: true, classId: 'triggerman', team: 'blue' });
         await wait(() => shooter.local && shooter.round);
-        shooter.send({ type: 'configure', bots: 0, duration: 1800000 });
-        await wait(() => shooter.players.size === 1);
+        // Fixed shooter/target placements below use Sandyard's west lane.
+        shooter.send({ type: 'configure', map: 'sandyard', bots: 0, duration: 1800000 });
+        await wait(() => shooter.players.size === 1 && shooter.round?.mapId === 'sandyard');
         runner.connect({ name: 'Moving target', room: shooter.room, classId: 'triggerman', team: 'blue' });
         await wait(() => runner.local && shooter.players.size === 2);
         const room = app.rooms.get(shooter.room)!;

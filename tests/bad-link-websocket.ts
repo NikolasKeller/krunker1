@@ -21,8 +21,9 @@ const wait = async (predicate: () => unknown) => {
 try {
     net.connect({ name: 'Bad link probe', room: '', create: true, classId: 'hunter', team: 'blue' });
     await wait(() => net.local && net.round);
-    net.send({ type: 'configure', bots: 0, duration: 1800000 });
-    await wait(() => net.players.size === 1);
+    // This recorded movement tape uses the Sandyard west lane.
+    net.send({ type: 'configure', map: 'sandyard', bots: 0, duration: 1800000 });
+    await wait(() => net.players.size === 1 && net.round?.mapId === 'sandyard');
     net.send({ type: 'ready', ready: true });
     await wait(() => net.round?.phase === 'playing');
     // Walk from the normal spawn into the west lane using ordinary inputs.

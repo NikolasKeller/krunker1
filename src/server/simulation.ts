@@ -1,3 +1,6 @@
+import { Tactics } from './abilities';
+import { abilityMoveScale, guardedDamage } from '../shared/abilities';
+import type { TacticalMessage, Vec3 } from '../shared/types';
 import { canDamage, CombatClock, traceShot } from '../shared/combat';
 import { randomUUID } from 'node:crypto';
 import { CLASS_IDS, CLASSES, shotRays, WEAPONS } from '../shared/weapons';
@@ -35,6 +38,8 @@ export interface Actor {
 const ammo = () => Object.fromEntries(Object.entries(WEAPONS).map(([id, w]) => [id, w.magazine])) as Record<WeaponId, number>;
 export class Room {
     players = new Map<string, Actor>();
+    tactics = new Tactics(this);
+    onTactical: (message: TacticalMessage, recipient?: string) => void = () => {};
     round = newRound();
     history = new History();
     events: GameEvent[] = [];
@@ -125,6 +130,8 @@ export class Room {
         // A selection is an input boundary, not a respawn: retain health, death
         // deadline, inventory and fire cooldown. Old controls cannot reselect the
         // old loadout, and class cycling cannot heal or refill a magazine.
+        this.tactics.cancel(a);
+        this.tactics.cancelProjectiles(a, now);
         a.state.life++;
         a.state.protectionEnd = 0;
         a.queue = [];
@@ -136,7 +143,7 @@ export class Room {
     }
     add(name: string, classId: ClassId, team: Team, bot = false): Actor {
         const id = randomUUID().slice(0, 8), c = CLASSES[classId];
-        const state: PlayerState = { ...moveState(), id, name: this.uniqueName(name), classId, team, bot, ready: false, yaw: 0, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, kills: 0, deaths: 0, score: 0, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: 0, ack: 0, aiming: false, bloom: 0, streak: 0, life: 0 };
+        const state: PlayerState = { ...moveState(), id, name: this.uniqueName(name), classId, team, bot, ready: false, yaw: 0, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, kills: 0, deaths: 0, score: 0, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: 0, ack: 0, aiming: false, bloom: 0, streak: 0, life: 0, abilityReadyAt: 0, abilityUntil: 0, abilitySteps: 0, grenadeReadyAt: 0, grenadeUntil: 0 };
         const a: Actor = { state, queue: [], lastSeq: 0, lastInputAt: Date.now(), credit: 1, nextShot: 0, recoilIndex: 0, lastShot: 0, aimTime: 0, ammo: ammo(), rtt: 0, connected: true, botBrain: bot ? brain() : undefined };
         this.players.set(id, a);
         if (!this.host && !bot)
@@ -144,9 +151,10 @@ export class Room {
         this.spawn(a, Date.now());
         return a;
     }
-    remove(id: string) { this.shotRejections.delete(id); this.players.delete(id); if (this.host === id)
+    remove(id: string) { const a = this.players.get(id); if (a) { this.tactics.cancel(a); this.tactics.cancelProjectiles(a, Date.now()); } this.shotRejections.delete(id); this.players.delete(id); if (this.host === id)
         this.host = [...this.players.values()].find(p => !p.state.bot && p.connected)?.state.id ?? ''; }
     spawn(a: Actor, now: number) {
+        this.tactics.cancel(a);
         if (a.botBrain) a.botBrain = brain();
         this.shotRejections.delete(a.state.id);
         a.lastShotRejection = undefined;
@@ -201,8 +209,8 @@ export class Room {
             bots.push(a);
         }
     }
-    start(now: number) { this.forcedCountdown = false; startRound(this.round, now); this.history.frames = []; for (const a of this.players.values()) {
-        Object.assign(a.state, { kills: 0, deaths: 0, score: 0, streak: 0, ready: false });
+    start(now: number) { this.tactics.clear(); this.forcedCountdown = false; startRound(this.round, now); this.history.frames = []; for (const a of this.players.values()) {
+        Object.assign(a.state, { kills: 0, deaths: 0, score: 0, streak: 0, ready: false, abilityReadyAt: 0, grenadeReadyAt: 0 });
         if (a.connected) this.spawn(a, now);
     } this.events.push({ type: 'notice', text: 'ROUND LIVE · GOOD LUCK, HAVE FUN' }); }
     enqueue(a: Actor, inputs: unknown, now: number): boolean {
@@ -234,6 +242,7 @@ export class Room {
         const connectedStates = states.filter(p => this.players.get(p.id)!.connected);
         for (const a of this.players.values()) {
             const p = a.state;
+            this.tactics.updateActor(a, now);
             if (!a.connected) continue;
             // Bank elapsed simulation time through stalls, never sequence gaps.
             // Catch-up remains bounded per tick and cannot create extra time.
@@ -285,7 +294,9 @@ export class Room {
                     a.aimTime = Math.min(1, a.aimTime + STEP * 1000 / (WEAPONS[weapon].scopeTime || 1));
                 else
                     a.aimTime = 0;
-                move(p, i, CLASSES[p.classId].speed * (weapon === 'knife' ? 1.16 : 1), STEP, this.map);
+                this.tactics.use(a, i, now);
+                const mobility = abilityMoveScale(p);
+                move(p, i, mobility * CLASSES[p.classId].speed * (weapon === 'knife' ? 1.16 : 1), STEP, this.map, mobility);
                 if (i.reload && weapon !== 'knife' && !p.reloadEnd && p.ammo < WEAPONS[weapon].magazine)
                     p.reloadEnd = now + WEAPONS[weapon].reload;
                 const shotAge = now - i.shotTime - (i.interpolationDelay ?? 0);
@@ -313,8 +324,9 @@ export class Room {
             // unacknowledged neutral physics here changes the replay origin and
             // makes even a complete input history diverge after upload silence.
         }
+        this.tactics.tick(now);
         if (recordHistory && this.round.phase === 'playing') this.history.record(now, states);
-        if (checkRound(this.round, states, now)) { this.resetReady(); for (const p of states) p.reloadEnd = 0; }
+        if (checkRound(this.round, states, now)) { this.resetReady(); this.tactics.clear(); for (const p of states) p.reloadEnd = 0; }
     }
     rejectShot(a: Actor, i: Input, now: number, reason: 'expired' | 'cooldown' | 'unavailable') {
         this.onCombat({ type: 'combat', time: Date.now(), shooter: a.state.id, life: i.life ?? a.state.life, seq: i.seq, accepted: false, reason, events: [], players: [] });
@@ -322,6 +334,7 @@ export class Room {
     fire(a: Actor, i: Input, now: number) {
         const firstEvent = this.events.length;
         const p = a.state, w = WEAPONS[p.weapon];
+        if (p.classId === 'vince') this.tactics.cancel(a);
         a.nextShot = now + w.interval;
         a.lastShot = now;
         p.protectionEnd = 0;
@@ -350,35 +363,32 @@ export class Room {
         this.events.push({ type: 'shot', shooter: p.id, weapon: p.weapon, origin, ends, seq: i.seq });
         for (const hit of hits) {
             const q = this.players.get(hit.victim)!.state;
-            const actual = Math.min(q.hp, hit.damage);
-            q.hp = Math.max(0, q.hp - hit.damage);
-            this.events.push({ type: 'hit', shooter: p.id, victim: q.id, damage: actual, zone: hit.zone, point: hit.point, from: origin, lethal: q.hp <= 0 });
-            if (q.hp <= 0) {
-                q.alive = false;
-                q.deaths++;
-                q.streak = 0;
-                q.respawnAt = now + 2200;
-                q.reloadEnd = 0;
-                q.vx = 0;
-                q.vy = 0;
-                q.vz = 0;
-                p.kills++;
-                p.streak++;
-                p.score += hit.zone === 'head' ? 150 : 100;
-                if (p.team === 'blue')
-                    this.round.blue++;
-                else
-                    this.round.red++;
-                this.events.push({ type: 'kill', killer: p.id, victim: q.id, killerName: p.name, victimName: q.name, weapon: p.weapon, headshot: hit.zone === 'head', team: p.team });
-            }
+            this.damage(p, q, hit.damage, hit.zone, hit.point, origin, p.weapon, now);
         }
-        const players = [p, ...hits.map(h => this.players.get(h.victim)!.state)].map(q => ({
-            id: q.id, life: q.life, hp: q.hp, alive: q.alive, kills: q.kills, deaths: q.deaths,
-            score: q.score, streak: q.streak, respawnAt: q.respawnAt, protectionEnd: q.protectionEnd,
-            // A death is a life transition: freeze at its authoritative pose now,
-            // rather than treating the next snapshot as a movement correction.
-            ...(!q.alive ? { x: q.x, y: q.y, z: q.z, vx: 0, vy: 0, vz: 0, reloadEnd: 0 } : {}),
-        }));
+        const players = [p, ...hits.map(h => this.players.get(h.victim)!.state)].map(q => this.combatPatch(q));
         this.onCombat({ type: 'combat', time: Date.now(), shooter: p.id, life: p.life, seq: i.seq, accepted: true, events: this.events.slice(firstEvent), players });
     }
+    combatPatch(q: PlayerState) {
+        return { id: q.id, life: q.life, hp: q.hp, alive: q.alive, kills: q.kills, deaths: q.deaths,
+            score: q.score, streak: q.streak, respawnAt: q.respawnAt, protectionEnd: q.protectionEnd,
+            abilityUntil: q.abilityUntil,
+            ...(!q.alive ? { x: q.x, y: q.y, z: q.z, vx: 0, vy: 0, vz: 0, reloadEnd: 0, abilitySteps: 0 } : {}) };
+    }
+    damage(p: PlayerState, q: PlayerState, amount: number, zone: 'head' | 'body' | 'legs', point: Vec3, from: Vec3, weapon: WeaponId | 'grenade', now: number) {
+        if (!q.alive || amount <= 0) return;
+        const damage = guardedDamage(q, amount, now), actual = Math.min(q.hp, damage);
+        q.hp = Math.max(0, q.hp - damage);
+        if (q.classId === 'triggerman') this.tactics.cancel(this.players.get(q.id)!);
+        this.events.push({ type: 'hit', shooter: p.id, victim: q.id, damage: actual, zone, point, from, lethal: q.hp <= 0 });
+        if (q.hp > 0) return;
+        q.alive = false; q.deaths++; q.streak = 0; q.respawnAt = now + 2200; q.reloadEnd = 0;
+        q.vx = q.vy = q.vz = 0;
+        this.tactics.cancel(this.players.get(q.id)!);
+        if (q.id !== p.id) {
+            p.kills++; if (p.alive) p.streak++; p.score += zone === 'head' ? 150 : 100;
+            if (p.team === 'blue') this.round.blue++; else this.round.red++;
+        }
+        this.events.push({ type: 'kill', killer: p.id, victim: q.id, killerName: p.name, victimName: q.name, weapon, headshot: zone === 'head', team: p.team });
+    }
+
 }

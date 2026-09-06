@@ -1,3 +1,4 @@
+import { TacticalInput } from './tactical-input';
 import { setClientMap } from '../shared/map';
 import { MAX_INTERPOLATION_DELAY_MS, type ClientMessage, type GameEvent, type Input, type PlayerState, type RoundState, type ServerMessage, type ClassId, type Team, type Difficulty } from '../shared/types';
 import { correctedPosition, predictInput, PredictionHistory, preserveLocalMotion, smoothCorrection } from './prediction';
@@ -45,6 +46,7 @@ export class Network {
     difficulty: Difficulty = 'normal';
     bots = 5;
     readonly inputs = new InputBuffer();
+    readonly tactics = new TacticalInput();
     readonly predictionHistory = new PredictionHistory();
     get pending() { return this.inputs.pending; }
     set pending(value: Input[]) { this.inputs.pending = value; }
@@ -128,7 +130,7 @@ export class Network {
         this.round = undefined; this.predicted = undefined;
         this.players.clear(); this.selections = [];
         this.frames = []; this.interpolation.reset(); this.remoteHealth.reset();
-        this.inputs.clear(); this.predictionHistory.clear(); this.weapons.reset();
+        this.tactics.clear(); this.inputs.clear(); this.predictionHistory.clear(); this.weapons.reset();
     }
     connect(config: {
         name: string;
@@ -159,7 +161,7 @@ export class Network {
         this.remoteHealth.reset();
         this.clockSamples = [];
         this.predicted = undefined;
-        this.inputs.clear();
+        this.tactics.clear(); this.inputs.clear();
         this.predictionHistory.clear();
         this.correction = { x: 0, y: 0, z: 0 };
         this.correctionDistances = []; this.rawCorrectionDistances = []; this.renderedCorrectionDistances = [];
@@ -228,6 +230,7 @@ export class Network {
                     Object.assign(patch, { classId, weapon, ammo, reloadEnd, bloom, aiming, ready: false });
                 }
                 if (message.team !== undefined && ['blue', 'red'].includes(message.team)) Object.assign(patch, { team: message.team, ready: false });
+                if (patch.classId || (patch.team && patch.team !== this.predicted.team)) Object.assign(patch, { abilityUntil: 0, abilitySteps: 0, grenadeUntil: 0 });
             }
             this.selections.push({ requestId: message.requestId!, patch });
             this.applySelections(this.predicted);
@@ -245,7 +248,7 @@ export class Network {
     input(input: Input) {
         if (!this.predicted) return;
         const timing = input.interpolationDelay === undefined ? this.shotTiming(input.shotTime) : {};
-        const i = this.inputs.enqueue({ ...input, ...timing, life: this.predicted.life });
+        const i = this.inputs.enqueue(this.tactics.prepare({ ...input, ...timing, life: this.predicted.life }, this.predicted, this.round?.phase === 'playing' && !this.changingClass, this.serverNow));
         this.predictionHistory.add(i);
         if (this.round?.phase === 'playing') this.weapons.advance(this.predicted, i);
         predictInput(this.predicted, i, this.round?.phase === 'playing');
@@ -304,9 +307,11 @@ export class Network {
         }
         if (m.type === 'shot-rejected') this.onNotice('Shot expired during connection delay. Fire again.');
         if (m.type === 'weapon' && this.predicted && !this.changingClass) this.weapons.confirm(m, this.predicted);
-        if (m.type === 'combat') {
-            this.combatDelays.push(this.serverNow - m.time);
-            if (this.combatDelays.length > 24000) this.combatDelays.shift();
+        if (m.type === 'combat' || m.type === 'tactical') {
+            if (m.type === 'combat') {
+                this.combatDelays.push(this.serverNow - m.time);
+                if (this.combatDelays.length > 24000) this.combatDelays.shift();
+            }
             // Living movement and ACKs stay on the snapshot channel. Death
             // carries its freeze pose; provisional feedback never writes here.
             for (const patch of m.players) {
@@ -315,8 +320,8 @@ export class Network {
                 Object.assign(p, patch);
                 if (patch.id === this.id && this.predicted?.life === patch.life) Object.assign(this.predicted, patch);
             }
-            this.remoteHealth.resolve(m, this.players, this.id, performance.now());
-            this.onCombat(m);
+            if (m.type === 'combat') { this.remoteHealth.resolve(m, this.players, this.id, performance.now()); this.onCombat(m); }
+            else this.remoteHealth.tactical(m, this.players, this.id, performance.now());
             this.onEvents(m.events);
         }
         if (m.type === 'events')
@@ -407,7 +412,7 @@ export class Network {
             // Position uses playback history; health and life transitions use the
             // latest authority. Never replay a dead opponent as alive.
             if (!latest) return p;
-            const state = latest.life !== p.life ? { ...latest } : { ...p, team: latest.team, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd };
+            const state = latest.life !== p.life ? { ...latest } : { ...p, team: latest.team, alive: latest.alive, hp: latest.hp, protectionEnd: latest.protectionEnd, abilityUntil: latest.abilityUntil };
             return this.remoteHealth.sample(state, performance.now());
         });
     }

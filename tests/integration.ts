@@ -64,7 +64,8 @@ try {
     clients.push(a, b);
     await waitFor(() => !!a.id && !!b.id, 'two clients join');
     const r = app.rooms.get('QA')!;
-    a.send({ type: 'configure', bots: 0 });
+    // The placements and firing lanes below are authored for Sandyard.
+    a.send({ type: 'configure', map: 'sandyard', bots: 0 });
     a.send({ type: 'start' });
     await waitFor(() => a.phase === 'playing' && b.phase === 'playing', 'round starts');
     a.start();

@@ -3,9 +3,12 @@ import test from 'node:test';
 import { MAPS, chooseMap, getMap, setClientMap } from '../src/shared/map';
 import { Room } from '../src/server/simulation';
 import { neutralInput } from '../src/shared/movement';
-import { predictInput, reconcile } from '../src/client/prediction';
+import { predictInput, PredictionHistory, reconcile } from '../src/client/prediction';
 import { encodeServerMessage, decodeServerMessage, wireInput } from '../src/shared/protocol';
 import { STEP } from '../src/shared/types';
+import { botInput, findPath } from '../src/server/bots';
+import { moveState } from '../src/shared/movement';
+import { CLASS_IDS } from '../src/shared/weapons';
 
 test('random is the default and all five maps occupy equal selection intervals', () => {
     const room = new Room('DEFAULT');
@@ -95,3 +98,79 @@ for (const map of MAPS) test(`${map.name}: server movement, client prediction an
         for (const key of ['x', 'y', 'z', 'vx', 'vy', 'vz'] as const) assert.equal(replay[key], actor.state[key]);
     } finally { setClientMap('sandyard'); }
 });
+
+test('interleaved rooms retain their own physics, bot perception, navigation and prediction replay', t => {
+    t.mock.method(Math, 'random', () => .5);
+    const rooms = MAPS.map(map => {
+        const room = new Room(map.id, map.id); room.botCount = 0;
+        const actor = room.add('Runner', 'runngun', 'blue');
+        const bot = room.add('Bot', 'hunter', 'red', true);
+        room.start(0);
+        const predicted = { ...actor.state }, history = new PredictionHistory();
+        const botState = { ...bot.state }, botBrain = structuredClone(bot.botBrain!);
+        // Exercise navigation and perception without deaths interrupting the tape.
+        actor.state.hp = predicted.hp = bot.state.hp = botState.hp = 100000;
+        return { room, actor, bot, predicted, history, botState, botBrain };
+    });
+    try {
+        for (let tick = 1; tick <= 360; tick++) for (const [index, fixture] of rooms.entries()) {
+            const { room, actor, bot, predicted, history, botState, botBrain } = fixture;
+            // Deliberately poison the browser fallback with a different room's map.
+            setClientMap(MAPS[(index + tick) % MAPS.length].id);
+            const before = { ...actor.state }, now = tick * STEP * 1000;
+            const input = wireInput({ ...neutralInput(tick), life: actor.state.life, forward: 1,
+                yaw: Math.floor(tick / 90) * Math.PI / 2, slot: 3, jump: tick % 23 === 0 });
+            history.add(input); predictInput(predicted, input, true, room.map);
+            const replay = history.reconcile(before, true, undefined, room.map);
+            const command = botInput(botState, botBrain, [predicted, botState], room.round.mode, room.difficulty, now, room.map);
+            predictInput(botState, command, true, room.map);
+            room.enqueue(actor, [input], now); room.tick(now);
+            botState.ack = bot.state.ack;
+            for (const field of Object.keys(moveState()) as (keyof ReturnType<typeof moveState>)[]) {
+                assert.equal(predicted[field], actor.state[field], `${room.id} prediction ${tick} ${field}`);
+                assert.equal(replay[field], actor.state[field], `${room.id} replay ${tick} ${field}`);
+                assert.equal(botState[field], bot.state[field], `${room.id} bot ${tick} ${field}`);
+            }
+            assert.deepEqual(bot.botBrain!.path, botBrain.path, `${room.id}: bot routes use room geometry`);
+            assert.equal(bot.botBrain!.target, botBrain.target, `${room.id}: bot visibility uses room geometry`);
+            assert.ok(room.history.frames.every(f => f.players.size === 2), 'history only contains this room');
+        }
+    } finally { setClientMap('sandyard'); }
+});
+
+for (const map of MAPS) {
+    test(`${map.name}: all classes spawn with 100 health and each ramp connects bots to its raised destination`, () => {
+        const room = new Room('SPAWNS', map.id);
+        for (const classId of CLASS_IDS) {
+            const actor = room.add(classId, classId, 'blue');
+            assert.equal(actor.state.hp, 100); assert.equal(actor.state.maxHp, 100);
+            assert.ok(map.spawns.some(p => p.x === actor.state.x && p.y === actor.state.y && p.z === actor.state.z));
+        }
+        for (const r of map.ramps) {
+            const span = r.axis === 'x' ? r.w : r.d;
+            const low = { x: r.x, y: 0, z: r.z, [r.axis]: r[r.axis] - r.sign * (span / 2 + 2) };
+            const high = { x: r.x, y: r.h, z: r.z, [r.axis]: r[r.axis] + r.sign * (span / 2 + 2) };
+            const path = findPath(low, high, map);
+            assert.ok(path.length > 0);
+            assert.equal(path.at(-1)!.y, r.h);
+            assert.ok(path.some(p => p.y > 0 && p.y < r.h), 'route uses the incline');
+        }
+    });
+
+    test(`${map.name}: results suppress firing until map preparation starts a new, fully supplied life`, () => {
+        const room = new Room('RESULTS', map.id); room.botCount = 0;
+        const actor = room.add('Runner', 'triggerman', 'blue'); room.start(0);
+        actor.state.ammo = actor.ammo.rifle = 1;
+        room.tick(room.round.endsAt);
+        const life = actor.state.life, deadline = room.round.nextAt;
+        room.enqueue(actor, [{ ...neutralInput(1), life, combat: true, fire: true, shotTime: deadline - 1 }], deadline - 1);
+        room.tick(deadline - 1);
+        assert.equal(room.round.phase, 'results'); assert.equal(actor.state.life, life);
+        assert.equal(actor.state.ammo, 1); assert.equal(actor.state.reloadEnd, 0);
+        room.enqueue(actor, [{ ...neutralInput(2), life, combat: true, fire: true, shotTime: deadline }], deadline);
+        room.tick(deadline);
+        assert.equal(room.round.phase, 'lobby'); assert.equal(actor.state.life, life + 1);
+        assert.equal(actor.state.ammo, 30); assert.equal(actor.state.reloadEnd, 0);
+        assert.equal(room.events.filter(e => e.type === 'shot').length, 0);
+    });
+}

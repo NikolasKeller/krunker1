@@ -16,7 +16,10 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--collect', action='store_true')
 parser.add_argument('--resume-probes', action='store_true', help='Resume failed probes, retaining successful checks only when their bundle hashes match')
 parser.add_argument('--output', default='artifacts/fairness', help='Directory for this candidate verification report')
+parser.add_argument('--maps', default='random', help='Comma-separated load matrix map choices; each runs the full 2/5/10-player matrix')
 args = parser.parse_args()
+if not args.maps.split(',') or any(m not in ['random', 'sandyard', 'orbital', 'abyss', 'wildroot', 'catacomb'] for m in args.maps.split(',')):
+    parser.error('--maps requires comma-separated map IDs or random')
 artifacts = root / args.output
 artifacts.mkdir(parents=True, exist_ok=True)
 
@@ -50,6 +53,7 @@ for name, source in [('server', 'src/server/index.ts'), ('load', 'tests/load.ts'
 hashes = {name: hashlib.sha256(data).hexdigest() for name, data in bundles.items()}
 directory = '/tmp/arena-fairness-' + hashes['server.mjs'][:12]
 if previous:
+    assert previous.get('maps', 'random') == args.maps, 'Map matrix changed: run the complete matrix again'
     assert previous['directory'] == directory, 'Server changed: run the complete matrix again'
     for name in ['server.mjs', 'load.mjs', 'bad-link.mjs', 'remote.mjs']:
         assert previous['hashes'][name] == hashes[name], 'Previously passed bundle changed: ' + name
@@ -63,7 +67,7 @@ process.on('SIGTERM',()=>app.close().then(()=>process.exit(0)));
 controller = r"""const fs=require('fs'),{spawn,spawnSync}=require('child_process'),crypto=require('crypto');
 const dir=DIRECTORY,hashes=HASHES,base=BASE;
 const results=RESUME?JSON.parse(fs.readFileSync(dir+'/status.json')).results.filter(r=>r.status===0):[];
-const write=(extra)=>fs.writeFileSync(dir+'/status.json',JSON.stringify({node:process.version,base,hashes,results,...extra}));
+const write=(extra)=>fs.writeFileSync(dir+'/status.json',JSON.stringify({node:process.version,base,hashes,mapChoices:MAP_CHOICES,results,...extra}));
 let server;
 (async()=>{
  for(const [name,hash] of Object.entries(hashes))if(crypto.createHash('sha256').update(fs.readFileSync(dir+'/'+name)).digest('hex')!==hash)throw Error('Bundle mismatch: '+name);
@@ -75,14 +79,14 @@ let server;
  for(const name of ['load-0','load-80','bad-link','hitscan','remote']){
   if(results.some(r=>r.name===name&&r.status===0))continue;
   const source=name.startsWith('load')?'load':name;
-  const env={...process.env,GAME_URL:origin,LOAD_COUNTS:'2,5,10',LOAD_SECONDS:'30',LOAD_BOTS:'7',LOAD_LATENCY_MS:name==='load-80'?'80':'0',LOAD_REPORT:dir+'/'+name+'.json',BAD_LINK_REPORT:dir+'/'+name+'.json',HIT_REPORT:dir+'/'+name+'.json',REMOTE_REPORT:dir+'/'+name+'.json'};
+  const env={...process.env,GAME_URL:origin,LOAD_MAPS:MAP_CHOICES,LOAD_COUNTS:'2,5,10',LOAD_SECONDS:'30',LOAD_BOTS:'7',LOAD_LATENCY_MS:name==='load-80'?'80':'0',LOAD_REPORT:dir+'/'+name+'.json',BAD_LINK_REPORT:dir+'/'+name+'.json',HIT_REPORT:dir+'/'+name+'.json',REMOTE_REPORT:dir+'/'+name+'.json'};
   const child=spawnSync(process.execPath,[dir+'/'+source+'.mjs'],{stdio:'inherit',env});
   results.push({name,status:child.status});write({done:false,origin});
   if(child.status!==0)throw Error(name+' failed: '+child.status);
  }
  write({done:true,origin});
 })().catch(error=>{console.error(error);write({done:true,error:String(error)});}).finally(()=>server?.kill('SIGTERM'));
-""".replace('DIRECTORY', json.dumps(directory)).replace('HASHES', json.dumps(hashes)).replace('BASE', json.dumps(base)).replace('RESUME', json.dumps(args.resume_probes))
+""".replace('DIRECTORY', json.dumps(directory)).replace('HASHES', json.dumps(hashes)).replace('BASE', json.dumps(base)).replace('RESUME', json.dumps(args.resume_probes)).replace('MAP_CHOICES', json.dumps(args.maps))
 print(ssh("const fs=require('fs'),dir=" + json.dumps(directory) + ";fs.mkdirSync(dir,{recursive:true});if(!fs.existsSync(dir+'/node_modules'))fs.symlinkSync('/app/node_modules',dir+'/node_modules','dir');console.log(dir);"))
 # Small independent chunks stay below SSH/exec argument limits.
 for name, data in bundles.items():
@@ -101,6 +105,6 @@ output = ssh(launch)
 for line in output.splitlines():
     if line.startswith('{'):
         item = json.loads(line)
-        (artifacts / 'railway-launch.json').write_text(json.dumps({**item, 'base': base, 'hashes': hashes}, indent=2) + '\n')
+        (artifacts / 'railway-launch.json').write_text(json.dumps({**item, 'base': base, 'hashes': hashes, 'maps': args.maps}, indent=2) + '\n')
 print(output)
-print('Collect in about seven minutes: python3 tests/railway-fairness.py --collect')
+print(f'Collect in about {4 + 4 * len(args.maps.split(","))} minutes: python3 tests/railway-fairness.py --collect --output {shlex.quote(args.output)}')

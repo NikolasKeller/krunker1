@@ -1,0 +1,7 @@
+
+> krunker-local-arena@1.0.0 test:production
+> node tests/production.mjs
+
+PASS: initial loader, split JS/CSS, Brotli and hashed-asset caching at http://127.0.0.1:8097
+PASS: two independent production clients navigate using inputs and register a headshot kill
+PRODUCTION METRICS {"ok":true,"tickRate":60,"tickMs":0.06,"peakTickMs":0.395,"tickP95Ms":0.157,"tickP99Ms":0.292,"totalTickMs":207.55134100002397,"overBudgetTicks":0,"ticks":1018,"bytesOut":189376,"players":2,"rooms":1,"transport":{"snapshots":582,"skippedSnapshots":0,"maxSnapshotSendGapMs":93,"maxSendCallbackMs":3.949,"maxBufferedBytes":0,"maxMessageBytes":2590,"maxInputMessageBytes":224,"maxInputArrivalGapMs":66,"maxInputQueue":2},"configuredTickRate":60,"connections":2,"queuedBytes":0}

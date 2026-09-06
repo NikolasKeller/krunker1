@@ -1,0 +1,112 @@
+
+> krunker-local-arena@1.0.0 test:maps
+> tsx --test tests/maps-*.test.ts tests/map-geometry.test.ts
+
+SANDYARD geometry: 77 objects, 53 solid boxes; tolerance 0.0001 m
+ORBITAL geometry: 74 objects, 64 solid boxes; tolerance 0.0001 m
+ABYSS geometry: 81 objects, 75 solid boxes; tolerance 0.0001 m
+WILDROOT geometry: 98 objects, 92 solid boxes; tolerance 0.0001 m
+CATACOMB geometry: 55 objects, 51 solid boxes; tolerance 0.0001 m
+✔ SANDYARD: every rendered object fits its collider and the entire outer shell is sealed (43.339041ms)
+✔ ORBITAL: every rendered object fits its collider and the entire outer shell is sealed (19.700166ms)
+✔ ABYSS: every rendered object fits its collider and the entire outer shell is sealed (13.976625ms)
+✔ WILDROOT: every rendered object fits its collider and the entire outer shell is sealed (59.35375ms)
+✔ CATACOMB: every rendered object fits its collider and the entire outer shell is sealed (46.510875ms)
+✔ the audit rejects a 0.2 mm slit above a viewport, even between ordinary sample heights (11.152125ms)
+✔ the audit rejects an oversized collider as well as protruding theme geometry (11.074042ms)
+✔ the audit rejects unsupported rotated trim, upper walls, unowned props and roofs over empty ground (20.053791ms)
+✔ production batching preserves every audited triangle and textured sign in world space (54.897416ms)
+✔ ORBITAL: production batching preserves audited triangles, glass and emitters (52.332208ms)
+✔ ABYSS: production batching preserves audited triangles, glass and emitters (48.013416ms)
+✔ WILDROOT: production batching preserves audited triangles, glass and emitters (249.083334ms)
+✔ CATACOMB: production batching preserves audited triangles, glass and emitters (221.490333ms)
+✔ all six facade signs remain visible in front of their buildings and containers (9.146209ms)
+SANDYARD: 6360 solid-face collision / camera / hitscan checks at 28 m/s
+SANDYARD: 52560 assembled-map movement steps
+ORBITAL: 7680 solid-face collision / camera / hitscan checks at 28 m/s
+ORBITAL: 47520 assembled-map movement steps
+ABYSS: 9000 solid-face collision / camera / hitscan checks at 28 m/s
+ABYSS: 56880 assembled-map movement steps
+WILDROOT: 11040 solid-face collision / camera / hitscan checks at 28 m/s
+WILDROOT: 72240 assembled-map movement steps
+CATACOMB: 6120 solid-face collision / camera / hitscan checks at 28 m/s
+CATACOMB: 49200 assembled-map movement steps
+✔ SANDYARD: every solid face blocks maximum-speed air/slide/hop movement and hitscan at five angles (78.769667ms)
+✔ SANDYARD: every solid top and underside catches fast vertical motion (55.438625ms)
+✔ SANDYARD: every ramp climbs cleanly, blocks side entry and catches high-speed falls (11.76675ms)
+✔ SANDYARD: assembled walls, ramp joints, window seams and boundaries stay solid under repeated maximum-speed approaches (412.6545ms)
+✔ ORBITAL: every solid face blocks maximum-speed air/slide/hop movement and hitscan at five angles (48.453833ms)
+✔ ORBITAL: every solid top and underside catches fast vertical motion (31.348625ms)
+✔ ORBITAL: every ramp climbs cleanly, blocks side entry and catches high-speed falls (5.277375ms)
+✔ ORBITAL: assembled walls, ramp joints, window seams and boundaries stay solid under repeated maximum-speed approaches (330.692792ms)
+✔ ABYSS: every solid face blocks maximum-speed air/slide/hop movement and hitscan at five angles (44.817333ms)
+✔ ABYSS: every solid top and underside catches fast vertical motion (26.887208ms)
+✔ ABYSS: every ramp climbs cleanly, blocks side entry and catches high-speed falls (2.46175ms)
+✔ ABYSS: assembled walls, ramp joints, window seams and boundaries stay solid under repeated maximum-speed approaches (369.885333ms)
+✔ WILDROOT: every solid face blocks maximum-speed air/slide/hop movement and hitscan at five angles (42.694834ms)
+✔ WILDROOT: every solid top and underside catches fast vertical motion (31.258166ms)
+✔ WILDROOT: every ramp climbs cleanly, blocks side entry and catches high-speed falls (2.281458ms)
+✔ WILDROOT: assembled walls, ramp joints, window seams and boundaries stay solid under repeated maximum-speed approaches (522.865042ms)
+✔ CATACOMB: every solid face blocks maximum-speed air/slide/hop movement and hitscan at five angles (23.040292ms)
+✔ CATACOMB: every solid top and underside catches fast vertical motion (17.321458ms)
+✔ CATACOMB: every ramp climbs cleanly, blocks side entry and catches high-speed falls (4.164834ms)
+✔ CATACOMB: assembled walls, ramp joints, window seams and boundaries stay solid under repeated maximum-speed approaches (268.277167ms)
+✔ SANDYARD: spawn bodies are clear, connected, and have multiple independent flanking routes (19.707041ms)
+✔ ORBITAL: spawn bodies are clear, connected, and have multiple independent flanking routes (17.490667ms)
+✔ ORBITAL: mirrored team pockets resist central sniping and one camper cannot see all spawns (50.777375ms)
+✔ ABYSS: spawn bodies are clear, connected, and have multiple independent flanking routes (21.126166ms)
+✔ ABYSS: mirrored team pockets resist central sniping and one camper cannot see all spawns (48.438291ms)
+✔ WILDROOT: spawn bodies are clear, connected, and have multiple independent flanking routes (12.489167ms)
+✔ WILDROOT: mirrored team pockets resist central sniping and one camper cannot see all spawns (72.628542ms)
+✔ CATACOMB: spawn bodies are clear, connected, and have multiple independent flanking routes (12.709333ms)
+✔ CATACOMB: mirrored team pockets resist central sniping and one camper cannot see all spawns (45.848084ms)
+✔ lobby exposes all maps and random; guests and mobile layouts see the resolved map before ready-up (109.885958ms)
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"d767fca9"}
+{"event":"ws.message","connectionId":"d767fca9","type":"join","bytes":86}
+{"event":"ws.joined","connectionId":"d767fca9","room":"3XR56","player":"75902b83"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"2960b3a1"}
+{"event":"ws.message","connectionId":"2960b3a1","type":"join","bytes":92}
+{"event":"ws.joined","connectionId":"2960b3a1","room":"3XR56","player":"c8a4348d"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"4a2086a3"}
+{"event":"ws.message","connectionId":"4a2086a3","type":"join","bytes":86}
+{"event":"ws.joined","connectionId":"4a2086a3","room":"BZ55G","player":"df7787d0"}
+{"event":"ws.upgrade","path":"/ws"}
+{"event":"ws.connection","connectionId":"57dc7b36"}
+{"event":"ws.message","connectionId":"57dc7b36","type":"join","bytes":92}
+{"event":"ws.joined","connectionId":"57dc7b36","room":"3XR56","player":"3aa694f9"}
+{"event":"ws.close","connectionId":"57dc7b36","code":1006,"reason":"","durationMs":55,"receivedMessages":1}
+{"event":"ws.close","connectionId":"4a2086a3","code":1006,"reason":"","durationMs":490,"receivedMessages":2}
+{"event":"ws.close","connectionId":"2960b3a1","code":1006,"reason":"","durationMs":514,"receivedMessages":2}
+{"event":"ws.close","connectionId":"d767fca9","code":1006,"reason":"","durationMs":554,"receivedMessages":7}
+✔ live host selection is authoritative and broadcasts all five maps to guests and late arrivals (564.908083ms)
+✔ random is the default and all five maps occupy equal selection intervals (2.141375ms)
+✔ only the host can change a map; changing it clears readiness, countdown, input and old history (18.397792ms)
+✔ random draws once per round before ready-up; every client receives the same resolved map (1.917167ms)
+✔ a fixed map persists across rematches and simultaneous rooms do not share collision state (0.79525ms)
+✔ SANDYARD: server movement, client prediction and replay agree for recorded controls (28.233583ms)
+✔ ORBITAL: server movement, client prediction and replay agree for recorded controls (31.911375ms)
+✔ ABYSS: server movement, client prediction and replay agree for recorded controls (6.704625ms)
+✔ WILDROOT: server movement, client prediction and replay agree for recorded controls (6.006083ms)
+✔ CATACOMB: server movement, client prediction and replay agree for recorded controls (14.093291ms)
+✔ interleaved rooms retain their own physics, bot perception, navigation and prediction replay (170.55225ms)
+✔ SANDYARD: all classes spawn with 100 health and each ramp connects bots to its raised destination (8.359125ms)
+✔ SANDYARD: results suppress firing until map preparation starts a new, fully supplied life (0.562333ms)
+✔ ORBITAL: all classes spawn with 100 health and each ramp connects bots to its raised destination (10.844542ms)
+✔ ORBITAL: results suppress firing until map preparation starts a new, fully supplied life (0.128291ms)
+✔ ABYSS: all classes spawn with 100 health and each ramp connects bots to its raised destination (6.730709ms)
+✔ ABYSS: results suppress firing until map preparation starts a new, fully supplied life (0.123125ms)
+✔ WILDROOT: all classes spawn with 100 health and each ramp connects bots to its raised destination (7.816584ms)
+✔ WILDROOT: results suppress firing until map preparation starts a new, fully supplied life (0.123459ms)
+✔ CATACOMB: all classes spawn with 100 health and each ramp connects bots to its raised destination (5.652208ms)
+✔ CATACOMB: results suppress firing until map preparation starts a new, fully supplied life (0.123792ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 65
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2486.676875

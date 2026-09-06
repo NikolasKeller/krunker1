@@ -3,6 +3,7 @@ import { distance, worldHit, direction, angleLerp } from '../shared/math';
 import { neutralInput } from '../shared/movement';
 import { WEAPONS } from '../shared/weapons';
 import type { Difficulty, Input, PlayerState, Vec3 } from '../shared/types';
+import { abilityActive, GRENADE } from '../shared/abilities';
 const GRID = 2, N = 35, ORIGIN = -34, LAYER = N * N;
 const navigation = new WeakMap<MapDefinition, ReturnType<typeof buildNavigation>>();
 function buildNavigation(map: MapDefinition) {
@@ -67,6 +68,7 @@ export function findPath(from: Vec3, to: Vec3, map = getMap()): Vec3[] {
     return path.reverse();
 }
 export interface BotBrain {
+    nextTactic?: number;
     target: string;
     seenAt: number;
     nextThink: number;
@@ -88,7 +90,8 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
         normal: { reaction: 420, error: 0.044, speed: 0.8, yaw: .15, pitch: .14, height: 1.05, push: .62 },
         hard: { reaction: 220, error: 0.023, speed: 0.95, yaw: .16, pitch: .15, height: 1.1, push: .65 },
     }[difficulty];
-    const enemies = [...players].filter(q => q.id !== p.id && q.alive && (mode === 'ffa' || q.team !== p.team));
+    const allPlayers = [...players];
+    const enemies = allPlayers.filter(q => q.id !== p.id && q.alive && (mode === 'ffa' || q.team !== p.team));
     const origin = { x: p.x, y: p.y + 1.55, z: p.z };
     const visible = enemies.filter(q => { const target = { x: q.x, y: q.y + 1.05, z: q.z }, dist = distance(origin, target); const d = { x: (target.x - origin.x) / dist, y: (target.y - origin.y) / dist, z: (target.z - origin.z) / dist }; return dist < 65 && worldHit(origin, d, dist, map) >= dist - 0.3; }).sort((a, c) => distance(p, a) - distance(p, c));
     const enemy = visible[0];
@@ -153,6 +156,41 @@ export function botInput(p: PlayerState, b: BotBrain, players: Iterable<PlayerSt
     input.pitch = p.pitch + (aimPitch - p.pitch) * tune.pitch;
     input.jump = b.stuck > 1 && Math.floor(now / 650) % 2 === 0;
     input.reload = p.ammo === 0 || (!enemy && p.ammo < WEAPONS[p.weapon].magazine * 0.5);
+    if (enemy && p.classId === 'hunter' && abilityActive(p, now)) { input.forward = 0; input.strafe = 0; input.aim = true; }
+    if (enemy && p.classId === 'vince' && abilityActive(p, now) && distance(p, enemy) > 7) input.fire = false;
+    if (enemy && now >= (b.nextTactic ?? b.seenAt + { easy: 3500, normal: 1800, hard: 800 }[difficulty])) {
+        b.nextTactic = now + { easy: 15000, normal: 7000, hard: 3000 }[difficulty];
+        const dist = distance(p, enemy);
+        if (now >= (p.abilityReadyAt ?? 0)) {
+            input.ability = p.classId === 'hunter' ? dist > 16 : p.classId === 'triggerman' ? p.hp <= 70 :
+                p.classId === 'vince' ? dist > 8 && dist < 25 : dist > 8 && Math.hypot(input.forward, input.strafe) > .2;
+            if (input.ability && p.classId === 'hunter') { input.forward = input.strafe = 0; input.aim = true; }
+            if (input.ability && p.classId === 'vince') input.fire = false;
+        }
+        if (!input.ability && !abilityActive(p, now) && now >= (p.grenadeReadyAt ?? 0) && dist > 10 && dist < 28) {
+            // Aim at an observed position and estimate a safe arc. Never use
+            // hidden enemy positions, and avoid landing a blast on teammates.
+            let best: { pitch: number; miss: number } | undefined;
+            for (const pitch of [-.4, -.15, .1, .35]) {
+                const d = direction(aimYaw, pitch), g = { position: { ...origin }, velocity: { x: d.x * GRENADE.speed, y: d.y * GRENADE.speed + GRENADE.lift, z: d.z * GRENADE.speed } };
+                let blocked = false;
+                // Cheap ballistic estimate for deciding when to throw. The room
+                // still runs swept authoritative physics for the real projectile.
+                for (let t = 0; t < GRENADE.fuse; t += 100) {
+                    const from = { ...g.position }, dt = Math.min(.1, (GRENADE.fuse - t) / 1000);
+                    g.velocity.y -= GRENADE.gravity * dt;
+                    g.position.x += g.velocity.x * dt; g.position.z += g.velocity.z * dt; g.position.y += g.velocity.y * dt;
+                    if (g.position.y < GRENADE.size) { g.position.y = GRENADE.size; g.velocity.y *= -.42; g.velocity.x *= .72; g.velocity.z *= .72; }
+                    const length = distance(from, g.position);
+                    if (length && worldHit(from, { x: (g.position.x - from.x) / length, y: (g.position.y - from.y) / length, z: (g.position.z - from.z) / length }, length, map) < length - .02) { blocked = true; break; }
+                }
+                const miss = distance(g.position, { ...enemy, y: enemy.y + 1 });
+                const unsafe = distance(g.position, p) < 7 || (mode === 'tdm' && allPlayers.some(q => q.alive && q.team === p.team && distance(g.position, q) < 7));
+                if (!blocked && !unsafe && miss < 5 && (!best || miss < best.miss)) best = { pitch, miss };
+            }
+            if (best) { input.grenade = true; input.yaw = aimYaw; input.pitch = best.pitch; input.fire = false; }
+        }
+    }
     input.shotTime = now;
     input.life = p.life;
     return input;

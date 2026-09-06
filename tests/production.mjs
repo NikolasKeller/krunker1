@@ -69,7 +69,8 @@ class Client {
 const a = new Client('Alpha'), b = new Client('Bravo');
 try {
     await wait(() => a.p && b.p, 'join');
-    a.send({ type: 'configure', bots: 0 });
+    // Navigation waypoints above follow Sandyard's outer lane.
+    a.send({ type: 'configure', map: 'sandyard', bots: 0 });
     a.send({ type: 'start' });
     await wait(() => a.phase === 'playing' && b.phase === 'playing', 'start');
     a.start(12);

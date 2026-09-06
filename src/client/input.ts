@@ -4,6 +4,7 @@ import { assistedLook } from './aim-assist';
 import { TouchInput, touchDevice, TOUCH_SENSITIVITY, type TouchRole } from './touch';
 export class Controls {
     keys = new Set<string>();
+    private actions = new Set<'ability' | 'grenade'>();
     yaw = 0;
     pitch = 0;
     private mouseFire = false;
@@ -44,6 +45,8 @@ export class Controls {
             if (e.code === 'Escape') { this.unlock(); this.onPause(); }
             if (!this.locked) return;
             this.keys.add(e.code);
+            if (!e.repeat && e.code === 'KeyQ') this.actions.add('ability');
+            if (!e.repeat && e.code === 'KeyG') this.actions.add('grenade');
             if (e.code === 'Digit1') this.slot = 1;
             if (e.code === 'Digit2') this.slot = 2;
             if (e.code === 'Digit3') this.slot = 3;
@@ -106,7 +109,7 @@ export class Controls {
         } catch { this.onLock(false); }
     }
     unlock() { this.locked = false; this.clear(); document.exitPointerLock?.(); this.onLock(false); }
-    clear() { this.keys.clear(); this.fire = false; this.aim = false; this.touch.clear(); this.drawTouch(); this.onScore(false); }
+    clear() { this.actions.clear(); this.keys.clear(); this.fire = false; this.aim = false; this.touch.clear(); this.drawTouch(); this.onScore(false); }
     updateLook(dt: number, player?: PlayerState, remotes: PlayerState[] = [], mode: Mode = 'ffa', now = 0) {
         const delta = this.touch.consumeLook();
         if (!this.touchMode || !this.locked || this.typing) return;
@@ -124,10 +127,14 @@ export class Controls {
         document.querySelector('[data-touch-command="aim"]')?.setAttribute('aria-pressed', String(this.aim));
         document.querySelectorAll<HTMLElement>('[data-touch-slot]').forEach(b => b.classList.toggle('selected', Number(b.dataset.touchSlot) === this.slot));
     }
+    consumed(input: Input) {
+        for (const tool of ['ability', 'grenade'] as const) if (input[tool]) this.actions.delete(tool);
+        this.touch.consumed(input);
+    }
     sample(seq: number, time: number): Input {
         const active = this.locked && !this.typing;
         const down = (k: string) => active && this.keys.has(k);
         const movement = active ? this.touch.movement : { forward: 0, strafe: 0 };
-        return { seq, forward: clamp(Number(down('KeyW')) - Number(down('KeyS')) + movement.forward, -1, 1), strafe: clamp(Number(down('KeyD')) - Number(down('KeyA')) + movement.strafe, -1, 1), yaw: this.yaw, pitch: this.pitch, jump: down('Space') || (active && this.touch.held('jump')), slide: down('ShiftLeft') || down('ShiftRight') || (active && this.touch.held('slide')), fire: active && this.fire, aim: active && this.aim, reload: down('KeyR') || (active && this.touch.held('reload')), slot: this.slot, shotTime: time };
+        return { seq, ...(active && (this.actions.has('ability') || this.touch.pressed('ability')) ? { ability: true } : {}), ...(active && (this.actions.has('grenade') || this.touch.pressed('grenade')) ? { grenade: true } : {}), forward: clamp(Number(down('KeyW')) - Number(down('KeyS')) + movement.forward, -1, 1), strafe: clamp(Number(down('KeyD')) - Number(down('KeyA')) + movement.strafe, -1, 1), yaw: this.yaw, pitch: this.pitch, jump: down('Space') || (active && this.touch.held('jump')), slide: down('ShiftLeft') || down('ShiftRight') || (active && this.touch.held('slide')), fire: active && this.fire, aim: active && this.aim, reload: down('KeyR') || (active && this.touch.held('reload')), slot: this.slot, shotTime: time };
     }
 }

@@ -1,5 +1,5 @@
 import { clamp } from '../shared/math';
-import type { CombatMessage, PlayerState } from '../shared/types';
+import type { CombatMessage, PlayerState, TacticalMessage } from '../shared/types';
 import type { ProvisionalHit } from './shot-feedback';
 
 type Prediction = { damage: number; shooterLife: number; seq: number };
@@ -63,6 +63,14 @@ export class RemoteHealth {
         for (const patch of m.players) {
             const p = players.get(patch.id);
             if (p && p.id !== localId && !this.tracks.has(p.id)) this.track(p, now);
+        }
+    }
+    tactical(m: TacticalMessage, players: Map<string, PlayerState>, localId: string, now: number) {
+        // Grenades/healing update authority immediately without retiring any
+        // pending rifle/shotgun predictions or touching position interpolation.
+        for (const patch of m.players) {
+            const p = players.get(patch.id);
+            if (p && p.id !== localId && p.life === patch.life) this.update(this.track(p, now), p, m.time, false);
         }
     }
     predict(hit: ProvisionalHit, players: Map<string, PlayerState>, now: number) {

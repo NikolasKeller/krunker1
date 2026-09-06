@@ -1,3 +1,4 @@
+import { guardedDamage } from '../shared/abilities';
 import type { Object3D } from 'three';
 import type { CombatMessage, GameEvent, Input, Mode, PlayerState, Vec3, WeaponId } from '../shared/types';
 import { shotRays, recoilFor, WEAPONS } from '../shared/weapons';
@@ -54,6 +55,7 @@ export class ShotFeedback {
         const dirs = shotRays(p.weapon, input.yaw, input.pitch, Math.hypot(p.vx, p.vz), p.bloom, aimProgress, index, input.seq, p.life);
         const trace = traceShot(p.weapon, origin, dirs, remotes.filter(q => q.id !== p.id && q.alive));
         trace.hits = trace.hits.filter(hit => canDamage(p, remotes.find(q => q.id === hit.victim)!, mode));
+        for (const hit of trace.hits) hit.damage = guardedDamage(remotes.find(q => q.id === hit.victim)!, hit.damage, now);
         const impacts: Object3D[] = [];
         if (p.weapon !== 'knife') {
             // The eye determines the aim ray; the tracer starts at the rendered

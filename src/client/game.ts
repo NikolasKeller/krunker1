@@ -1,3 +1,4 @@
+import { TacticalEffects } from './tactical-effects';
 import { Controls } from './input';
 import type { Network } from './network';
 import { ShotFeedback } from './shot-feedback';
@@ -15,6 +16,7 @@ import { FrameBudget } from './frame-budget';
 export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Promise<void> {
     const audio = new AudioEngine(), controls = new Controls(canvas);
     const renderer = new Renderer(canvas, controls.touchMode);
+    const tactics = new TacticalEffects(renderer.scene);
     const shots = new ShotFeedback(renderer.effects, renderer.viewmodel, audio);
     renderer.setClass(ui.selected);
     renderer.setQuality(localStorage.getItem('arena-quality') ?? (controls.touchMode ? 'low' : 'balanced'));
@@ -58,7 +60,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let pendingFireAim: Input | undefined;
     const welcomed = net.onWelcome;
-    net.onWelcome = () => { shots.clear(); spawnReadyAt = 0; lastLife = -1; phase = ''; welcomed(); };
+    net.onWelcome = () => { tactics.clear(); shots.clear(); spawnReadyAt = 0; lastLife = -1; phase = ''; welcomed(); };
     shots.onHit = e => { net.remoteHealth.predict(e, net.players, performance.now()); ui.provisionalHit(e, renderer, performance.now()); };
     shots.onRetract = key => { net.remoteHealth.retract(key); ui.retractHit(key, performance.now()); };
     shots.onConfirm = (key, e) => ui.confirmHit(key, e);
@@ -66,6 +68,13 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     net.weapons.onCorrection = slot => { controls.slot = slot; pendingFireAim = undefined; };
     net.onEvents = events => {
         for (const e of events) {
+            const fresh = tactics.event(e, net.serverNow);
+            if (e.type === 'grenade' && fresh) {
+                const v = 1 / (1 + (net.predicted ? distance(e.position, net.predicted) : 40) * .12);
+                if (e.phase === 'blast') { audio.burst(.3, .65 * v, 900); audio.tone(85, .3, .5 * v, 'triangle', 25); }
+                else audio.tone(1100, .12, .25 * v);
+            }
+            if (e.type === 'ability' && net.predicted && distance(e.origin, net.predicted) < 30) audio.tone(440, .18, .14, 'triangle', 820);
             const provisional = shots.reconcileEvent(e);
             if (!provisional) ui.event(e, renderer, performance.now());
             if (e.type === 'shot') {
@@ -100,6 +109,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         if (pendingFireAim?.seq === seq) Object.assign(input, pendingFireAim);
         if (!playing || ui.menu || ui.paused || !controls.locked || net.round?.phase !== 'playing') {
             input.forward = 0; input.strafe = 0; input.jump = false;
+            delete input.ability; delete input.grenade;
             input.fire = false; input.slide = false; input.aim = false; input.reload = false;
         }
         return wireInput(input);
@@ -133,7 +143,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             playing = playing && !ui.home;
             ui.paused = playing && !ui.menu && !controls.locked;
             ui.scoreOpen = false;
-            if (!playing) { controls.unlock(); pendingFireAim = undefined; }
+            if (!playing) { controls.unlock(); pendingFireAim = undefined; tactics.clear(); }
             ui.visibility();
         }
         if (ui.home) {
@@ -157,7 +167,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         if (!p?.alive) { pendingFireAim = undefined; if (controls.touchMode) controls.clear(); }
         controls.updateLook(dt, playing && !ui.paused ? p : undefined, remotes, net.round?.mode ?? 'ffa', now);
         motion.advance(dt, net, sampleInput, input => {
-            controls.touch.consumed(input);
+            controls.consumed(input);
             if (pendingFireAim?.seq === input.seq) pendingFireAim = undefined;
         });
         if (p && playing && controls.locked && !controls.typing && !ui.menu) net.selectWeapon(controls.slot);
@@ -195,6 +205,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
         const aim = controls.locked && controls.aim && !!p?.alive && p.reloadEnd <= now;
         if (p?.reloadEnd && p.reloadEnd !== previousReload) audio.reload();
         previousReload = p?.reloadEnd ?? 0;
+        if (playing) tactics.update(now, remotes, net.predicted);
         renderer.render(dt, time / 1000, rendered, remotes, controls, net.correction, ui.menu, aim, now, net.round?.mode ?? 'ffa');
         ui.update(time, renderer, aim, remotes);
     }

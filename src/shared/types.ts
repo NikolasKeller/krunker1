@@ -39,6 +39,8 @@ export interface MoveState {
 }
 export interface Input {
     seq: number;
+    ability?: boolean;
+    grenade?: boolean;
     // v4: explicit predicted fire commands with shared command-clock timing.
     combat?: boolean;
     life?: number;
@@ -58,6 +60,11 @@ export interface Input {
     interpolationDelay?: number;
 }
 export interface PlayerState extends MoveState {
+    abilityReadyAt?: number;
+    abilityUntil?: number;
+    abilitySteps?: number;
+    grenadeReadyAt?: number;
+    grenadeUntil?: number;
     id: string;
     name: string;
     classId: ClassId;
@@ -108,6 +115,27 @@ export type PlayerPatch = {
     id: string;
 } & Partial<PlayerState>;
 export type GameEvent = {
+    type: 'ability';
+    player: string;
+    classId: ClassId;
+    origin: Vec3;
+    until: number;
+} | {
+    type: 'grenade';
+    id: string;
+    owner: string;
+    phase: 'flight' | 'blast' | 'cancel';
+    position: Vec3;
+    velocity: Vec3;
+    time: number;
+    until: number;
+} | {
+    type: 'spot';
+    viewer: string;
+    life: number;
+    points: Vec3[];
+    until: number;
+} | {
     type: 'shot';
     shooter: string;
     weapon: WeaponId;
@@ -129,7 +157,7 @@ export type GameEvent = {
     victim: string;
     killerName: string;
     victimName: string;
-    weapon: WeaponId;
+    weapon: WeaponId | 'grenade';
     headshot: boolean;
     team: Team;
 } | {
@@ -202,7 +230,8 @@ export type WeaponMessage = {
     ammo: number;
     reloadEnd: number;
 };
-export type ServerMessage = CombatMessage | WeaponMessage | {
+export type TacticalMessage = { type: 'tactical'; time: number; events: GameEvent[]; players: PlayerPatch[] };
+export type ServerMessage = CombatMessage | WeaponMessage | TacticalMessage | {
     type: 'shot-rejected';
     seq: number;
     reason: 'expired';

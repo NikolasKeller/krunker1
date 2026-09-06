@@ -70,7 +70,7 @@ export function createGameServer() {
     const wss = new WebSocketServer({ server, path: '/ws', maxPayload: MAX_CLIENT_PAYLOAD, perMessageDeflate: false });
     function send(c: Connection, m: ServerMessage, critical = false) { if (c.ws.readyState === WebSocket.OPEN && (critical || c.ws.bufferedAmount === 0)) {
         if (critical && c.ws.bufferedAmount > 1024 * 1024) { c.ws.close(1013, 'Connection too slow'); return; }
-        const data = c.binary ? encodeServerMessage(m, c.actor?.state.id) : JSON.stringify(m);
+        const data = c.binary ? encodeServerMessage(m, c.actor?.state.id, c.ws.protocol === WIRE_PROTOCOL) : JSON.stringify(m);
         const started = performance.now();
         c.ws.send(data, () => { transport.maxSendCallbackMs = Math.max(transport.maxSendCallbackMs, +(performance.now() - started).toFixed(3)); });
         transport.maxMessageBytes = Math.max(transport.maxMessageBytes, Buffer.byteLength(data));
@@ -88,7 +88,7 @@ export function createGameServer() {
             ws.close(1013, 'Server full');
             return;
         }
-        const c: Connection = { id: connectionId, combat: ws.protocol === WIRE_PROTOCOL, binary: [WIRE_PROTOCOL, LEGACY_WIRE_PROTOCOL, 'arena-v3'].includes(ws.protocol), ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
+        const c: Connection = { id: connectionId, combat: [WIRE_PROTOCOL, 'arena-v4'].includes(ws.protocol), binary: [WIRE_PROTOCOL, 'arena-v4', LEGACY_WIRE_PROTOCOL, 'arena-v3'].includes(ws.protocol), ws, baseline: new Map(), metadata: '', keyframeSlot: connections.size % 100, snapshot: 0, messages: 0, strikes: 0, pingAt: Date.now(), pongAt: Date.now(), lastSnapshotAt: 0, lastInputAt: 0, lastChatAt: 0 };
         connections.add(c);
         ws.on('pong', () => { c.pongAt = Date.now(); if (c.actor)
             c.actor.rtt = Math.min(1000, c.pongAt - c.pingAt); });
@@ -312,6 +312,12 @@ export function createGameServer() {
                     for (const c of connections) if (c.room === r && (message.accepted || c.actor?.state.id === message.shooter)) {
                         if (c.combat) send(c, message, true);
                         else if (message.events.length) send(c, { type: 'events', events: message.events }, true);
+                    }
+                };
+                r.onTactical = (message, recipient) => {
+                    for (const c of connections) if (c.room === r && (!recipient || c.actor?.state.id === recipient)) {
+                        if (c.ws.protocol === WIRE_PROTOCOL) send(c, message, true);
+                        else { const events = message.events.filter(e => e.type === 'hit' || e.type === 'kill'); if (events.length) send(c, { type: 'events', events }, true); }
                     }
                 };
                 r.onWeapon = (id, message) => {

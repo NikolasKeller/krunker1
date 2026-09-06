@@ -11,11 +11,12 @@ export function validInput(v: unknown): v is Input {
         return false;
     const i = v as Input;
     if (i.interpolationDelay !== undefined && (!Number.isFinite(i.interpolationDelay) || i.interpolationDelay < 0 || i.interpolationDelay > MAX_INTERPOLATION_DELAY_MS)) return false;
+    if (['ability', 'grenade'].some(k => (i as unknown as Record<string, unknown>)[k] !== undefined && typeof (i as unknown as Record<string, unknown>)[k] !== 'boolean')) return false;
     if (i.combat !== undefined && typeof i.combat !== 'boolean') return false;
     return (i.life === undefined || (Number.isSafeInteger(i.life) && i.life >= 0)) && Number.isSafeInteger(i.seq) && i.seq >= 0 && i.seq < 2 ** 31 && Number.isFinite(i.forward) && Math.abs(i.forward) <= 1 && Number.isFinite(i.strafe) && Math.abs(i.strafe) <= 1 && Number.isFinite(i.yaw) && Math.abs(i.yaw) < 1e7 && Number.isFinite(i.pitch) && Math.abs(i.pitch) <= Math.PI / 2 && Number.isFinite(i.shotTime) && ['jump', 'slide', 'fire', 'aim', 'reload'].every(k => typeof (i as unknown as Record<string, unknown>)[k] === 'boolean') && [1, 2, 3].includes(i.slot);
 }
 export function eyeHeight(p: Pick<MoveState, 'slide'>) { return p.slide > 0 ? 1.08 : EYE; }
-export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP, map = getClientMap()): void {
+export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP, map = getClientMap(), accelerationScale = 1): void {
     p.slideAge += dt;
     if (i.jump && !p.jumpHeld)
         p.jumpBuffer = 0.12;
@@ -77,7 +78,7 @@ export function move(p: MoveState, i: Input, speedScale = 1, dt = STEP, map = ge
         p.vz *= 1 - 0.5 * dt;
     }
     else if (len > 0) {
-        const current = p.vx * wx + p.vz * wz, add = Math.max(0, wish - current), accel = (p.grounded ? 110 : 18) * dt;
+        const current = p.vx * wx + p.vz * wz, add = Math.max(0, wish - current), accel = (p.grounded ? 110 : 18) * dt * accelerationScale;
         const a = Math.min(add, accel);
         p.vx += wx * a;
         p.vz += wz * a;

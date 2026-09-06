@@ -1,0 +1,38 @@
+{
+  "base": "dec41d6328e29d41148ae6380ba915bec01d10bf",
+  "build": "passed",
+  "tests": {
+    "passed": 392,
+    "failed": 0
+  },
+  "hudFixtures": 24,
+  "browserLaunched": false,
+  "cdpUsed": false,
+  "hitscan": [
+    {
+      "rtt": 0,
+      "actualShots": 24,
+      "hits": 24,
+      "resyncs": 0,
+      "maxCorrectionMetres": 0,
+      "maxSnapshotJumpMetres": 0
+    },
+    {
+      "rtt": 100,
+      "actualShots": 24,
+      "hits": 24,
+      "resyncs": 0,
+      "maxCorrectionMetres": 0,
+      "maxSnapshotJumpMetres": 0
+    },
+    {
+      "rtt": 350,
+      "actualShots": 24,
+      "hits": 24,
+      "resyncs": 0,
+      "maxCorrectionMetres": 0,
+      "maxSnapshotJumpMetres": 0
+    }
+  ],
+  "scope": "Ability files plus compatible map argument integration in prediction.ts. Concurrent map docs/tests excluded from patch."
+}

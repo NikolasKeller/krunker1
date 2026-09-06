@@ -1,8 +1,10 @@
+import { abilityMoveScale } from '../shared/abilities';
 import { clipPlayerMotion } from '../shared/collision';
+import { getClientMap } from '../shared/map';
 import { move, moveState } from '../shared/movement';
 import { CLASSES } from '../shared/weapons';
 import { MAX_PENDING_INPUTS } from '../shared/protocol';
-import type { Input, MoveState, PlayerState, Vec3 } from '../shared/types';
+import { STEP, type Input, type MoveState, type PlayerState, type Vec3 } from '../shared/types';
 
 // Prediction is independent of transport capacity, including when bounded
 // retention is exhausted by an outage longer than the supported ten seconds.
@@ -18,7 +20,7 @@ export class PredictionHistory {
             this.evictedThrough = evicted.at(-1)!.seq;
         }
     }
-    reconcile(authoritative: PlayerState, playing: boolean, previous?: PlayerState) {
+    reconcile(authoritative: PlayerState, playing: boolean, previous?: PlayerState, map = getClientMap()) {
         // An upload-only outage can outlast the watchdog while snapshots still
         // arrive. A partial replay from an older ACK would erase local progress
         // every snapshot. Keep moving until authority reaches retained history;
@@ -26,7 +28,7 @@ export class PredictionHistory {
         if (playing && previous?.alive && authoritative.alive && previous.life === authoritative.life && authoritative.ack < this.evictedThrough) {
             return { ...authoritative, ...Object.fromEntries(movementFields.map(key => [key, previous[key]])), yaw: previous.yaw, pitch: previous.pitch };
         }
-        const result = reconcile(authoritative, this.pending, playing);
+        const result = reconcile(authoritative, this.pending, playing, map);
         this.pending = result.remaining;
         return result.predicted;
     }
@@ -71,17 +73,18 @@ export function previewInput(p: PlayerState | undefined, i: Input, playing: bool
     const t = Math.max(0, Math.min(1, fraction));
     return { ...p, ...clipPlayerMotion(p, { x: p.x + (next.x - p.x) * t, y: p.y + (next.y - p.y) * t, z: p.z + (next.z - p.z) * t }, p.slide > 0 ? 1.26 : undefined) };
 }
-export function predictInput(p: PlayerState, i: Input, playing: boolean) {
+export function predictInput(p: PlayerState, i: Input, playing: boolean, map = getClientMap()) {
     if (!p.alive || !playing || (i.life !== undefined && i.life !== p.life))
         return;
-    move(p, i, CLASSES[p.classId].speed * (i.slot === 3 ? 1.16 : 1));
+    const mobility = abilityMoveScale(p);
+    move(p, i, CLASSES[p.classId].speed * mobility * (i.slot === 3 ? 1.16 : 1), STEP, map, mobility);
     p.yaw = i.yaw;
     p.pitch = i.pitch;
 }
-export function reconcile(authoritative: PlayerState, pending: Input[], playing: boolean) {
+export function reconcile(authoritative: PlayerState, pending: Input[], playing: boolean, map = getClientMap()) {
     const remaining = pending.filter(i => i.seq > authoritative.ack), predicted = { ...authoritative };
     for (const input of remaining)
-        predictInput(predicted, input, playing);
+        predictInput(predicted, input, playing, map);
     return { predicted, remaining };
 }
 

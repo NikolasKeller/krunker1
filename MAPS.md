@@ -55,13 +55,34 @@ to `artifacts/maps/`. Open `artifacts/maps/index.html` to review them. It launch
 no browser and uses no CDP connection. Lighting is approximated; WebGL shadows
 and canvas signs are omitted.
 
-Verified on 2026-09-06: all 353 tests pass, production build passes, all five maps
+Verified on 2026-09-06: all 364 map-candidate tests pass, production build passes, all five maps
 have zero bounds mismatches. Collision regression covers 40,200 solid-face
 approaches at the 28 m/s speed cap, five approach angles, air/slide/hop modes,
 normal and extended ticks, plus 278,400 assembled-map movement steps. Every ramp
 is checked for climbing, side/end entry and fast falls; every solid top and
 underside is checked at 400 m/s vertical speed. Layout checks cover spawn
 clearance, exits, bot connectivity, independent flanks and spawn sightlines.
+
+The completion checks also interleave five rooms while deliberately changing the
+browser's fallback map. Server movement, bot perception/routes, prediction and
+pending-input replay continue to use each room's map. Every ramp reaches its
+raised navigation destination. Live lobby changes leave another room's players,
+bots and selected map intact.
+
+The Node load client now takes map geometry from each client's authoritative
+round for both bot controls and prediction. `LOAD_MAPS` accepts a comma-separated
+list, defaulting to `random`. Existing fixed-coordinate network probes explicitly
+select Sandyard. To run the complete 2/5/10-player, 0/80 ms one-way latency matrix
+on every map inside an isolated Railway process:
+
+```sh
+python3 tests/railway-fairness.py --maps sandyard,orbital,abyss,wildroot,catacomb --output artifacts/maps/verification
+python3 tests/railway-fairness.py --collect --output artifacts/maps/verification
+```
+
+See [completion evidence](artifacts/maps/verification/README.md) for the reload
+failure diagnosis, exact candidate hashes and verification reports. The existing
+live service is not redeployed by these commands.
 
 These checks establish geometry, movement and lobby correctness. Weapon balance
 and visual lighting still benefit from human playtesting in the rendered game.

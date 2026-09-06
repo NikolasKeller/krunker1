@@ -3,6 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { writeFile } from 'node:fs/promises';
 import { WebSocket } from 'ws';
 import { brain, botInput } from '../src/server/bots';
+import { getMap, isMapChoice, type MapChoice } from '../src/shared/map';
 import { predictInput, PredictionHistory } from '../src/client/prediction';
 import { CLASS_IDS, WEAPONS } from '../src/shared/weapons';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../src/shared/protocol';
@@ -16,6 +17,8 @@ const seconds = Number(process.env.LOAD_SECONDS ?? 30);
 const latency = Number(process.env.LOAD_LATENCY_MS ?? 0); // one-way application delay
 const counts = (process.env.LOAD_COUNTS ?? '2,5,10').split(',').map(Number);
 const bots = Number(process.env.LOAD_BOTS ?? 7);
+const maps = (process.env.LOAD_MAPS ?? 'random').split(',');
+assert.ok(maps.every(isMapChoice), 'LOAD_MAPS must contain map IDs or random');
 assert.ok(seconds >= 5 && counts.every(n => n >= 1 && n <= 10) && latency >= 0);
 const wait = async (fn: () => unknown, label: string, ms = 10000) => {
     const start = Date.now();
@@ -103,13 +106,19 @@ class Client {
             this.players.set(p.id, { ...this.players.get(p.id), ...p } as PlayerState);
         }
         for (const id of m.removed) this.players.delete(id);
-        if (m.round) this.round = m.round;
+        if (m.round) {
+            if (m.round.mapId !== this.round?.mapId) {
+                this.predicted = undefined; this.predictionHistory.clear();
+                this.pending = []; this.outgoing = []; this.ai = brain();
+            }
+            this.round = m.round;
+        }
         const local = this.players.get(this.id);
         if (!local) { this.desyncs++; return; }
         for (const p of this.players.values()) if (![p.x, p.y, p.z, p.yaw, p.pitch, p.hp].every(Number.isFinite) || Math.abs(p.x) > 38 || Math.abs(p.z) > 38 || p.y < -.1) this.desyncs++;
         this.inputs.acknowledge(local.ack);
         const old = this.predicted;
-        this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
+        this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old, getMap(this.round?.mapId));
         this.weapons.reconcile(local, this.predicted);
         this.pending = this.pending.filter(i => i.seq > local.ack);
         this.seq = Math.max(this.seq, local.ack);
@@ -150,7 +159,8 @@ class Client {
             if (!this.running) return;
             if (this.predicted && this.round?.phase === 'playing') {
                 let p = this.predicted;
-                let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset);
+                const map = getMap(this.round.mapId);
+                let i = botInput(p, this.ai, this.players.values(), this.round.mode, 'hard', Date.now() + this.offset, map);
                 i.seq = ++this.seq; i.shotTime = Date.now() + this.offset - 100;
                 i.interpolationDelay = 100; // Exercise the current wire format and bounded timing path.
                 i.combat = true;
@@ -163,7 +173,7 @@ class Client {
                 i = this.inputs.enqueue({ ...i, life: p.life });
                 this.predictionHistory.add(i);
                 this.weapons.advance(p, i);
-                predictInput(p, i, true);
+                predictInput(p, i, true, map);
                 if (this.measured) this.moved += Math.hypot(p.x - prev.x, p.z - prev.z);
 
                 if (this.pending.length > 240) { this.desyncs++; this.pending = []; this.send({ type: 'sync' }); }
@@ -177,15 +187,16 @@ class Client {
     close() { this.running = false; clearTimeout(this.timer); clearInterval(this.inputTimer); for (const timer of this.delayedSends) clearTimeout(timer); this.ws.close(); }
 }
 const report = [];
-for (const count of counts) {
+for (const map of maps) for (const count of counts) {
     const clients: Client[] = [];
     observations = new Map(); replicaErrors = 0;
     try {
         const a = new Client(0, ''); clients.push(a);
         await wait(() => a.id && a.round, 'host joins');
-        a.send({ type: 'configure', bots, scoreLimit: 200, duration: 1800000 });
+        a.send({ type: 'configure', map: map as MapChoice, bots, scoreLimit: 200, duration: 1800000 });
         for (let i = 1; i < count; i++) clients.push(new Client(i, a.room));
         await wait(() => clients.every(c => c.id && c.players.size === count + bots), `${count} humans + ${bots} bots join`);
+        await wait(() => clients.every(c => c.round?.mapChoice === map && c.round.mapId === a.round?.mapId), 'all clients receive the selected map');
         for (const c of clients) c.send({ type: 'ready', ready: true });
         await wait(() => clients.every(c => c.round?.phase === 'playing'), 'all clients start together');
         assert.equal(new Set(clients.map(c => c.round!.endsAt)).size, 1);
@@ -199,6 +210,7 @@ for (const count of counts) {
         const end = samples.at(-1)!, duration = (Date.now() - started) / 1000;
         for (const c of clients) c.measured = false;
         const row = {
+            mapChoice: map, mapId: a.round!.mapId,
             humans: count, bots, durationSeconds: +duration.toFixed(1), latencyMsOneWay: latency,
             tickHz: +((end.ticks - begin.ticks) / duration).toFixed(2),
             meanTickMs: +((end.totalTickMs - begin.totalTickMs) / (end.ticks - begin.ticks)).toFixed(3),
