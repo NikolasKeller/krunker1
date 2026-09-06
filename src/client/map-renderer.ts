@@ -1,6 +1,24 @@
 import * as THREE from 'three';
-import { BOXES, DETAIL_BOXES, RAMPS } from '../shared/map';
+import { BOXES, DETAIL_BOXES, FENCE_BOXES, BUILDING_ROOFS, ROOF_VENTS, RAMPS, type MapBox, type Ramp } from '../shared/map';
 import { batchMeshes, box, material } from './models';
+export interface MapObject {
+    id: string;
+    group: THREE.Group;
+    collider?: MapBox;
+    ramp?: Ramp;
+    building?: MapBox;
+    decoration?: 'ground' | 'paint' | 'skyline' | 'fabric';
+}
+function visualBody(b: MapBox): MapBox {
+    // Reserve space INSIDE the authored collision footprint for the existing
+    // ledges, plinths and trim. These are fixed design dimensions, never fitted
+    // to measured bounds: the geometry audit must catch future protrusions.
+    if (b.kind === 'building') return { ...b, w: b.w - (b.w > 5 ? .42 : .05), d: b.d - (b.w > 5 ? .76 : .05) };
+    if (b.kind === 'crate') return { ...b, w: b.w - (b.w > 4 ? .04 : 0), d: b.d - (b.w > 4 ? .26 : .22) };
+    if (b.kind === 'cover' && b.h > 2) return { ...b, w: b.w - .1, d: b.d - .164, y: b.y - .03, h: b.h - .06 };
+    if (b.kind === 'wall' && b.h === 6) return { ...b, w: b.w - (b.w < b.d ? .08 : 0), d: b.d - (b.d < b.w ? .08 : 0) };
+    return b;
+}
 function sign(scene: THREE.Object3D, text: string, x: number, y: number, z: number, width: number, height: number, rotation = 0, bg = '#263c3c', fg = '#eae3ce') {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -20,31 +38,45 @@ function sign(scene: THREE.Object3D, text: string, x: number, y: number, z: numb
     mesh.rotation.y = rotation;
     scene.add(mesh);
 }
-export function buildMap(scene: THREE.Scene) {
-    const staticGroup = new THREE.Group();
+export function buildMap(scene: THREE.Scene, { batch = true } = {}) {
+    // Keep object ownership until batching so headless audits measure the very
+    // same meshes (including signs and rotated details) that the game renders.
+    const objects: MapObject[] = [];
+    function object(id: string, physics: Omit<MapObject, 'id' | 'group'>) {
+        const group = new THREE.Group();
+        group.name = id;
+        objects.push({ id, group, ...physics });
+        scene.add(group);
+        return group;
+    }
+    const boxGroups = new Map<MapBox, THREE.Group>();
+    let staticGroup = object('ground', { decoration: 'ground' });
     box(staticGroup, 0, -0.25, 0, 180, 0.5, 180, 0xb98065);
-    for (const b of BOXES) {
+    for (const collider of BOXES) {
+        const b = visualBody(collider);
+        const staticGroup = object(`box:${BOXES.indexOf(collider)}:${b.kind}`, { collider, building: b.kind === 'building' ? collider : undefined });
+        boxGroups.set(collider, staticGroup);
         // These vans occupy the two existing low cover volumes, keeping movement/hitscan intact.
         if (b.kind === 'cover' && b.w === 7 && b.h === 1.7) {
             const body = 0xd4cfc0, glass = 0x30383c, tyre = 0x303233;
-            box(staticGroup, b.x, .66, b.z, 7, .65, 2, body);
+            box(staticGroup, b.x + .03, .66, b.z, 6.94, .65, 1.95, body);
             box(staticGroup, b.x + .35, 1.3, b.z, 5.5, .8, 1.86, body);
             box(staticGroup, b.x - 2.9, .95, b.z, 1.2, .15, 1.94, body);
             for (const side of [-1, 1]) {
                 for (const x of [-1.75, -.25, 1.25, 2.65]) {
                     box(staticGroup, b.x + x, 1.31, b.z + side * .94, 1.25, .56, .035, glass);
-                    box(staticGroup, b.x + x + .4, .9, b.z + side * 1.01, .2, .045, .025, 0x656563);
+                    box(staticGroup, b.x + x + .4, .9, b.z + side * .985, .2, .045, .025, 0x656563);
                 }
                 for (const x of [-2.3, 2.3]) {
                     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.45, .45, .16, 10), material(tyre));
-                    wheel.rotation.x = Math.PI / 2; wheel.position.set(b.x + x, .45, b.z + side * .92); staticGroup.add(wheel);
+                    wheel.rotation.x = Math.PI / 2; wheel.position.set(b.x + x, .45, b.z + side * .91); staticGroup.add(wheel);
                     const hub = new THREE.Mesh(new THREE.CylinderGeometry(.25, .25, .17, 10), material(0x969795));
                     hub.rotation.x = Math.PI / 2; hub.position.copy(wheel.position); staticGroup.add(hub);
                 }
             }
             box(staticGroup, b.x - 2.43, 1.31, b.z, .035, .56, 1.68, glass);
-            box(staticGroup, b.x - 3.51, .67, b.z, .035, .26, 1.25, 0x656563);
-            for (const z of [-.77, .77]) box(staticGroup, b.x - 3.53, .81, b.z + z, .04, .22, .25, 0xf0dfaf);
+            box(staticGroup, b.x - 3.4825, .67, b.z, .035, .26, 1.25, 0x656563);
+            for (const z of [-.77, .77]) box(staticGroup, b.x - 3.48, .81, b.z + z, .04, .22, .25, 0xf0dfaf);
             continue;
         }
         box(staticGroup, b.x, b.y, b.z, b.w, b.h, b.d, b.color);
@@ -120,16 +152,17 @@ export function buildMap(scene: THREE.Scene) {
             box(staticGroup, b.x, b.y + b.h / 2, b.z, b.w + 0.1, 0.12, b.d + 0.1, 0x345559);
         }
     }
-    for (const b of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
+    for (const collider of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
+        const b = visualBody(collider), staticGroup = boxGroups.get(collider)!;
         for (const side of [-1, 1]) {
             const face = b.z + side * (b.d / 2 + .09);
             box(staticGroup, b.x, 1.7, face, 3.3, 3.4, .12, b.x > 0 ? 0x3d5369 : 0x735c49);
             for (let y = .4; y < 3.4; y += .35) box(staticGroup, b.x, y, face + side * .075, 3.15, .04, .03, 0x30383c);
             box(staticGroup, b.x, 3.55, face, 3.7, .18, .4, 0x656563);
         }
-        for (let n = 0; n < 4; n++) box(staticGroup, b.x + 2.3 + n * .45, b.h + .92, b.z - 2, .08, .03, 1.6, 0x30383c);
     }
     for (const r of RAMPS) {
+        const staticGroup = object(`ramp:${RAMPS.indexOf(r)}`, { ramp: r });
         const x0 = r.x - r.w / 2, x1 = r.x + r.w / 2, z0 = r.z - r.d / 2, z1 = r.z + r.d / 2;
         const h = (x: number, z: number) => (0.5 + (r.axis === 'x' ? (x - r.x) / r.w : (z - r.z) / r.d) * r.sign) * r.h;
         const v = [x0, h(x0, z0), z0, x0, h(x0, z1), z1, x1, h(x1, z1), z1, x1, h(x1, z0), z0, x0, 0, z0, x0, 0, z1, x1, 0, z1, x1, 0, z0];
@@ -143,6 +176,7 @@ export function buildMap(scene: THREE.Scene) {
         staticGroup.add(mesh);
     }
     // Sparse angular paving fragments retain clean silhouettes and add scale to the yard.
+    staticGroup = object('ground-paint', { decoration: 'paint' });
     for (let i = 0; i < 115; i++) {
         const x = ((i * 29.73) % 70) - 35, z = ((i * 17.39) % 70) - 35;
         if (BOXES.some(b => Math.abs(x - b.x) < b.w / 2 + .5 && Math.abs(z - b.z) < b.d / 2 + .5)) continue;
@@ -157,18 +191,29 @@ export function buildMap(scene: THREE.Scene) {
     }
     box(staticGroup, 0, 0.009, 21, 5, 0.018, 6, 0x96938a);
     for (const x of [-1, 1]) {
-        box(staticGroup, x * 4.55, 4.015, 0, 0.17, 0.03, 8, 0xe4b450);
-        box(staticGroup, x * 4.5, 4.015, -8, 0.13, 0.03, 6, 0xe4b450);
+        staticGroup = boxGroups.get(BOXES[8])!;
+        // Twenty micrometres of paint avoids coplanar faces without a ledge.
+        box(staticGroup, x * 4.55, 4, 0, 0.17, .00004, 8, 0xe4b450);
+        staticGroup = boxGroups.get(BOXES[9])!;
+        box(staticGroup, x * 4.5, 4, -8, 0.13, .00004, 6, 0xe4b450);
     }
     // Small architectural accents stay geometric, just like the reference maps.
-    for (const b of DETAIL_BOXES)
+    for (const b of DETAIL_BOXES) {
+        const roof = BUILDING_ROOFS.find(r => r.box === b), vent = ROOF_VENTS.find(v => v.body === b || v.cap === b);
+        staticGroup = object(`detail:${DETAIL_BOXES.indexOf(b)}`, { collider: b, building: roof?.building ?? vent?.building });
         box(staticGroup, b.x, b.y, b.z, b.w, b.h, b.d, b.color);
+        if (vent?.cap === b) {
+            for (let n = 0; n < 4; n++) box(staticGroup, b.x - .7 + n * .45, b.y + b.h / 2 - .015 + .00002, b.z, .08, .03, 1.6, 0x30383c);
+        }
+    }
     for (let i = 0; i < 16; i++) {
+        staticGroup = object(`skyline:${i}`, { decoration: 'skyline' });
         const x = (i % 8 - 3.5) * 15, z = i < 8 ? -48 : 49, h = 5 + (i * 7 % 9);
         box(staticGroup, x, h / 2, z, 10, h, 9, [0x797b7c, 0x9b8173, 0x969795, 0x687580][i % 4]);
         box(staticGroup, x, h + 0.12, z, 10.4, 0.25, 9.4, 0xb4b1a9);
     }
     // A fixed crane behind the boundary gives the industrial yard a recognisable skyline.
+    staticGroup = object('crane', { decoration: 'skyline' });
     const steel = 0x655c4e, yellow = 0xb89a5f;
     for (const x of [-30.7, -29.3]) box(staticGroup, x, 10, -44, .22, 20, .22, steel);
     for (let y = 1; y < 20; y += 2) {
@@ -185,36 +230,58 @@ export function buildMap(scene: THREE.Scene) {
     box(staticGroup, -29.6, 17.8, -42.88, 1.5, .85, .04, 0x30383c);
     box(staticGroup, -12, 15.3, -44, .06, 7.2, .06, steel);
     box(staticGroup, -11.8, 11.75, -44, .46, .16, .12, steel);
-    // Fences sit on top of solid boundary walls; their thin bars require no extra physics.
-    for (const side of [-1, 1]) {
-        for (let z = -30; z <= 30; z += 3) box(staticGroup, side * 38, 7, z, .12, 2, .12, 0x656563);
-        for (const y of [6.4, 7.6]) box(staticGroup, side * 38, y, 0, .06, .06, 60, 0x656563);
-        for (let z = -30; z < 30; z += .75) {
-            const wire = box(staticGroup, side * 38, 7, z, .035, 1.6, .035, 0x969795);
+    // The shared panel collider covers the bars, including their upper extent.
+    for (const b of FENCE_BOXES) {
+        staticGroup = object(`fence:${Math.sign(b.x)}`, { collider: b });
+        for (let z = -30; z <= 30; z += 3) box(staticGroup, b.x, b.y, z, .12, b.h, .12, b.color);
+        for (const y of [6.4, 7.6]) box(staticGroup, b.x, y, 0, .06, .06, 60, b.color);
+        for (let z = -29.6; z < 29.6; z += .75) {
+            const wire = box(staticGroup, b.x, b.y, z, .035, 1.6, .035, 0x969795);
             wire.rotation.x = .45;
         }
     }
     // Static folded pennants and broad wall flags, kept above playable sight lines.
     for (const z of [-13, 13]) {
+        staticGroup = object(`pennants:${z}`, { decoration: 'fabric' });
         box(staticGroup, 0, 8.5, z, 26, .035, .035, 0x65503d);
         for (let x = -10; x <= 10; x += 2.5) {
             const flag = box(staticGroup, x, 8.05, z, .72, .9, .035, (x + 10) % 5 === 0 ? 0x3d5369 : 0xb3654c);
             flag.rotation.z = .12; flag.rotation.y = .16;
         }
     }
-    for (const b of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
+    for (const collider of BOXES.filter(b => b.kind === 'building' && b.w > 5)) {
+        const b = visualBody(collider), staticGroup = boxGroups.get(collider)!;
         const z = b.z + b.d / 2 + .16;
-        box(staticGroup, b.x + 5.2, 5.7, z, 1.4, 1.1, .055, b.x > 0 ? 0x3d5369 : 0xb3654c);
-        box(staticGroup, b.x + 5.2, 5.7, z + .035, 1.4, .2, .03, 0xd4bf84);
-        box(staticGroup, b.x + 4.95, 5.7, z + .035, .18, 1.1, .03, 0xd4bf84);
+        const y = Math.min(5.7, b.y + b.h / 2 - .55);
+        box(staticGroup, b.x + 5.2, y, z, 1.4, 1.1, .055, b.x > 0 ? 0x3d5369 : 0xb3654c);
+        box(staticGroup, b.x + 5.2, y, z + .035, 1.4, .2, .03, 0xd4bf84);
+        box(staticGroup, b.x + 4.95, y, z + .035, .18, 1.1, .03, 0xd4bf84);
     }
-    // All static solid colours share one vertex-colour batch; props add triangles, not draw calls.
-    batchMeshes(staticGroup);
-    scene.add(staticGroup);
-    sign(scene, 'SANDYARD', -19, 5.65, -5.94, 7.6, 1.4, 0, '#355b5a');
-    sign(scene, 'WAREHOUSE 02', 19, 5.2, 20.06, 7.5, 1.3, 0, '#3b5b5b');
-    sign(scene, 'A  →', -12, 2.3, 13.94, 3, 1.15, Math.PI, '#a66348');
-    sign(scene, '←  B', 20, 2.3, -15.94, 3, 1.15, 0, '#426e74');
-    sign(scene, 'CARGO / 03', 27.5, 1.65, -2.54, 3.5, .65, 0, '#345559', '#e6dbc1');
-    sign(scene, '01', -0.5, 5.65, 1.51, 2.1, 1.25, 0, '#cbbb9b', '#f5edda');
+    function facadeSign(b: MapBox, text: string, y: number, width: number, height: number, side: number, bg: string, fg?: string) {
+        const body = visualBody(b);
+        const faceOffset = b.kind === 'cover' ? .081 : y < 3.5 ? .181 : .01;
+        sign(boxGroups.get(b)!, text, b.x, y, b.z + side * (body.d / 2 + faceOffset), width, height, side < 0 ? Math.PI : 0, bg, fg);
+    }
+    facadeSign(BOXES[4], 'SANDYARD', 5.65, 7.6, 1.4, 1, '#355b5a');
+    facadeSign(BOXES[5], 'WAREHOUSE 02', 5.2, 7.5, 1.3, 1, '#3b5b5b');
+    facadeSign(BOXES[7], 'A  →', 2.3, 3, 1.15, -1, '#a66348');
+    facadeSign(BOXES[6], '←  B', 2.3, 3, 1.15, 1, '#426e74');
+    facadeSign(BOXES[20], 'CARGO / 03', 1.65, 3.5, .65, 1, '#345559', '#e6dbc1');
+    facadeSign(BOXES[15], '01', 5.65, 2.1, 1.25, 1, '#cbbb9b', '#f5edda');
+    if (batch) {
+        // Flatten ownership groups with world transforms intact. Textured signs
+        // keep their own materials; all solid colours still share one draw call.
+        staticGroup = new THREE.Group();
+        scene.add(staticGroup);
+        scene.updateMatrixWorld(true);
+        for (const { group } of objects) {
+            for (const mesh of [...group.children]) {
+                if (mesh instanceof THREE.Mesh && (mesh.material as THREE.MeshBasicMaterial).map) scene.attach(mesh);
+                else staticGroup.attach(mesh);
+            }
+            scene.remove(group);
+        }
+        batchMeshes(staticGroup);
+    }
+    return objects;
 }

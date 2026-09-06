@@ -11,6 +11,7 @@
     "build": "npm run typecheck && vite build && node scripts/compress-client.mjs && esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",
     "start": "node dist/server.js",
     "test": "tsx --test tests/*.test.ts",
+    "audit:map": "tsx scripts/audit-map-geometry.ts",
     "test:movement": "tsx --test tests/movement-stall.test.ts",
     "test:movement:ws": "tsx tests/movement-websocket.ts",
     "test:integration": "tsx tests/integration.ts",

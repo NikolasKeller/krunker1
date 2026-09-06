@@ -105,7 +105,11 @@ function resolveMovement(p: MoveState, dt: number) {
         for (const b of BOXES) {
             if (p.y >= b.y + b.h / 2 - 1e-9 || p.y + bodyH <= b.y - b.h / 2 + 1e-9)
                 continue;
-            if (Math.abs(p.x - b.x) < b.w / 2 + RADIUS && Math.abs(p.z - b.z) < b.d / 2 + RADIUS) {
+            // A resolved contact is not penetration on the other axis. At real
+            // map coordinates (-26.38 against x=-19), subtraction can round a
+            // tangent distance below half + RADIUS and eject Z an entire house
+            // width. Use the same contact tolerance as the vertical faces.
+            if (Math.abs(p.x - b.x) < b.w / 2 + RADIUS - 1e-9 && Math.abs(p.z - b.z) < b.d / 2 + RADIUS - 1e-9) {
                 const top = b.y + b.h / 2;
                 if (top - p.y <= 0.34 && p.grounded && !BOXES.some(ceiling =>
                     Math.abs(p.x - ceiling.x) < ceiling.w / 2 + RADIUS && Math.abs(p.z - ceiling.z) < ceiling.d / 2 + RADIUS &&

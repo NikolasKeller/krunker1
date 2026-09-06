@@ -72,7 +72,8 @@ test('input validation rejects NaN, impossible speed, wrong buttons and invalid 
     assert.equal(validInput(null), false);
 });
 test('movement is deterministic for prediction replay and achieves arcade running speed', () => {
-    const p = moveState(32, 0, 30), q = { ...p }, i = { ...neutralInput(1), forward: 1 };
+    // x=32 runs into the crate at (31,27); a speed check needs a clear lane.
+    const p = moveState(34, 0, 30), q = { ...p }, i = { ...neutralInput(1), forward: 1 };
     for (let n = 0; n < 60; n++) {
         move(p, i);
         move(q, i);

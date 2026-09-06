@@ -6,6 +6,7 @@ import { clipPlayerMotion } from '../src/shared/collision';
 import { correctedPosition, predictInput, reconcile, previewInput } from '../src/client/prediction';
 import { Room } from '../src/server/simulation';
 import { STEP } from '../src/shared/types';
+import { wireInput } from '../src/shared/protocol';
 
 function isolated(body: (boxes: MapBox[]) => void) {
     const boxes = [...SOLID_BOXES], ramps = [...RAMPS];
@@ -22,6 +23,28 @@ test('maximum-speed movement cannot cross a thin collider in one tick (entry-sid
     move(p, neutralInput());
     assert.ok(p.x <= 31.545 + 1e-9, `crossed thin wall: ${p.x}`);
 }));
+
+test('straight walking at a real building contact never ejects the player across the other face', () => {
+    const p = moveState(-28.38, 0, -13);
+    // Packet yaw is float32. The old resolver reached x=-26.38 on tick 15,
+    // misread its rounded contact as penetration, then teleported z to -5.62.
+    for (let seq = 1; seq <= 120; seq++) {
+        const before = { ...p };
+        move(p, wireInput({ ...neutralInput(seq), forward: 1, yaw: -Math.PI / 2 }));
+        assert.ok(Math.hypot(p.x - before.x, p.z - before.z) <= MAX_SPEED * STEP + 1e-9, `unphysical displacement at tick ${seq}`);
+        assert.ok(Math.abs(p.z + 13) < 1e-5, `sideways ejection at tick ${seq}: ${p.z}`);
+        assert.ok(p.x <= -26.38 + 1e-9);
+    }
+    assert.equal(p.x, -26.38);
+});
+
+test('walking into the yard crate stops instead of ejecting sideways into the speed-test lane', () => {
+    const p = moveState(32, 0, 30);
+    for (let seq = 1; seq <= 60; seq++) move(p, { ...neutralInput(seq), forward: 1 });
+    assert.equal(p.x, 32);
+    assert.equal(p.z, 28.88);
+    assert.equal(p.vz, 0);
+});
 
 test('every solid map box blocks maximum-speed air, slide and hop approaches on both axes and several angles', () => isolated(boxes => {
     let checks = 0, fastest = 0;

@@ -52,19 +52,28 @@ export const BOXES: MapBox[] = [
 ];
 // Solid architectural props use the same dimensions for rendering, movement and hitscan.
 export const LAMP_POSITIONS = [[-32, 18], [32, -18], [-28, -34], [28, 34]];
+export const BUILDING_ROOFS = BOXES.filter(b => b.kind === 'building').map(building => ({
+    building,
+    box: { x: building.x, y: building.y + building.h / 2 + .12, z: building.z, w: building.w, h: .24, d: building.d, color: 0xb4b1a9 },
+}));
+export const ROOF_VENTS = BOXES.filter(b => b.kind === 'building' && b.w > 5).map(building => ({
+    building,
+    body: { x: building.x + 3, y: building.y + building.h / 2 + .4, z: building.z - 2, w: 2.2, h: .8, d: 1.8, color: 0x656563 },
+    cap: { x: building.x + 3, y: building.y + building.h / 2 + .85, z: building.z - 2, w: 2.4, h: .12, d: 2, color: 0x969795 },
+}));
 export const DETAIL_BOXES: MapBox[] = [
-    ...BOXES.filter(b => b.kind === 'building').map(b => ({ x: b.x, y: b.y + b.h / 2 + .12, z: b.z, w: b.w + .35, h: .24, d: b.d + .35, color: 0xb4b1a9 })),
-    ...BOXES.filter(b => b.kind === 'building' && b.w > 5).flatMap(b => [
-        { x: b.x + 3, y: b.h + .4, z: b.z - 2, w: 2.2, h: .8, d: 1.8, color: 0x656563 },
-        { x: b.x + 3, y: b.h + .85, z: b.z - 2, w: 2.4, h: .12, d: 2, color: 0x969795 },
-    ]),
+    ...BUILDING_ROOFS.map(r => r.box),
+    ...ROOF_VENTS.flatMap(v => [v.body, v.cap]),
     ...LAMP_POSITIONS.flatMap(([x, z]) => [
         { x, y: 2.5, z, w: .15, h: 5, d: .15, color: 0x65726e },
         { x: x + .5, y: 4.95, z, w: 1.1, h: .15, d: .15, color: 0x65726e },
         { x: x + 1, y: 4.83, z, w: .5, h: .13, d: .3, color: 0xe9e2c3 },
     ]),
 ];
-export const SOLID_BOXES = [...BOXES, ...DETAIL_BOXES];
+// Fence panels read as obstacles even above the boundary walls. Their whole
+// visible panel, including posts and wires, blocks movement and hitscan.
+export const FENCE_BOXES: MapBox[] = [-1, 1].map(side => ({ x: side * 38, y: 7, z: 0, w: .12, h: 2, d: 60.12, color: 0x656563 }));
+export const SOLID_BOXES = [...BOXES, ...DETAIL_BOXES, ...FENCE_BOXES];
 export const RAMPS: Ramp[] = [
     { x: -10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: 1, color: 0x9d9587 },
     { x: 10, z: 0, w: 10, d: 7, h: 4, axis: 'x', sign: -1, color: 0x9d9587 },
