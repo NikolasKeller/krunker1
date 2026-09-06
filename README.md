@@ -13,7 +13,7 @@ npm run dev
 
 Open **http://localhost:5173**. Vite proxies `/ws` and `/api` to the game server on port 3000. Click Create Lobby and share the generated `/?room=AB7K4` URL. Opening an invite joins that lobby directly. On a LAN, use `http://<host-ip>:5173` on both machines. The last ready player triggers a shared three-second countdown. The host can start early; match settings (mode, score/time limit, bots) reset readiness. Bots fill five slots by default. The visible **Room bots** controls let the host select **No bots (friends only)** for a private 1v1, or 1–7 bots with Easy, Normal, or Hard difficulty. Everyone joining the invite receives the same room settings, which persist through the match and rematches. Only the host can change them in the lobby.
 
-Share a room with `http://localhost:5173/?room=YOUR-ROOM`. Edit your callsign in the lobby; duplicates receive a numbered suffix. Join another room by code or create a new lobby in the room panel. Each tab has its own reconnect token. Disconnected identities are retained for 20 seconds; empty rooms are removed after 30 seconds. Disconnected players disappear from the roster immediately; host ownership passes to the next connected player. At capacity, a new friend can take a disconnected slot.
+Share a room with `http://localhost:5173/?room=YOUR-ROOM`. Edit your callsign in the lobby; duplicates receive a numbered suffix. Join another room by code or create a new lobby in the room panel. Each tab has its own reconnect token. Reconnects retain the same actor, remaining health, loadout and death timer. Disconnected identities are retained for 20 seconds; empty rooms are removed after 30 seconds. Disconnected players disappear from the roster immediately; host ownership passes to the next connected player. At capacity, a new friend can take a disconnected slot.
 
 ## Production / Railway
 
@@ -37,17 +37,19 @@ Open **http://localhost:8080**. This one HTTP server serves the compiled client,
 | Tab | Live scoreboard |
 | Esc | Release pointer lock and open pause menu |
 
-Audio unlocks on Ready or Click to Play. When the countdown ends (or an invite joins a running match), everyone enters the match together. Click to Play captures the mouse; browsers require this user gesture. Mouse sensitivity, master volume, and graphics quality are saved locally. Changing class during a live round applies on the next respawn. Reloads have unlimited reserve ammunition. The server has no fall damage. Spawn protection lasts 1.5 seconds and ends when firing. Death lasts 2.2 seconds.
+Audio unlocks on Ready or Click to Play. When the countdown ends (or an invite joins a running match), everyone enters the match together. Click to Play captures the mouse; browsers require this user gesture. Mouse sensitivity, master volume, and graphics quality are saved locally. Class changes apply immediately, including the weapon in hand, ammo and viewmodel. Team changes move you to the new team’s spawn immediately. Both preserve remaining health; neither can revive a dead player or refill ammunition. Reloads have unlimited reserve ammunition. The server has no fall damage. There is no spawn protection: living opponents are damageable immediately, including after respawn or a late join. Death lasts 2.2 seconds.
 
 ## Game
 
-- **Hunter**: Triangle .50 sniper, 60 HP, 3 rounds, 180 ms scope-in; lethal torso damage.
+- **Hunter**: Triangle .50 sniper, 100 HP, 3 rounds, 180 ms scope-in; lethal torso damage.
 - **Triggerman**: 100 HP, 30-round assault rifle, predictable recoil and moderate spread.
 - **Vince**: 100 HP, two-shell shotgun with eight server-traced pellets and steep range falloff.
 - **Run N Gun**: 100 HP, faster movement, 34-round SMG with a 72 ms shot interval.
 - Free-for-all and team deathmatch. Default: first to 25 eliminations or four minutes, configurable by the host. Results return everyone to the same lobby; after six seconds players can ready up for a new round. Results remain visible until that round starts.
 - Sandyard: three connected lanes, a raised central platform, three ramps, an underpass, long perimeter sightlines, containers, crates, and short-range corners.
 - Block characters, animated first-person weapons, scope, muzzle flashes, tracers, impact marks, blood particles, synthesized weapon audio, hit sounds, headshot feedback, directional damage, health/ammo HUD, minimap, killfeed, scoreboards, and results.
+
+Weapon damage has been rescaled to preserve the former 60-HP Hunter kill times with the common 100-HP cap. See [fairness verification and before/after weapon timings](artifacts/fairness/README.md).
 
 ## Architecture and netcode
 
@@ -118,7 +120,7 @@ Squada One is bundled and preloaded locally for the HUD and menus; see [font sou
 
 `npm run preview:hud` exports standalone `artifacts/hud-preview/{lobby,ffa,tdm,body-hit,headshot,multikill}.html` pages using the actual UI markup, stylesheet and embedded font. The combat fixtures freeze the yellow damage animation 150 ms into its lifetime and display the hitmarker; lethal hits also show the kill notice. They use a software geometry backdrop and require an external browser to verify layout; they do not connect to or change a live match. Capture them at 1024×614 to compare with the supplied reference, then check the deployed lobby and match at 1280×800 for clipping.
 
-`tests/hud.test.ts` loads the production stylesheet in jsdom and checks yellow body/head damage, white HEADSHOT with yellow +50, multi-kill text, hitmarker visibility/colour/expiry, and a deterministic aimed server headshot in team deathmatch. Team numbers are authoritative team **kill counts**, matching this game's TDM rules. An injected 175-damage event renders `+175`; actual damage is capped to the target's remaining HP (for example, `+60` against a full-health Hunter). This polish pass does not change damage or scoring rules.
+`tests/hud.test.ts` loads the production stylesheet in jsdom and checks yellow body/head damage, white HEADSHOT with yellow +50, multi-kill text, hitmarker visibility/colour/expiry, and a deterministic aimed server headshot in team deathmatch. Team numbers are authoritative team **kill counts**, matching this game's TDM rules. An injected 175-damage event renders `+175`; actual damage is capped to the target's remaining HP (for example, `+100` against a full-health Hunter). This polish pass does not change damage or scoring rules.
 
 `tests/hud-network.test.ts` also fires an aimed authoritative headshot through a real server and two production Network clients using binary WebSockets. It asserts the resulting HUD damage, hitmarker, headshot bonus and team score; the victim receives the same events without personal hit/kill feedback. TDM's personal elimination counter remains hidden when kill feedback expires and when switching modes.
 

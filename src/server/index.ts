@@ -30,6 +30,7 @@ interface Connection {
     lastSnapshotAt: number;
     lastInputAt: number;
     lastChatAt: number;
+    selectionAck?: number;
 }
 export function createGameServer() {
     const rooms = new Map<string, Room>();
@@ -148,8 +149,8 @@ export function createGameServer() {
                         s.connection = c;
                         if (!s.room.host)
                             s.room.host = s.actor.state.id;
-                        if (s.room.round.phase === 'playing')
-                            s.room.spawn(s.actor, now);
+                        // Resume the same actor, health and death timer. A token
+                        // takeover/reconnect must never act as a free respawn.
                     }
                 }
                 if (!c.actor) {
@@ -217,24 +218,25 @@ export function createGameServer() {
                 if (!m.ready) r.cancelCountdown();
                 r.updateLobby(now);
             }
-            if (m.type === 'team' && (m.playerId === undefined || typeof m.playerId === 'string'))
-                r.moveTeam(a.state.id, m.playerId ?? a.state.id, m.team, now);
-            if (m.type === 'class' && CLASS_IDS.includes(m.classId) && (m.team === undefined || ['blue', 'red'].includes(m.team))) {
-                if (r.round.phase !== 'playing') {
-                    // Older clients bundle team and class. New class-only requests retain host assignments,
-                    // including a team change whose snapshot has not reached the choosing player yet.
-                    const team = m.team ?? a.state.team;
-                    if (a.state.classId !== m.classId || a.state.team !== team) {
-                        a.state.ready = false;
-                        r.cancelCountdown();
-                    }
-                    a.state.classId = m.classId;
-                    a.state.team = team;
-                    r.spawn(a, now);
+            if (m.type === 'team' || m.type === 'class') {
+                if (m.requestId !== undefined) {
+                    if (!Number.isSafeInteger(m.requestId) || m.requestId <= 0) return;
+                    if (m.requestId <= (c.selectionAck ?? 0)) { snapshot(c); return; }
+                    c.selectionAck = m.requestId;
                 }
-                else {
-                    a.pendingClass = m.classId;
+                let accepted = false;
+                if (m.type === 'team' && (m.playerId === undefined || typeof m.playerId === 'string'))
+                    accepted = r.moveTeam(a.state.id, m.playerId ?? a.state.id, m.team, now);
+                if (m.type === 'class' && CLASS_IDS.includes(m.classId) && (m.team === undefined || ['blue', 'red'].includes(m.team))) {
+                    accepted = r.changeClass(a, m.classId, now);
+                    // Legacy bundled requests still work; modern requests own
+                    // only one field so an old team preference cannot race a move.
+                    if (accepted && m.team !== undefined) accepted = r.moveTeam(a.state.id, a.state.id, m.team, now);
                 }
+                if (!accepted) send(c, { type: 'error', message: 'Selection unavailable. Team and class changes apply immediately during the lobby or match; only your own team can change during play.' }, true);
+                // ACK and state travel together, including no-ops/rejections.
+                // If this socket is blocked the regular snapshot retains the ACK.
+                snapshot(c);
             }
             if (m.type === 'configure' && r.host === a.state.id && r.round.phase !== 'playing') {
                 r.resetReady();
@@ -255,9 +257,6 @@ export function createGameServer() {
             c.actor.connected = false;
             c.actor.state.ready = false;
             c.actor.queue = [];
-            c.actor.state.alive = false;
-            c.actor.state.hp = 0;
-            c.actor.state.respawnAt = Date.now() + 20000;
             if (c.token) {
                 const s = sessions.get(c.token);
                 if (s) {
@@ -295,7 +294,7 @@ export function createGameServer() {
                 removed.push(id);
                 c.baseline.delete(id);
             }
-        const metadata = { round: c.room.round, host: c.room.host, difficulty: c.room.difficulty, bots: c.room.botCount };
+        const metadata = { round: c.room.round, host: c.room.host, difficulty: c.room.difficulty, bots: c.room.botCount, selectionAck: c.selectionAck };
         const encoded = JSON.stringify(metadata);
         send(c, { type: 'snapshot', n: snapshotId, base: full ? 0 : c.snapshot, time: now, full, players: patches, removed, ...(full || encoded !== c.metadata ? metadata : {}) });
         c.metadata = encoded;

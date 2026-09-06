@@ -1,0 +1,278 @@
+[
+  {
+    "weapon": "sniper",
+    "oldDamage": 110,
+    "newDamage": 184,
+    "oldAppliedDamage": 110,
+    "newAppliedDamage": 184,
+    "distanceMetres": 5,
+    "pelletsHit": 1,
+    "before": [
+      {
+        "hp": 60,
+        "shots": 1,
+        "nominalTtkMs": 0,
+        "commandTtkMs": 0
+      },
+      {
+        "hp": 100,
+        "shots": 1,
+        "nominalTtkMs": 0,
+        "commandTtkMs": 0
+      }
+    ],
+    "after": {
+      "hp": 100,
+      "shots": 1,
+      "nominalTtkMs": 0,
+      "measuredCommandTtkMs": 0
+    },
+    "zoneShots": [
+      {
+        "zone": "head",
+        "damage": 276,
+        "shots": 1
+      },
+      {
+        "zone": "body",
+        "damage": 184,
+        "shots": 1
+      },
+      {
+        "zone": "legs",
+        "damage": 101,
+        "shots": 1
+      }
+    ]
+  },
+  {
+    "weapon": "rifle",
+    "oldDamage": 25,
+    "newDamage": 42,
+    "oldAppliedDamage": 25,
+    "newAppliedDamage": 42,
+    "distanceMetres": 5,
+    "pelletsHit": 1,
+    "before": [
+      {
+        "hp": 60,
+        "shots": 3,
+        "nominalTtkMs": 240,
+        "commandTtkMs": 266.6666666666667
+      },
+      {
+        "hp": 100,
+        "shots": 4,
+        "nominalTtkMs": 360,
+        "commandTtkMs": 400
+      }
+    ],
+    "after": {
+      "hp": 100,
+      "shots": 3,
+      "nominalTtkMs": 240,
+      "measuredCommandTtkMs": 266.6666666666667
+    },
+    "zoneShots": [
+      {
+        "zone": "head",
+        "damage": 63,
+        "shots": 2
+      },
+      {
+        "zone": "body",
+        "damage": 42,
+        "shots": 3
+      },
+      {
+        "zone": "legs",
+        "damage": 34,
+        "shots": 3
+      }
+    ]
+  },
+  {
+    "weapon": "shotgun",
+    "oldDamage": 24,
+    "newDamage": 40,
+    "oldAppliedDamage": 24,
+    "newAppliedDamage": 40,
+    "distanceMetres": 5,
+    "pelletsHit": 8,
+    "before": [
+      {
+        "hp": 60,
+        "shots": 1,
+        "nominalTtkMs": 0,
+        "commandTtkMs": 0
+      },
+      {
+        "hp": 100,
+        "shots": 1,
+        "nominalTtkMs": 0,
+        "commandTtkMs": 0
+      }
+    ],
+    "after": {
+      "hp": 100,
+      "shots": 1,
+      "nominalTtkMs": 0,
+      "measuredCommandTtkMs": 0
+    },
+    "zoneShots": [
+      {
+        "zone": "head",
+        "damage": 54,
+        "shots": 1
+      },
+      {
+        "zone": "body",
+        "damage": 40,
+        "shots": 1
+      },
+      {
+        "zone": "legs",
+        "damage": 32,
+        "shots": 1
+      }
+    ]
+  },
+  {
+    "weapon": "smg",
+    "oldDamage": 18,
+    "newDamage": 30,
+    "oldAppliedDamage": 18,
+    "newAppliedDamage": 30,
+    "distanceMetres": 5,
+    "pelletsHit": 1,
+    "before": [
+      {
+        "hp": 60,
+        "shots": 4,
+        "nominalTtkMs": 216,
+        "commandTtkMs": 250
+      },
+      {
+        "hp": 100,
+        "shots": 6,
+        "nominalTtkMs": 360,
+        "commandTtkMs": 416.66666666666663
+      }
+    ],
+    "after": {
+      "hp": 100,
+      "shots": 4,
+      "nominalTtkMs": 216,
+      "measuredCommandTtkMs": 250
+    },
+    "zoneShots": [
+      {
+        "zone": "head",
+        "damage": 45,
+        "shots": 3
+      },
+      {
+        "zone": "body",
+        "damage": 30,
+        "shots": 4
+      },
+      {
+        "zone": "legs",
+        "damage": 24,
+        "shots": 5
+      }
+    ]
+  },
+  {
+    "weapon": "pistol",
+    "oldDamage": 24,
+    "newDamage": 40,
+    "oldAppliedDamage": 24,
+    "newAppliedDamage": 40,
+    "distanceMetres": 5,
+    "pelletsHit": 1,
+    "before": [
+      {
+        "hp": 60,
+        "shots": 3,
+        "nominalTtkMs": 480,
+        "commandTtkMs": 500
+      },
+      {
+        "hp": 100,
+        "shots": 5,
+        "nominalTtkMs": 960,
+        "commandTtkMs": 1000
+      }
+    ],
+    "after": {
+      "hp": 100,
+      "shots": 3,
+      "nominalTtkMs": 480,
+      "measuredCommandTtkMs": 500
+    },
+    "zoneShots": [
+      {
+        "zone": "head",
+        "damage": 64,
+        "shots": 2
+      },
+      {
+        "zone": "body",
+        "damage": 40,
+        "shots": 3
+      },
+      {
+        "zone": "legs",
+        "damage": 32,
+        "shots": 4
+      }
+    ]
+  },
+  {
+    "weapon": "knife",
+    "oldDamage": 65,
+    "newDamage": 109,
+    "oldAppliedDamage": 33,
+    "newAppliedDamage": 55,
+    "distanceMetres": 2,
+    "pelletsHit": 1,
+    "before": [
+      {
+        "hp": 60,
+        "shots": 2,
+        "nominalTtkMs": 450,
+        "commandTtkMs": 450
+      },
+      {
+        "hp": 100,
+        "shots": 4,
+        "nominalTtkMs": 1350,
+        "commandTtkMs": 1350
+      }
+    ],
+    "after": {
+      "hp": 100,
+      "shots": 2,
+      "nominalTtkMs": 450,
+      "measuredCommandTtkMs": 450
+    },
+    "zoneShots": [
+      {
+        "zone": "head",
+        "damage": 55,
+        "shots": 2
+      },
+      {
+        "zone": "body",
+        "damage": 55,
+        "shots": 2
+      },
+      {
+        "zone": "legs",
+        "damage": 55,
+        "shots": 2
+      }
+    ]
+  }
+]

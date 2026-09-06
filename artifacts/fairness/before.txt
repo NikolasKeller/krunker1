@@ -1,0 +1,46 @@
+✖ a freshly spawned player takes server damage without firing or waiting for immunity (2.33075ms)
+✖ an obsolete rewound life cannot remove the current player hitbox (1.013167ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 231.625083
+
+✖ failing tests:
+
+test at ../../../../private/tmp/arena-fairness-base/tests/fairness.test.ts:16:1
+✖ a freshly spawned player takes server damage without firing or waiting for immunity (2.33075ms)
+  AssertionError [ERR_ASSERTION]: fresh spawn: 100 -> 100
+      at TestContext.<anonymous> (/private/tmp/arena-fairness-base/tests/fairness.test.ts:20:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at ../../../../private/tmp/arena-fairness-base/tests/fairness.test.ts:23:1
+✖ an obsolete rewound life cannot remove the current player hitbox (1.013167ms)
+  AssertionError [ERR_ASSERTION]: new life against old history: 100 -> 100
+      at TestContext.<anonymous> (/private/tmp/arena-fairness-base/tests/fairness.test.ts:31:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

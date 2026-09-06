@@ -57,7 +57,7 @@ test('team assignment authorizes self or host, validates targets and cancels rea
     friend.connected = false;
     assert.equal(room.moveTeam(host.state.id, friend.state.id, 'red', 1300), false);
     friend.connected = true;
-    for (const phase of ['playing', 'results'] as const) {
+    for (const phase of ['results'] as const) {
         room.round.phase = phase;
         assert.equal(room.moveTeam(host.state.id, friend.state.id, 'red', 1400), false);
         assert.equal(room.moveTeam(friend.state.id, friend.state.id, 'red', 1400), false);

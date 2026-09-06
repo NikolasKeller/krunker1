@@ -1,0 +1,861 @@
+{
+  "evidence": "Deterministic 120-second production interpolation replay; no browser/GPU or kernel impairment measurement.",
+  "cases": [
+    {
+      "profile": "stable",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 350,
+        "p99": 350,
+        "max": 350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 50
+      },
+      "renderStepMetres": {
+        "p50": 0.0640306442702201,
+        "p95": 0.08972258670841271,
+        "p99": 0.08998519594688559,
+        "max": 0.0899981009198781
+      },
+      "recoveryStepMetres": {
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "max": 0
+      },
+      "playbackAgeMs": {
+        "p50": 275,
+        "p95": 275,
+        "p99": 275,
+        "max": 275
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00033981957699324994,
+        "p95": 0.0007385362252367855,
+        "p99": 0.0007586440514462112,
+        "max": 0.4948596330364402
+      },
+      "interpolationUnderruns": 0,
+      "interpolationUnderrunFrames": 0,
+      "underrunStartsMs": [],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "stable",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 350,
+        "p99": 350,
+        "max": 350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 100,
+        "max": 150
+      },
+      "renderStepMetres": {
+        "p50": 0.0640153862692312,
+        "p95": 0.08972088663392308,
+        "p99": 0.08998556097877403,
+        "max": 0.08999809568279889
+      },
+      "recoveryStepMetres": {
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "max": 0
+      },
+      "playbackAgeMs": {
+        "p50": 366.66666666665697,
+        "p95": 366.66666666665697,
+        "p99": 366.66666666665697,
+        "max": 366.66666666665697
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003247278250952945,
+        "p95": 0.001732578719773059,
+        "p99": 0.002829214007654457,
+        "max": 0.4948596330364402
+      },
+      "interpolationUnderruns": 0,
+      "interpolationUnderrunFrames": 0,
+      "underrunStartsMs": [],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "stable",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 350,
+        "p99": 350,
+        "max": 350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 50
+      },
+      "renderStepMetres": {
+        "p50": 0.02668579106047808,
+        "p95": 0.037390195600792264,
+        "p99": 0.03749413365601614,
+        "max": 0.03749920871661752
+      },
+      "recoveryStepMetres": {
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "max": 0
+      },
+      "playbackAgeMs": {
+        "p50": 275,
+        "p95": 275,
+        "p99": 275,
+        "max": 275
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0002930501417504061,
+        "p95": 0.0007066555580461653,
+        "p99": 0.0007493514800884782,
+        "max": 0.5098464826151945
+      },
+      "interpolationUnderruns": 0,
+      "interpolationUnderrunFrames": 0,
+      "underrunStartsMs": [],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "stable",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 350,
+        "p99": 350,
+        "max": 350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 100,
+        "max": 150
+      },
+      "renderStepMetres": {
+        "p50": 0.026673077612146656,
+        "p95": 0.03738441112845958,
+        "p99": 0.03749398374112636,
+        "max": 0.03749920653453227
+      },
+      "recoveryStepMetres": {
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "max": 0
+      },
+      "playbackAgeMs": {
+        "p50": 370.83333333331393,
+        "p95": 370.83333333331393,
+        "p99": 373.61111111090577,
+        "max": 373.61111111090577
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00034110427817601874,
+        "p95": 0.0018835372954661977,
+        "p99": 0.002874184176762995,
+        "max": 0.5098464826151945
+      },
+      "interpolationUnderruns": 0,
+      "interpolationUnderrunFrames": 0,
+      "underrunStartsMs": [],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "matched-quantiles",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1121,
+        "p99": 1908,
+        "max": 2158
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 1858
+      },
+      "renderStepMetres": {
+        "p50": 0.06220871042912357,
+        "p95": 0.08979039050418736,
+        "p99": 0.090171575592224,
+        "max": 0.09103597449152273
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0016749358267023062,
+        "p95": 0.0016749358267023062,
+        "p99": 0.0016749358267023062,
+        "max": 0.0026894324305324346
+      },
+      "playbackAgeMs": {
+        "p50": 2083.2860474407353,
+        "p95": 2089.2231671705813,
+        "p99": 2095.7663286972384,
+        "max": 2100.8669654227997
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00028685874254374966,
+        "p95": 0.0006809937164025115,
+        "p99": 0.004797796115310948,
+        "max": 0.4948596330364402
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 100,
+      "underrunStartsMs": [
+        2250,
+        15016.666666666668
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "matched-quantiles",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1121,
+        "p99": 1908,
+        "max": 2158
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 150,
+        "max": 1908
+      },
+      "renderStepMetres": {
+        "p50": 0.062477854530278876,
+        "p95": 0.08985949745467892,
+        "p99": 0.0913024039483723,
+        "max": 0.09262647152470013
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0016749358267023062,
+        "p95": 0.0016749358267023062,
+        "p99": 0.0016749358267023062,
+        "max": 0.0024891164891016615
+      },
+      "playbackAgeMs": {
+        "p50": 2083.395308290863,
+        "p95": 2119.455169756475,
+        "p99": 2123.224713700838,
+        "max": 2130.176244972914
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003495367718109321,
+        "p95": 0.002160917537201712,
+        "p99": 0.005515275601998937,
+        "max": 0.4948596330364402
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 98,
+      "underrunStartsMs": [
+        2283.3333333333335,
+        15016.666666666668
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "matched-quantiles",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1121,
+        "p99": 1908,
+        "max": 2158
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 1858
+      },
+      "renderStepMetres": {
+        "p50": 0.02592033122156856,
+        "p95": 0.03741598591626749,
+        "p99": 0.03757641356646935,
+        "max": 0.03794763209542995
+      },
+      "recoveryStepMetres": {
+        "p50": 0.00021115207520905344,
+        "p95": 0.00021115207520905344,
+        "p99": 0.00021115207520905344,
+        "max": 0.001566449410645987
+      },
+      "playbackAgeMs": {
+        "p50": 2083.299492680322,
+        "p95": 2089.3737172577603,
+        "p99": 2096.132529919356,
+        "max": 2101.2218205994286
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003053807316586443,
+        "p95": 0.0007250579707367422,
+        "p99": 0.0036540667352766842,
+        "max": 0.5098464826151945
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 244,
+      "underrunStartsMs": [
+        2236.1111111111113,
+        15006.944444444445
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "matched-quantiles",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1121,
+        "p99": 1908,
+        "max": 2158
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 150,
+        "max": 1908
+      },
+      "renderStepMetres": {
+        "p50": 0.02601320411917918,
+        "p95": 0.0374473886414699,
+        "p99": 0.038075780409615456,
+        "max": 0.03866862064153925
+      },
+      "recoveryStepMetres": {
+        "p50": 0.00021115207520905344,
+        "p95": 0.00021115207520905344,
+        "p99": 0.00021115207520905344,
+        "max": 0.0014471823070447698
+      },
+      "playbackAgeMs": {
+        "p50": 2083.4302902027157,
+        "p95": 2131.971313281625,
+        "p99": 2135.7297151351668,
+        "max": 2141.1787394545827
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00035228007661913807,
+        "p95": 0.0021166824237148774,
+        "p99": 0.004921941404283814,
+        "max": 0.5098464826151945
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 237,
+      "underrunStartsMs": [
+        2284.722222222222,
+        15006.944444444445
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "one-second-stalls",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1350,
+        "p99": 2100,
+        "max": 2350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 2050
+      },
+      "renderStepMetres": {
+        "p50": 0.06203389804295867,
+        "p95": 0.08966905251964441,
+        "p99": 0.08998113811208844,
+        "max": 0.08999810091987812
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0016990553303464218,
+        "p95": 0.0016990553303464218,
+        "p99": 0.0016990553303464218,
+        "max": 0.0051550019236987765
+      },
+      "playbackAgeMs": {
+        "p50": 2274.9999999999854,
+        "p95": 2274.9999999999854,
+        "p99": 2274.9999999999854,
+        "max": 2274.9999999999854
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00034925091089554883,
+        "p95": 0.0007523179644959299,
+        "p99": 0.009716816911858217,
+        "max": 0.4948596330364402
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 112,
+      "underrunStartsMs": [
+        2250,
+        15250.000000000002
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "one-second-stalls",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1350,
+        "p99": 2100,
+        "max": 2350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 150,
+        "max": 2100
+      },
+      "renderStepMetres": {
+        "p50": 0.06202995939296585,
+        "p95": 0.089674544943533,
+        "p99": 0.08997985004995357,
+        "max": 0.0899980956827989
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0016990553303464218,
+        "p95": 0.0016990553303464218,
+        "p99": 0.0016990553303464218,
+        "max": 0.004660085848954054
+      },
+      "playbackAgeMs": {
+        "p50": 2274.9999999999854,
+        "p95": 2274.9999999999854,
+        "p99": 2274.9999999999854,
+        "max": 2274.9999999999854
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003786104346676922,
+        "p95": 0.0022244556982897734,
+        "p99": 0.008741685123998977,
+        "max": 0.4948596330364402
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 110,
+      "underrunStartsMs": [
+        2283.3333333333335,
+        15250.000000000002
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "one-second-stalls",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1350,
+        "p99": 2100,
+        "max": 2350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 2050
+      },
+      "renderStepMetres": {
+        "p50": 0.025852369737398462,
+        "p95": 0.037365616435447,
+        "p99": 0.037493677366060296,
+        "max": 0.03749920871661752
+      },
+      "recoveryStepMetres": {
+        "p50": 0.00022344116844874584,
+        "p95": 0.00022344116844874584,
+        "p99": 0.00022344116844874584,
+        "max": 0.0026230939791354047
+      },
+      "playbackAgeMs": {
+        "p50": 2274.999999999949,
+        "p95": 2274.9999999999563,
+        "p99": 2274.9999999999563,
+        "max": 2274.9999999999563
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00030434846124638426,
+        "p95": 0.000727277015956318,
+        "p99": 0.008361960746780639,
+        "max": 0.5098464826151945
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 272,
+      "underrunStartsMs": [
+        2236.1111111111113,
+        15236.111111111111
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "one-second-stalls",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1350,
+        "p99": 2100,
+        "max": 2350
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 150,
+        "max": 2100
+      },
+      "renderStepMetres": {
+        "p50": 0.02584581641370498,
+        "p95": 0.037365616435456994,
+        "p99": 0.037491964163813174,
+        "max": 0.03749920653453229
+      },
+      "recoveryStepMetres": {
+        "p50": 0.00022344116844874584,
+        "p95": 0.00022344116844874584,
+        "p99": 0.00022344116844874584,
+        "max": 0.0023802309656435483
+      },
+      "playbackAgeMs": {
+        "p50": 2274.999999999949,
+        "p95": 2274.9999999999563,
+        "p99": 2274.9999999999563,
+        "max": 2274.9999999999563
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003549271556053668,
+        "p95": 0.002189128191195877,
+        "p99": 0.006802855267100227,
+        "max": 0.5098464826151945
+      },
+      "interpolationUnderruns": 2,
+      "interpolationUnderrunFrames": 265,
+      "underrunStartsMs": [
+        2284.722222222222,
+        15236.111111111111
+      ],
+      "underrunsAfter30Seconds": 0,
+      "exhaustedRunwayEpisodes": 0,
+      "exhaustedRunwayFrames": 0,
+      "freezeFrames": 0
+    },
+    {
+      "profile": "four-second-blackout",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1600,
+        "p99": 2925,
+        "max": 4175
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 3875
+      },
+      "renderStepMetres": {
+        "p50": 0.06183646175840707,
+        "p95": 0.08973161726533396,
+        "p99": 0.0899965847181404,
+        "max": 0.13311949041422988
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0051550019236987765,
+        "p95": 0.0051550019236987765,
+        "p99": 0.0051550019236987765,
+        "max": 0.05000000000001448
+      },
+      "playbackAgeMs": {
+        "p50": 2275.000000000422,
+        "p95": 2275.059737416872,
+        "p99": 2282.308507875503,
+        "max": 2296.7911042043124
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00035882238508566644,
+        "p95": 0.0014326362380412405,
+        "p99": 0.8057791281619595,
+        "max": 3.0787624812121854
+      },
+      "interpolationUnderruns": 3,
+      "interpolationUnderrunFrames": 218,
+      "underrunStartsMs": [
+        2250,
+        15250.000000000002,
+        57233.333333333336
+      ],
+      "underrunsAfter30Seconds": 1,
+      "exhaustedRunwayEpisodes": 1,
+      "exhaustedRunwayFrames": 31,
+      "freezeFrames": 30
+    },
+    {
+      "profile": "four-second-blackout",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 60,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1600,
+        "p99": 2925,
+        "max": 4175
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 150,
+        "max": 3875
+      },
+      "renderStepMetres": {
+        "p50": 0.061709661375489944,
+        "p95": 0.08972996316105275,
+        "p99": 0.08999518879604487,
+        "max": 0.13311949041422988
+      },
+      "recoveryStepMetres": {
+        "p50": 0.004660085848954054,
+        "p95": 0.004660085848954054,
+        "p99": 0.004660085848954054,
+        "max": 0.05000000000001448
+      },
+      "playbackAgeMs": {
+        "p50": 2275.000000000422,
+        "p95": 2275.059737416872,
+        "p99": 2282.308507875503,
+        "max": 2296.7911042043124
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.00038739746369209627,
+        "p95": 0.002939493932142767,
+        "p99": 0.8057791281619595,
+        "max": 3.0787624812121854
+      },
+      "interpolationUnderruns": 3,
+      "interpolationUnderrunFrames": 216,
+      "underrunStartsMs": [
+        2283.3333333333335,
+        15250.000000000002,
+        57233.333333333336
+      ],
+      "underrunsAfter30Seconds": 1,
+      "exhaustedRunwayEpisodes": 1,
+      "exhaustedRunwayFrames": 31,
+      "freezeFrames": 30
+    },
+    {
+      "profile": "four-second-blackout",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": false,
+      "appliedStates": 2397,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1600,
+        "p99": 2925,
+        "max": 4175
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 50,
+        "p99": 50,
+        "max": 3875
+      },
+      "renderStepMetres": {
+        "p50": 0.0257651923993798,
+        "p95": 0.037390883766648564,
+        "p99": 0.03749905747934596,
+        "max": 0.05546645433927733
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0026230939791354047,
+        "p95": 0.0026230939791354047,
+        "p99": 0.0026230939791354047,
+        "max": 0.020833333333335702
+      },
+      "playbackAgeMs": {
+        "p50": 2275.000000001033,
+        "p95": 2275.0635655957158,
+        "p99": 2282.469939570794,
+        "max": 2296.9997404050664
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003250382113151318,
+        "p95": 0.0012384358106967142,
+        "p99": 0.835226374733085,
+        "max": 3.1079291478790214
+      },
+      "interpolationUnderruns": 3,
+      "interpolationUnderrunFrames": 527,
+      "underrunStartsMs": [
+        2236.1111111111113,
+        15236.111111111111,
+        57229.16666666667
+      ],
+      "underrunsAfter30Seconds": 1,
+      "exhaustedRunwayEpisodes": 1,
+      "exhaustedRunwayFrames": 75,
+      "freezeFrames": 74
+    },
+    {
+      "profile": "four-second-blackout",
+      "synthetic": true,
+      "seconds": 120,
+      "renderHz": 144,
+      "dropped": true,
+      "appliedStates": 2205,
+      "probeRttMs": {
+        "p50": 350,
+        "p95": 1600,
+        "p99": 2925,
+        "max": 4175
+      },
+      "appliedStateGapMs": {
+        "p50": 50,
+        "p95": 100,
+        "p99": 150,
+        "max": 3875
+      },
+      "renderStepMetres": {
+        "p50": 0.02576188783195299,
+        "p95": 0.03738748465042563,
+        "p99": 0.03749867993071296,
+        "max": 0.05546645433927733
+      },
+      "recoveryStepMetres": {
+        "p50": 0.0023802309656435483,
+        "p95": 0.0023802309656435483,
+        "p99": 0.0023802309656435483,
+        "max": 0.020833333333335702
+      },
+      "playbackAgeMs": {
+        "p50": 2275.000000001033,
+        "p95": 2275.0635655957158,
+        "p99": 2282.469939570794,
+        "max": 2296.9997404050664
+      },
+      "errorFromHistoricalPoseMetres": {
+        "p50": 0.0003720828648852148,
+        "p95": 0.0029370124656313834,
+        "p99": 0.835226374733085,
+        "max": 3.1079291478790214
+      },
+      "interpolationUnderruns": 3,
+      "interpolationUnderrunFrames": 520,
+      "underrunStartsMs": [
+        2284.722222222222,
+        15236.111111111111,
+        57229.16666666667
+      ],
+      "underrunsAfter30Seconds": 1,
+      "exhaustedRunwayEpisodes": 1,
+      "exhaustedRunwayFrames": 75,
+      "freezeFrames": 74
+    }
+  ]
+}

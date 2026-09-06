@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-06T18:28:39.501Z",
+  "origin": "http://127.0.0.1:35179",
+  "seconds": 120,
+  "probeRttMs": {
+    "p50": 355,
+    "p95": 1602,
+    "p99": 2959,
+    "max": 4211
+  },
+  "simulationFrameMs": {
+    "p50": 4.121892999999545,
+    "p95": 4.614654000004521,
+    "p99": 6.082680999999866,
+    "max": 36.64954299999954
+  },
+  "simulationDeltaClampedAtMs": 50,
+  "rawCorrectionMetres": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "max": 0
+  },
+  "visibleFrameCorrectionMetres": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "max": 0
+  },
+  "maxSnapshotCameraJumpMetres": 0,
+  "maxBackwardFrameMetres": 0,
+  "deviationFromUnimpairedClientMetres": {
+    "p50": 0,
+    "p95": 0,
+    "p99": 0,
+    "max": 0
+  },
+  "correctionsOver1cmPerSecond": 0,
+  "frozenStallFrames": 0,
+  "stallFrames": 953,
+  "sequenceGaps": 0,
+  "droppedInputs": 0,
+  "maxPending": 254,
+  "maxInFlight": 252,
+  "maxOutgoing": 6,
+  "finalReferenceErrorMetres": 0
+}

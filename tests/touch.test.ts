@@ -101,7 +101,7 @@ test('portrait start cannot activate movement and orientation change releases ev
         env.controls.lock(); assert.equal(env.controls.locked, false); assert.equal(env.requests(), 0);
     } finally { env.restore(); }
 });
-test('aim assist has bounded drag-only magnetism; ignores friends, cover, protected and dead targets', () => {
+test('aim assist has bounded drag-only magnetism; ignores friends, cover and dead targets', () => {
     const room = new Room('ASSIST'), p = room.add('You', 'hunter', 'blue').state;
     Object.assign(p, moveState(34, 0, 20));
     const q = { ...p, id: 'enemy', team: 'red' as const, x: 34.3, z: 10, protectionEnd: 0 };
@@ -110,7 +110,7 @@ test('aim assist has bounded drag-only magnetism; ignores friends, cover, protec
     const yes = assistedLook(0, pitch, raw, 0, 1 / 60, p, [q], 'tdm', 1000);
     assert.ok(yes.yaw < no.yaw); assert.ok(Math.abs(yes.yaw - no.yaw) < .002);
     assert.deepEqual(assistedLook(0, pitch, 0, 0, 1, p, [q], 'tdm', 1000), { yaw: 0, pitch });
-    for (const target of [{ ...q, team: 'blue' as const }, { ...q, protectionEnd: 1001 }, { ...q, alive: false }]) assert.deepEqual(assistedLook(0, pitch, raw, 0, 1 / 60, p, [target], 'tdm', 1000), no);
+    for (const target of [{ ...q, team: 'blue' as const }, { ...q, alive: false }]) assert.deepEqual(assistedLook(0, pitch, raw, 0, 1 / 60, p, [target], 'tdm', 1000), no);
     const wallPlayer = { ...p, x: -28, y: 0, z: 0 }, wallTarget = { ...q, x: 28, y: 0, z: 0 };
     assert.deepEqual(assistedLook(-Math.PI / 2, 0, raw, 0, 1 / 60, wallPlayer, [wallTarget], 'ffa', 1000), { yaw: -Math.PI / 2 + raw, pitch: 0 });
 });

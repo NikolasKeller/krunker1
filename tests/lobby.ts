@@ -75,7 +75,7 @@ try {
     assert.equal(a.round!.endsAt, b.round!.endsAt);
     const late = await join(a.room, 'Late');
     assert.equal(late.round!.phase, 'playing'); assert.equal(late.p!.alive, true);
-    assert.ok(late.p!.protectionEnd > Date.now());
+    assert.equal(late.p!.protectionEnd, 0);
     const lateId = late.id, token = late.token;
     late.close();
     await wait(() => !a.players.has(lateId), 'disconnect removed immediately');

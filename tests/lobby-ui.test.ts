@@ -236,7 +236,7 @@ test('team click and host move controls use distinct targets and class changes r
         assert.deepEqual(sent, [], 'stale host control cannot move another player');
         net.host = a.id; net.round!.phase = 'playing'; ui.updateLobby();
         assert.equal(move.disabled, true);
-        assert.equal(document.querySelector<HTMLButtonElement>('[data-team="blue"]')!.disabled, true);
+        assert.equal(document.querySelector<HTMLButtonElement>('[data-team="blue"]')!.disabled, false);
         assert.equal(document.getElementById('deploy-label')!.textContent, 'JOIN MATCH');
         net.round!.phase = 'lobby'; ui.updateLobby();
         assert.equal(move.disabled, false);

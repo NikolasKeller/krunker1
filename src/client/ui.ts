@@ -104,7 +104,7 @@ export class UI {
         document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => b.onclick = () => this.choose(b.dataset.class as ClassId));
         document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => net.send({ type: 'configure', mode: b.dataset.mode as 'ffa' | 'tdm' }));
         document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => {
-            b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'team', team: this.team }); };
+            b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'team', team: this.team }); this.updateLobby(); };
             b.closest('.team-column')!.addEventListener('click', event => {
                 const target = event.target as HTMLElement;
                 if (!target.closest('button')) b.click();
@@ -192,8 +192,10 @@ export class UI {
             $('lan-links').innerHTML = addresses.lan.map(href => `<div>LAN <a href="${escapeHTML(href)}">${escapeHTML(href)}</a></div>`).join('');
         } catch { $('lan-links').textContent = ''; }
     }
-    choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send)
-        this.net.send({ type: 'class', classId: id }); }
+    choose(id: ClassId, send = true) { this.selected = id; localStorage.setItem('arena-class', id); document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => b.classList.toggle('selected', b.dataset.class === id)); this.onClass(id); if (send) {
+        this.net.send({ type: 'class', classId: id });
+        if (this.net.changingClass) this.updateLobby();
+    } }
     setTouchMode(touch: boolean) {
         this.touchMode = touch;
         document.documentElement.classList.toggle('touch-device', touch);
@@ -263,8 +265,10 @@ export class UI {
         if (this.numbers.length > 16) this.numbers.shift()!.node.remove();
     }
     updateLobby() {
-        const team = this.net.local?.team;
+        const selection = this.net.selectionState ?? this.net.local;
+        const team = selection?.team;
         if (team && team !== this.team) { this.team = team; localStorage.setItem('arena-team', team); }
+        if (selection && selection.classId !== this.selected) this.choose(selection.classId, false);
         this.lobby.update(this.team, this.gameReady);
     }
     update(now: number, renderer: Renderer, aiming: boolean, remotes = this.net.remotePlayers()) {
@@ -291,7 +295,7 @@ export class UI {
             $('health-max').textContent = `|${p.maxHp}`;
             $('health-bar').style.width = `${p.hp / p.maxHp * 100}%`;
             $('health-bar').classList.toggle('low', p.hp < 30);
-            $('health-status').textContent = p.protectionEnd > serverNow ? 'SPAWN PROTECTED' : p.slide > 0 ? 'SLIDING' : !p.grounded ? 'AIRBORNE' : 'LOCKED & LOADED';
+            $('health-status').textContent = p.slide > 0 ? 'SLIDING' : !p.grounded ? 'AIRBORNE' : 'LOCKED & LOADED';
             $('speed').textContent = `${Math.round(Math.hypot(p.vx, p.vz) * 3.6)} KM/H`;
             const w = WEAPONS[p.weapon];
             $('ammo').textContent = p.weapon === 'knife' ? '∞' : String(p.ammo);
@@ -321,7 +325,7 @@ export class UI {
         $('network-warning').classList.toggle('hidden', !warning);
         $('network-warning').textContent = net.status;
         const results = round?.phase === 'results';
-        const players = [...net.players.values()].sort((a, b) => b.score - a.score || b.kills - a.kills || a.name.localeCompare(b.name));
+        const players = (net.displayPlayers ?? [...net.players.values()]).sort((a, b) => b.score - a.score || b.kills - a.kills || a.name.localeCompare(b.name));
         if (!round)
             return;
         const time = Math.max(0, Math.ceil((round.endsAt - serverNow) / 1000));
@@ -348,6 +352,7 @@ export class UI {
         }
         $('board-round').textContent = `ROUND ${String(round.round).padStart(2, '0')}`;
         if (results || this.scoreOpen) {
+            if (round.mode === 'tdm') players.sort((a, b) => a.team.localeCompare(b.team));
             const board = players.map(p => `${p.id}:${p.name}:${p.classId}:${p.team}:${p.score}:${p.deaths}:${p.kills}`).join('|');
             if (board !== this.lastBoard) {
                 this.lastBoard = board;

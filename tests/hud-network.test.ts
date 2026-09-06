@@ -69,7 +69,7 @@ test('an authoritative headshot travels over the live binary socket into the sho
         await wait(() => shooterHits === 1 && victimEvents.some(e => e.type === 'kill') && shooter.round?.blue === 1, 'combat events and team score arrive over both sockets');
         ui.update(100, renderer, false);
         const damage = document.querySelector('#damage-numbers > span')!;
-        assert.equal(damage.textContent, '+60');
+        assert.equal(damage.textContent, '+100');
         assert.equal(window.getComputedStyle(damage).color, 'rgb(255, 229, 82)');
         assert.equal(window.getComputedStyle(document.getElementById('hitmarker')!).opacity, '1');
         assert.equal(document.getElementById('kill-notice')!.textContent, 'HEADSHOT+50');

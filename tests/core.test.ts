@@ -36,16 +36,16 @@ test('ramps block bullets through their solid volume without blocking above the 
     assert.ok(rayRamp({ x: -10, y: 1, z: -8 }, { x: 0, y: 0, z: 1 }, r)! < 8);
 });
 test('world collision blocks the sightline through a building', () => { assert.ok(worldHit({ x: -19, y: 1.5, z: 0 }, { x: 0, y: 0, z: -1 }, 40) < 7); });
-test('sniper upper-body is lethal, legs are survivable, head multipliers are explicit', () => {
-    assert.equal(damageFor('sniper', 'body', 30), 110);
-    assert.equal(damageFor('sniper', 'head', 30), 165);
-    assert.equal(damageFor('sniper', 'legs', 30), 61);
-    assert.equal(damageFor('rifle', 'head', 10), 38);
-    assert.equal(damageFor('rifle', 'body', 10), 25);
-    assert.equal(damageFor('smg', 'head', 10), 27);
+test('weapon damage preserves the former Hunter ratios at 100 HP', () => {
+    assert.equal(damageFor('sniper', 'body', 30), 184);
+    assert.equal(damageFor('sniper', 'head', 30), 276);
+    assert.equal(damageFor('sniper', 'legs', 30), 101);
+    assert.equal(damageFor('rifle', 'head', 10), 63);
+    assert.equal(damageFor('rifle', 'body', 10), 42);
+    assert.equal(damageFor('smg', 'head', 10), 45);
 });
 test('shotgun close-range pellets are lethal and fall off sharply', () => {
-    assert.equal(damageFor('shotgun', 'body', 4) * 8, 192);
+    assert.equal(damageFor('shotgun', 'body', 4) * 8, 320);
     assert.ok(damageFor('shotgun', 'body', 26) * 8 < 25);
     assert.equal(damageFor('shotgun', 'body', 40), 0);
 });
@@ -223,14 +223,14 @@ test('server validates headshots, spawn protection, friendly fire and wall occlu
         a.nextShot = 0;
         r.history.record(2000, [a.state, b.state]);
         r.fire(a, { ...neutralInput(1), shotTime: 2000 }, 2000);
-        assert.equal(b.state.alive, condition !== 'head', condition);
+        assert.equal(b.state.alive, condition !== 'head' && condition !== 'protection', condition);
         if (condition === 'head') {
             assert.equal(a.state.kills, 1);
             assert.ok(r.events.some(e => e.type === 'hit' && e.zone === 'head'));
         }
     }
 });
-test('respawn resets health, ammo and momentum and adds temporary protection', () => { const r = room(), a = r.add('A', 'hunter', 'blue'); r.start(1000); Object.assign(a.state, { alive: false, hp: 0, respawnAt: 2000, vx: 20, ammo: 0 }); r.tick(2001); assert.equal(a.state.hp, 60); assert.equal(a.state.ammo, 3); assert.equal(a.state.vx, 0); assert.equal(a.state.protectionEnd, 3501); });
+test('respawn resets health, ammo and momentum without immunity', () => { const r = room(), a = r.add('A', 'hunter', 'blue'); r.start(1000); Object.assign(a.state, { alive: false, hp: 0, respawnAt: 2000, vx: 20, ammo: 0 }); r.tick(2001); assert.equal(a.state.hp, 100); assert.equal(a.state.ammo, 3); assert.equal(a.state.vx, 0); assert.equal(a.state.protectionEnd, 0); });
 test('bots fill requested slots and paths route around buildings', () => { const r = room(); r.add('Human', 'hunter', 'blue'); r.botCount = 5; r.fillBots(0); assert.equal(r.players.size, 6); r.botCount = 2; r.fillBots(0); assert.equal(r.players.size, 3); const path = findPath({ x: -30, y: 0, z: -30 }, { x: -10, y: 0, z: 5 }); assert.ok(path.length > 4); for (const p of path)
     for (const b of BOXES)
         assert.ok(!(Math.abs(p.x - b.x) < b.w / 2 && Math.abs(p.z - b.z) < b.d / 2 && b.y - b.h / 2 < p.y + 1.85 && b.y + b.h / 2 > p.y + .05)); });
@@ -252,7 +252,7 @@ test('prediction reconciles from an older acknowledgement and replays only pendi
     almost(result.predicted.z, predicted.z);
     almost(result.predicted.vz, predicted.vz);
 });
-test('a class change waits for the next spawn and does not inherit the previous health pool', () => { const r = room(), a = r.add('A', 'triggerman', 'blue'); r.start(0); a.pendingClass = 'hunter'; assert.equal(a.state.classId, 'triggerman'); r.spawn(a, 1000); assert.equal(a.state.classId, 'hunter'); assert.equal(a.state.hp, 60); assert.equal(a.state.weapon, 'sniper'); });
+test('a class change applies immediately without healing', () => { const r = room(), a = r.add('A', 'triggerman', 'blue'); r.start(0); a.state.hp = 40; r.changeClass(a, 'hunter', 1000); assert.equal(a.state.classId, 'hunter'); assert.equal(a.state.hp, 40); assert.equal(a.state.maxHp, 100); assert.equal(a.state.weapon, 'sniper'); });
 test('the bridge underpass connects the side lanes without a dead end', () => { const p = moveState(-9, 0, -9), i = { ...neutralInput(), forward: 1, yaw: -Math.PI / 2 }; for (let n = 0; n < 100; n++)
     move(p, i); assert.ok(p.x > 7, `underpass exit x=${p.x}`); assert.equal(p.y, 0); });
 

@@ -1,0 +1,2537 @@
+[
+  {
+    "rtt": 0,
+    "samples": 24,
+    "actualShots": 24,
+    "hits": 24,
+    "confirmedHits": 24,
+    "victimHitEvents": 24,
+    "resyncs": 0,
+    "hitRate": 1,
+    "probeRttMs": {
+      "p50": 8,
+      "p95": 9,
+      "max": 15
+    },
+    "timestampDifferenceMs": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0
+    },
+    "targetDifferenceMetres": {
+      "p50": 0.0021586774758799443,
+      "p95": 0.0036778251519384852,
+      "max": 0.003786976103351325
+    },
+    "maxCorrectionMetres": 0,
+    "maxSnapshotJumpMetres": 0,
+    "shots": [
+      {
+        "seq": 720,
+        "renderTime": 1788719554884.29,
+        "shotTime": 1788719554884.29,
+        "renderedAt": 1788719554996.6736,
+        "interpolationDelay": 112.383544921875,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.8624383928919475
+        },
+        "clientPing": 3,
+        "sentShotTime": 1788719554884.29,
+        "sentAt": 1788719555039,
+        "receivedInterpolationDelay": 112.383544921875,
+        "processedAt": 1788719555057,
+        "serverRtt": 3,
+        "rewindTime": 1788719554884.29,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.866116218043886
+        },
+        "targetDifferenceMetres": 0.0036778251519384852,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 762,
+        "renderTime": 1788719555583.6553,
+        "shotTime": 1788719555583.6553,
+        "renderedAt": 1788719555695.9128,
+        "interpolationDelay": 112.257568359375,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.3951935962651238
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719555583.6553,
+        "sentAt": 1788719555739,
+        "receivedInterpolationDelay": 112.257568359375,
+        "processedAt": 1788719555757,
+        "serverRtt": 3,
+        "rewindTime": 1788719555583.6553,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.3963652598597748
+        },
+        "targetDifferenceMetres": 0.0011716635946509846,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 804,
+        "renderTime": 1788719556284.909,
+        "shotTime": 1788719556284.909,
+        "renderedAt": 1788719556396.7795,
+        "interpolationDelay": 111.87060546875,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.39360136684277675
+        },
+        "clientPing": 5,
+        "sentShotTime": 1788719556284.909,
+        "sentAt": 1788719556439,
+        "receivedInterpolationDelay": 111.87060546875,
+        "processedAt": 1788719556441,
+        "serverRtt": 1,
+        "rewindTime": 1788719556284.909,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.3910599221984554
+        },
+        "targetDifferenceMetres": 0.0025414446443213223,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 846,
+        "renderTime": 1788719556983.7764,
+        "shotTime": 1788719556983.7764,
+        "renderedAt": 1788719557097.2551,
+        "interpolationDelay": 113.478759765625,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.8839873262960465
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719556983.7764,
+        "sentAt": 1788719557142,
+        "receivedInterpolationDelay": 113.478759765625,
+        "processedAt": 1788719557157,
+        "serverRtt": 1,
+        "rewindTime": 1788719556983.7764,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.882551735028106
+        },
+        "targetDifferenceMetres": 0.0014355912679402394,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 888,
+        "renderTime": 1788719557682.6548,
+        "shotTime": 1788719557682.6548,
+        "renderedAt": 1788719557794.8025,
+        "interpolationDelay": 112.147705078125,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.995106978053227
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719557682.6548,
+        "sentAt": 1788719557800,
+        "receivedInterpolationDelay": 112.147705078125,
+        "processedAt": 1788719557808,
+        "serverRtt": 1,
+        "rewindTime": 1788719557682.6548,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.992294060797393
+        },
+        "targetDifferenceMetres": 0.002812917255833547,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 930,
+        "renderTime": 1788719558383.147,
+        "shotTime": 1788719558383.147,
+        "renderedAt": 1788719558495.407,
+        "interpolationDelay": 112.260009765625,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.8407086057336796
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719558383.147,
+        "sentAt": 1788719558504,
+        "receivedInterpolationDelay": 112.260009765625,
+        "processedAt": 1788719558508,
+        "serverRtt": 2,
+        "rewindTime": 1788719558383.147,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.8400981929939659
+        },
+        "targetDifferenceMetres": 0.0006104127397136283,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 972,
+        "renderTime": 1788719559082.3462,
+        "shotTime": 1788719559082.3462,
+        "renderedAt": 1788719559194.7683,
+        "interpolationDelay": 112.422119140625,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.18970991340311416
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719559082.3462,
+        "sentAt": 1788719559206,
+        "receivedInterpolationDelay": 112.422119140625,
+        "processedAt": 1788719559225,
+        "serverRtt": 2,
+        "rewindTime": 1788719559082.3462,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.19113146095285194
+        },
+        "targetDifferenceMetres": 0.0014215475497377783,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1014,
+        "renderTime": 1788719559780.8318,
+        "shotTime": 1788719559780.8318,
+        "renderedAt": 1788719559893.594,
+        "interpolationDelay": 112.76220703125,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.455802124055406
+        },
+        "clientPing": 9,
+        "sentShotTime": 1788719559780.8318,
+        "sentAt": 1788719559910,
+        "receivedInterpolationDelay": 112.76220703125,
+        "processedAt": 1788719559923,
+        "serverRtt": 2,
+        "rewindTime": 1788719559780.8318,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.452079297567966
+        },
+        "targetDifferenceMetres": 0.003722826487440045,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1056,
+        "renderTime": 1788719560482.9253,
+        "shotTime": 1788719560482.9253,
+        "renderedAt": 1788719560595.0361,
+        "interpolationDelay": 112.11083984375,
+        "reserve": 107.65250800000013,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.383672507954762
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719560482.9253,
+        "sentAt": 1788719560610,
+        "receivedInterpolationDelay": 112.11083984375,
+        "processedAt": 1788719560624,
+        "serverRtt": 1,
+        "rewindTime": 1788719560482.9253,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.383305228766144
+        },
+        "targetDifferenceMetres": 0.0003672791886177862,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1098,
+        "renderTime": 1788719561182.5422,
+        "shotTime": 1788719561182.5422,
+        "renderedAt": 1788719561295.5125,
+        "interpolationDelay": 112.97021484375,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 1.87405277218204
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719561182.5422,
+        "sentAt": 1788719561310,
+        "receivedInterpolationDelay": 112.97021484375,
+        "processedAt": 1788719561324,
+        "serverRtt": 1,
+        "rewindTime": 1788719561182.5422,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 1.8775497985776055
+        },
+        "targetDifferenceMetres": 0.0034970263955655945,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1140,
+        "renderTime": 1788719561884.4248,
+        "shotTime": 1788719561884.4248,
+        "renderedAt": 1788719561996.868,
+        "interpolationDelay": 112.443115234375,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.1008232103765476
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719561884.4248,
+        "sentAt": 1788719562012,
+        "receivedInterpolationDelay": 112.443115234375,
+        "processedAt": 1788719562024,
+        "serverRtt": 1,
+        "rewindTime": 1788719561884.4248,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.0986003287781072
+        },
+        "targetDifferenceMetres": 0.002222881598440418,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1182,
+        "renderTime": 1788719562582.9583,
+        "shotTime": 1788719562582.9583,
+        "renderedAt": 1788719562695.646,
+        "interpolationDelay": 112.687744140625,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.357624126593582
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719562582.9583,
+        "sentAt": 1788719562712,
+        "receivedInterpolationDelay": 112.687744140625,
+        "processedAt": 1788719562724,
+        "serverRtt": 1,
+        "rewindTime": 1788719562582.9583,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.360254150067169
+        },
+        "targetDifferenceMetres": 0.00263002347358654,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1224,
+        "renderTime": 1788719563283.8625,
+        "shotTime": 1788719563283.8625,
+        "renderedAt": 1788719563396.8347,
+        "interpolationDelay": 112.97216796875,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.345152432310433
+        },
+        "clientPing": 6,
+        "sentShotTime": 1788719563283.8625,
+        "sentAt": 1788719563415,
+        "receivedInterpolationDelay": 112.97216796875,
+        "processedAt": 1788719563424,
+        "serverRtt": 1,
+        "rewindTime": 1788719563283.8625,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.3489394084137842
+        },
+        "targetDifferenceMetres": 0.003786976103351325,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1266,
+        "renderTime": 1788719563981.0356,
+        "shotTime": 1788719563981.0356,
+        "renderedAt": 1788719564093.6611,
+        "interpolationDelay": 112.62548828125,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.8902323994623993
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719563981.0356,
+        "sentAt": 1788719564118,
+        "receivedInterpolationDelay": 112.62548828125,
+        "processedAt": 1788719564124,
+        "serverRtt": 1,
+        "rewindTime": 1788719563981.0356,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.8913838975492254
+        },
+        "targetDifferenceMetres": 0.0011514980868261304,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1308,
+        "renderTime": 1788719564683.6506,
+        "shotTime": 1788719564683.6506,
+        "renderedAt": 1788719564796.7905,
+        "interpolationDelay": 113.139892578125,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.1365937511413815
+        },
+        "clientPing": 9,
+        "sentShotTime": 1788719564683.6506,
+        "sentAt": 1788719564817,
+        "receivedInterpolationDelay": 113.139892578125,
+        "processedAt": 1788719564824,
+        "serverRtt": 1,
+        "rewindTime": 1788719564683.6506,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.1387524286172614
+        },
+        "targetDifferenceMetres": 0.0021586774758799443,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1350,
+        "renderTime": 1788719565384.2576,
+        "shotTime": 1788719565384.2576,
+        "renderedAt": 1788719565496.7368,
+        "interpolationDelay": 112.479248046875,
+        "reserve": 108.47060300000157,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -8.177525027043314
+        },
+        "clientPing": 3,
+        "sentShotTime": 1788719565384.2576,
+        "sentAt": 1788719565517,
+        "receivedInterpolationDelay": 112.479248046875,
+        "processedAt": 1788719565524,
+        "serverRtt": 1,
+        "rewindTime": 1788719565384.2576,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -8.174121973009854
+        },
+        "targetDifferenceMetres": 0.0034030540334608617,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1392,
+        "renderTime": 1788719566077.9639,
+        "shotTime": 1788719566077.9639,
+        "renderedAt": 1788719566194.7493,
+        "interpolationDelay": 116.785400390625,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.497325260024518
+        },
+        "clientPing": 9,
+        "sentShotTime": 1788719566077.9639,
+        "sentAt": 1788719566221,
+        "receivedInterpolationDelay": 116.785400390625,
+        "processedAt": 1788719566241,
+        "serverRtt": 1,
+        "rewindTime": 1788719566077.9639,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.494543449469269
+        },
+        "targetDifferenceMetres": 0.0027818105552488426,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1434,
+        "renderTime": 1788719566776.9512,
+        "shotTime": 1788719566776.9512,
+        "renderedAt": 1788719566894.33,
+        "interpolationDelay": 117.37890625,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 3.0665367175173013
+        },
+        "clientPing": 5,
+        "sentShotTime": 1788719566776.9512,
+        "sentAt": 1788719566920,
+        "receivedInterpolationDelay": 117.37890625,
+        "processedAt": 1788719566923,
+        "serverRtt": 1,
+        "rewindTime": 1788719566776.9512,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 3.0687054312164856
+        },
+        "targetDifferenceMetres": 0.002168713699184366,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1476,
+        "renderTime": 1788719567478.0754,
+        "shotTime": 1788719567478.0754,
+        "renderedAt": 1788719567596.901,
+        "interpolationDelay": 118.825439453125,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.983678909013979
+        },
+        "clientPing": 9,
+        "sentShotTime": 1788719567478.0754,
+        "sentAt": 1788719567621,
+        "receivedInterpolationDelay": 118.825439453125,
+        "processedAt": 1788719567625,
+        "serverRtt": 1,
+        "rewindTime": 1788719567478.0754,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.9838846188171697
+        },
+        "targetDifferenceMetres": 0.000205709803190679,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1518,
+        "renderTime": 1788719568175.071,
+        "shotTime": 1788719568175.071,
+        "renderedAt": 1788719568293.1133,
+        "interpolationDelay": 118.042236328125,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.835545277246274
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719568175.071,
+        "sentAt": 1788719568321,
+        "receivedInterpolationDelay": 118.042236328125,
+        "processedAt": 1788719568324,
+        "serverRtt": 2,
+        "rewindTime": 1788719568175.071,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.837505592264787
+        },
+        "targetDifferenceMetres": 0.0019603150185130147,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1560,
+        "renderTime": 1788719568877.107,
+        "shotTime": 1788719568877.107,
+        "renderedAt": 1788719568994.81,
+        "interpolationDelay": 117.703125,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.6050375968555455
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719568877.107,
+        "sentAt": 1788719569023,
+        "receivedInterpolationDelay": 117.703125,
+        "processedAt": 1788719569040,
+        "serverRtt": 2,
+        "rewindTime": 1788719568877.107,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.6058250022036442
+        },
+        "targetDifferenceMetres": 0.0007874053480987353,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1602,
+        "renderTime": 1788719569576.6294,
+        "shotTime": 1788719569576.6294,
+        "renderedAt": 1788719569694.7827,
+        "interpolationDelay": 118.1533203125,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.4035871976078487
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719569576.6294,
+        "sentAt": 1788719569726,
+        "receivedInterpolationDelay": 118.1533203125,
+        "processedAt": 1788719569741,
+        "serverRtt": 2,
+        "rewindTime": 1788719569576.6294,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.4032569502806913
+        },
+        "targetDifferenceMetres": 0.0003302473271573625,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1644,
+        "renderTime": 1788719570278.6084,
+        "shotTime": 1788719570278.6084,
+        "renderedAt": 1788719570396.671,
+        "interpolationDelay": 118.0625,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.895383239871043
+        },
+        "clientPing": 8,
+        "sentShotTime": 1788719570278.6084,
+        "sentAt": 1788719570427,
+        "receivedInterpolationDelay": 118.0625,
+        "processedAt": 1788719570440,
+        "serverRtt": 2,
+        "rewindTime": 1788719570278.6084,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.891942097512163
+        },
+        "targetDifferenceMetres": 0.003441142358879823,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1686,
+        "renderTime": 1788719570974.9163,
+        "shotTime": 1788719570974.9163,
+        "renderedAt": 1788719571092.8035,
+        "interpolationDelay": 117.88720703125,
+        "reserve": 113.76551000000109,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.001915428372027
+        },
+        "clientPing": 7,
+        "sentShotTime": 1788719570974.9163,
+        "sentAt": 1788719571128,
+        "receivedInterpolationDelay": 117.88720703125,
+        "processedAt": 1788719571141,
+        "serverRtt": 2,
+        "rewindTime": 1788719570974.9163,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.001035248527173
+        },
+        "targetDifferenceMetres": 0.000880179844854112,
+        "hit": true,
+        "originDifferenceMetres": 0
+      }
+    ]
+  },
+  {
+    "rtt": 100,
+    "samples": 24,
+    "actualShots": 24,
+    "hits": 24,
+    "confirmedHits": 24,
+    "victimHitEvents": 24,
+    "resyncs": 0,
+    "hitRate": 1,
+    "probeRttMs": {
+      "p50": 106,
+      "p95": 453,
+      "max": 457
+    },
+    "timestampDifferenceMs": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0
+    },
+    "targetDifferenceMetres": {
+      "p50": 0.0017396668864462228,
+      "p95": 0.0035756212896533857,
+      "max": 0.004067839727505351
+    },
+    "maxCorrectionMetres": 0,
+    "maxSnapshotJumpMetres": 0,
+    "shots": [
+      {
+        "seq": 720,
+        "renderTime": 1788719585794.6543,
+        "shotTime": 1788719585794.6543,
+        "renderedAt": 1788719586306.488,
+        "interpolationDelay": 511.833740234375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.213888839650899
+        },
+        "clientPing": 104,
+        "sentShotTime": 1788719585794.6543,
+        "sentAt": 1788719586341,
+        "receivedInterpolationDelay": 511.833740234375,
+        "processedAt": 1788719586402,
+        "serverRtt": 100,
+        "rewindTime": 1788719585794.6543,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.217093496746856
+        },
+        "targetDifferenceMetres": 0.0032046570959574083,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 762,
+        "renderTime": 1788719586500.1013,
+        "shotTime": 1788719586500.1013,
+        "renderedAt": 1788719587008.488,
+        "interpolationDelay": 508.38671875,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.5867530083176495
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719586500.1013,
+        "sentAt": 1788719587043,
+        "receivedInterpolationDelay": 508.38671875,
+        "processedAt": 1788719587101,
+        "serverRtt": 100,
+        "rewindTime": 1788719586500.1013,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.5895736159444525
+        },
+        "targetDifferenceMetres": 0.002820607626802918,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 804,
+        "renderTime": 1788719587168.1113,
+        "shotTime": 1788719587168.1113,
+        "renderedAt": 1788719587709.488,
+        "interpolationDelay": 541.376708984375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.3979611923366937
+        },
+        "clientPing": 103,
+        "sentShotTime": 1788719587168.1113,
+        "sentAt": 1788719587744,
+        "receivedInterpolationDelay": 541.376708984375,
+        "processedAt": 1788719587801,
+        "serverRtt": 101,
+        "rewindTime": 1788719587168.1113,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.4010817770135113
+        },
+        "targetDifferenceMetres": 0.0031205846768176393,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 846,
+        "renderTime": 1788719587882.3801,
+        "shotTime": 1788719587882.3801,
+        "renderedAt": 1788719588405.488,
+        "interpolationDelay": 523.10791015625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.4390011620814722
+        },
+        "clientPing": 108,
+        "sentShotTime": 1788719587882.3801,
+        "sentAt": 1788719588445,
+        "receivedInterpolationDelay": 523.10791015625,
+        "processedAt": 1788719588502,
+        "serverRtt": 101,
+        "rewindTime": 1788719587882.3801,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.4354255407918188
+        },
+        "targetDifferenceMetres": 0.0035756212896533857,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 888,
+        "renderTime": 1788719588594.4207,
+        "shotTime": 1788719588594.4207,
+        "renderedAt": 1788719589108.488,
+        "interpolationDelay": 514.0673828125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.8207859654654746
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719588594.4207,
+        "sentAt": 1788719589148,
+        "receivedInterpolationDelay": 514.0673828125,
+        "processedAt": 1788719589201,
+        "serverRtt": 101,
+        "rewindTime": 1788719588594.4207,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.821563124676544
+        },
+        "targetDifferenceMetres": 0.000777159211069467,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 930,
+        "renderTime": 1788719589297.9907,
+        "shotTime": 1788719589297.9907,
+        "renderedAt": 1788719589807.488,
+        "interpolationDelay": 509.497314453125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.0145898673217744
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719589297.9907,
+        "sentAt": 1788719589847,
+        "receivedInterpolationDelay": 509.497314453125,
+        "processedAt": 1788719589902,
+        "serverRtt": 100,
+        "rewindTime": 1788719589297.9907,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.010522027594269
+        },
+        "targetDifferenceMetres": 0.004067839727505351,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 972,
+        "renderTime": 1788719589957.035,
+        "shotTime": 1788719589957.035,
+        "renderedAt": 1788719590507.488,
+        "interpolationDelay": 550.453125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.885499410198855
+        },
+        "clientPing": 103,
+        "sentShotTime": 1788719589957.035,
+        "sentAt": 1788719590550,
+        "receivedInterpolationDelay": 550.453125,
+        "processedAt": 1788719590619,
+        "serverRtt": 100,
+        "rewindTime": 1788719589957.035,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.8868551678529557
+        },
+        "targetDifferenceMetres": 0.0013557576541005645,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1014,
+        "renderTime": 1788719590678.8728,
+        "shotTime": 1788719590678.8728,
+        "renderedAt": 1788719591206.488,
+        "interpolationDelay": 527.615234375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.291855202553561
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719590678.8728,
+        "sentAt": 1788719591250,
+        "receivedInterpolationDelay": 527.615234375,
+        "processedAt": 1788719591302,
+        "serverRtt": 100,
+        "rewindTime": 1788719590678.8728,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.294828183270295
+        },
+        "targetDifferenceMetres": 0.0029729807167337974,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1056,
+        "renderTime": 1788719591391.4934,
+        "shotTime": 1788719591391.4934,
+        "renderedAt": 1788719591908.488,
+        "interpolationDelay": 516.99462890625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -8.14050674631726
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719591391.4934,
+        "sentAt": 1788719591953,
+        "receivedInterpolationDelay": 516.99462890625,
+        "processedAt": 1788719592017,
+        "serverRtt": 100,
+        "rewindTime": 1788719591391.4934,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -8.143038924712013
+        },
+        "targetDifferenceMetres": 0.0025321783947518384,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1098,
+        "renderTime": 1788719592096.218,
+        "shotTime": 1788719592096.218,
+        "renderedAt": 1788719592607.488,
+        "interpolationDelay": 511.27001953125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.123916093458431
+        },
+        "clientPing": 109,
+        "sentShotTime": 1788719592096.218,
+        "sentAt": 1788719592610,
+        "receivedInterpolationDelay": 511.27001953125,
+        "processedAt": 1788719592669,
+        "serverRtt": 103,
+        "rewindTime": 1788719592096.218,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.1226280553764756
+        },
+        "targetDifferenceMetres": 0.0012880380819555448,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1140,
+        "renderTime": 1788719592770.5093,
+        "shotTime": 1788719592770.5093,
+        "renderedAt": 1788719593309.488,
+        "interpolationDelay": 538.978759765625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 3.003751665975433
+        },
+        "clientPing": 245,
+        "sentShotTime": 1788719592770.5093,
+        "sentAt": 1788719593313,
+        "receivedInterpolationDelay": 538.978759765625,
+        "processedAt": 1788719593368,
+        "serverRtt": 103,
+        "rewindTime": 1788719592770.5093,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 3.004454304611875
+        },
+        "targetDifferenceMetres": 0.0007026386364419324,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1182,
+        "renderTime": 1788719593476.1372,
+        "shotTime": 1788719593476.1372,
+        "renderedAt": 1788719594007.488,
+        "interpolationDelay": 531.350830078125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.2516464841132984
+        },
+        "clientPing": 102,
+        "sentShotTime": 1788719593476.1372,
+        "sentAt": 1788719594015,
+        "receivedInterpolationDelay": 531.350830078125,
+        "processedAt": 1788719594086,
+        "serverRtt": 103,
+        "rewindTime": 1788719593476.1372,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.250780277996857
+        },
+        "targetDifferenceMetres": 0.0008662061164415036,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1224,
+        "renderTime": 1788719594188.4841,
+        "shotTime": 1788719594188.4841,
+        "renderedAt": 1788719594706.488,
+        "interpolationDelay": 518.00390625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.568127017051447
+        },
+        "clientPing": 104,
+        "sentShotTime": 1788719594188.4841,
+        "sentAt": 1788719594714,
+        "receivedInterpolationDelay": 518.00390625,
+        "processedAt": 1788719594768,
+        "serverRtt": 101,
+        "rewindTime": 1788719594188.4841,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.567436501477069
+        },
+        "targetDifferenceMetres": 0.0006905155743783808,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1266,
+        "renderTime": 1788719594895.4802,
+        "shotTime": 1788719594895.4802,
+        "renderedAt": 1788719595406.488,
+        "interpolationDelay": 511.0078125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.0975890604913359
+        },
+        "clientPing": 104,
+        "sentShotTime": 1788719594895.4802,
+        "sentAt": 1788719595415,
+        "receivedInterpolationDelay": 511.0078125,
+        "processedAt": 1788719595469,
+        "serverRtt": 101,
+        "rewindTime": 1788719594895.4802,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.1004062850081722
+        },
+        "targetDifferenceMetres": 0.002817224516836303,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1308,
+        "renderTime": 1788719595599.4631,
+        "shotTime": 1788719595599.4631,
+        "renderedAt": 1788719596107.488,
+        "interpolationDelay": 508.02490234375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 1.8441141091509277
+        },
+        "clientPing": 105,
+        "sentShotTime": 1788719595599.4631,
+        "sentAt": 1788719596116,
+        "receivedInterpolationDelay": 508.02490234375,
+        "processedAt": 1788719596185,
+        "serverRtt": 101,
+        "rewindTime": 1788719595599.4631,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 1.844517232645681
+        },
+        "targetDifferenceMetres": 0.0004031234947532436,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1350,
+        "renderTime": 1788719596271.5364,
+        "shotTime": 1788719596271.5364,
+        "renderedAt": 1788719596808.488,
+        "interpolationDelay": 536.95166015625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.171920139545109
+        },
+        "clientPing": 104,
+        "sentShotTime": 1788719596271.5364,
+        "sentAt": 1788719596816,
+        "receivedInterpolationDelay": 536.95166015625,
+        "processedAt": 1788719596885,
+        "serverRtt": 101,
+        "rewindTime": 1788719596271.5364,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.171264462567169
+        },
+        "targetDifferenceMetres": 0.0006556769779395566,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1392,
+        "renderTime": 1788719596985.6746,
+        "shotTime": 1788719596985.6746,
+        "renderedAt": 1788719597506.488,
+        "interpolationDelay": 520.8134765625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.556928895905148
+        },
+        "clientPing": 107,
+        "sentShotTime": 1788719596985.6746,
+        "sentAt": 1788719597517,
+        "receivedInterpolationDelay": 520.8134765625,
+        "processedAt": 1788719597584,
+        "serverRtt": 101,
+        "rewindTime": 1788719596985.6746,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.557828794195831
+        },
+        "targetDifferenceMetres": 0.0008998982906822661,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1434,
+        "renderTime": 1788719597694.4353,
+        "shotTime": 1788719597694.4353,
+        "renderedAt": 1788719598207.488,
+        "interpolationDelay": 513.052734375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.1989483002573103
+        },
+        "clientPing": 105,
+        "sentShotTime": 1788719597694.4353,
+        "sentAt": 1788719598218,
+        "receivedInterpolationDelay": 513.052734375,
+        "processedAt": 1788719598285,
+        "serverRtt": 101,
+        "rewindTime": 1788719597694.4353,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.19673443890645043
+        },
+        "targetDifferenceMetres": 0.0022138613508598803,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1476,
+        "renderTime": 1788719598400.5732,
+        "shotTime": 1788719598400.5732,
+        "renderedAt": 1788719598909.488,
+        "interpolationDelay": 508.914794921875,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.9428408271248918
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719598400.5732,
+        "sentAt": 1788719598919,
+        "receivedInterpolationDelay": 508.914794921875,
+        "processedAt": 1788719598986,
+        "serverRtt": 101,
+        "rewindTime": 1788719598400.5732,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.9468490774718928
+        },
+        "targetDifferenceMetres": 0.00400825034700103,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1518,
+        "renderTime": 1788719599061.9,
+        "shotTime": 1788719599061.9,
+        "renderedAt": 1788719599609.488,
+        "interpolationDelay": 547.588134765625,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.979099044227041
+        },
+        "clientPing": 107,
+        "sentShotTime": 1788719599061.9,
+        "sentAt": 1788719599619,
+        "receivedInterpolationDelay": 547.588134765625,
+        "processedAt": 1788719599685,
+        "serverRtt": 101,
+        "rewindTime": 1788719599061.9,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.981283104168732
+        },
+        "targetDifferenceMetres": 0.002184059941690464,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1560,
+        "renderTime": 1788719599779.653,
+        "shotTime": 1788719599779.653,
+        "renderedAt": 1788719600305.488,
+        "interpolationDelay": 525.8349609375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.716652936188038
+        },
+        "clientPing": 105,
+        "sentShotTime": 1788719599779.653,
+        "sentAt": 1788719600322,
+        "receivedInterpolationDelay": 525.8349609375,
+        "processedAt": 1788719600385,
+        "serverRtt": 101,
+        "rewindTime": 1788719599779.653,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.715405380133331
+        },
+        "targetDifferenceMetres": 0.0012475560547073883,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1602,
+        "renderTime": 1788719600491.0977,
+        "shotTime": 1788719600491.0977,
+        "renderedAt": 1788719601006.488,
+        "interpolationDelay": 515.390380859375,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.6945859318622388
+        },
+        "clientPing": 103,
+        "sentShotTime": 1788719600491.0977,
+        "sentAt": 1788719601022,
+        "receivedInterpolationDelay": 515.390380859375,
+        "processedAt": 1788719601084,
+        "serverRtt": 100,
+        "rewindTime": 1788719600491.0977,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.6945600388119807
+        },
+        "targetDifferenceMetres": 2.5893050258130046e-05,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1644,
+        "renderTime": 1788719601197.4675,
+        "shotTime": 1788719601197.4675,
+        "renderedAt": 1788719601707.488,
+        "interpolationDelay": 510.0205078125,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.0692077628056722
+        },
+        "clientPing": 106,
+        "sentShotTime": 1788719601197.4675,
+        "sentAt": 1788719601722,
+        "receivedInterpolationDelay": 510.0205078125,
+        "processedAt": 1788719601785,
+        "serverRtt": 100,
+        "rewindTime": 1788719601197.4675,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.07111131217654454
+        },
+        "targetDifferenceMetres": 0.0019035493708723372,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1686,
+        "renderTime": 1788719601853.2666,
+        "shotTime": 1788719601853.2666,
+        "renderedAt": 1788719602407.488,
+        "interpolationDelay": 554.221435546875,
+        "reserve": 452.45850999999675,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.959999474295068
+        },
+        "clientPing": 249,
+        "sentShotTime": 1788719601853.2666,
+        "sentAt": 1788719602422,
+        "receivedInterpolationDelay": 554.221435546875,
+        "processedAt": 1788719602484,
+        "serverRtt": 100,
+        "rewindTime": 1788719601853.2666,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.958259807408622
+        },
+        "targetDifferenceMetres": 0.0017396668864462228,
+        "hit": true,
+        "originDifferenceMetres": 0
+      }
+    ]
+  },
+  {
+    "rtt": 350,
+    "samples": 24,
+    "actualShots": 24,
+    "hits": 24,
+    "confirmedHits": 24,
+    "victimHitEvents": 24,
+    "resyncs": 0,
+    "hitRate": 1,
+    "probeRttMs": {
+      "p50": 355,
+      "p95": 621,
+      "max": 625
+    },
+    "timestampDifferenceMs": {
+      "p50": 0,
+      "p95": 0,
+      "max": 0
+    },
+    "targetDifferenceMetres": {
+      "p50": 0.0016309627556254647,
+      "p95": 0.003926108964396491,
+      "max": 0.004846864586025568
+    },
+    "maxCorrectionMetres": 0,
+    "maxSnapshotJumpMetres": 0,
+    "shots": [
+      {
+        "seq": 720,
+        "renderTime": 1788719617063.0398,
+        "shotTime": 1788719617063.0398,
+        "renderedAt": 1788719617694.632,
+        "interpolationDelay": 631.59228515625,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.9473580572498035
+        },
+        "clientPing": 358,
+        "sentShotTime": 1788719617063.0398,
+        "sentAt": 1788719617713,
+        "receivedInterpolationDelay": 631.59228515625,
+        "processedAt": 1788719617907,
+        "serverRtt": 351,
+        "rewindTime": 1788719617063.0398,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.949669101239044
+        },
+        "targetDifferenceMetres": 0.0023110439892404244,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 762,
+        "renderTime": 1788719617767.1653,
+        "shotTime": 1788719617767.1653,
+        "renderedAt": 1788719618397.632,
+        "interpolationDelay": 630.466796875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.234016596155707
+        },
+        "clientPing": 355,
+        "sentShotTime": 1788719617767.1653,
+        "sentAt": 1788719618417,
+        "receivedInterpolationDelay": 630.466796875,
+        "processedAt": 1788719618606,
+        "serverRtt": 349,
+        "rewindTime": 1788719617767.1653,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.2362080900942685
+        },
+        "targetDifferenceMetres": 0.0021914939385618837,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 804,
+        "renderTime": 1788719618457.6255,
+        "shotTime": 1788719618457.6255,
+        "renderedAt": 1788719619094.632,
+        "interpolationDelay": 637.006591796875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.015863953072918463
+        },
+        "clientPing": 357,
+        "sentShotTime": 1788719618457.6255,
+        "sentAt": 1788719619119,
+        "receivedInterpolationDelay": 637.006591796875,
+        "processedAt": 1788719619307,
+        "serverRtt": 349,
+        "rewindTime": 1788719618457.6255,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.01855294188815254
+        },
+        "targetDifferenceMetres": 0.002688988815234078,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 846,
+        "renderTime": 1788719619161.4783,
+        "shotTime": 1788719619161.4783,
+        "renderedAt": 1788719619794.632,
+        "interpolationDelay": 633.15380859375,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.7497912190665375
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719619161.4783,
+        "sentAt": 1788719619819,
+        "receivedInterpolationDelay": 633.15380859375,
+        "processedAt": 1788719620010,
+        "serverRtt": 349,
+        "rewindTime": 1788719619161.4783,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.7504923948547053
+        },
+        "targetDifferenceMetres": 0.0007011757881678626,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 888,
+        "renderTime": 1788719619862.3262,
+        "shotTime": 1788719619862.3262,
+        "renderedAt": 1788719620493.632,
+        "interpolationDelay": 631.305908203125,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.539932929173422
+        },
+        "clientPing": 354,
+        "sentShotTime": 1788719619862.3262,
+        "sentAt": 1788719620521,
+        "receivedInterpolationDelay": 631.305908203125,
+        "processedAt": 1788719620706,
+        "serverRtt": 351,
+        "rewindTime": 1788719619862.3262,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.539873509442169
+        },
+        "targetDifferenceMetres": 5.9419731252674524e-05,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 930,
+        "renderTime": 1788719620563.0557,
+        "shotTime": 1788719620563.0557,
+        "renderedAt": 1788719621193.632,
+        "interpolationDelay": 630.576416015625,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.3082643803019
+        },
+        "clientPing": 352,
+        "sentShotTime": 1788719620563.0557,
+        "sentAt": 1788719621223,
+        "receivedInterpolationDelay": 630.576416015625,
+        "processedAt": 1788719621407,
+        "serverRtt": 351,
+        "rewindTime": 1788719620563.0557,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -5.3041988073296
+        },
+        "targetDifferenceMetres": 0.0040655729722995915,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 972,
+        "renderTime": 1788719621262.2222,
+        "shotTime": 1788719621262.2222,
+        "renderedAt": 1788719621895.632,
+        "interpolationDelay": 633.409912109375,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.9609610807181945
+        },
+        "clientPing": 373,
+        "sentShotTime": 1788719621262.2222,
+        "sentAt": 1788719621924,
+        "receivedInterpolationDelay": 633.409912109375,
+        "processedAt": 1788719622106,
+        "serverRtt": 351,
+        "rewindTime": 1788719621262.2222,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 0.9598696697464759
+        },
+        "targetDifferenceMetres": 0.0010914109717186093,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1014,
+        "renderTime": 1788719621960.852,
+        "shotTime": 1788719621960.852,
+        "renderedAt": 1788719622594.632,
+        "interpolationDelay": 633.780029296875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.13866845615040801
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719621960.852,
+        "sentAt": 1788719622625,
+        "receivedInterpolationDelay": 633.780029296875,
+        "processedAt": 1788719622806,
+        "serverRtt": 351,
+        "rewindTime": 1788719621960.852,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -0.14029416276248202
+        },
+        "targetDifferenceMetres": 0.0016257066120740071,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1056,
+        "renderTime": 1788719622662.2166,
+        "shotTime": 1788719622662.2166,
+        "renderedAt": 1788719623293.632,
+        "interpolationDelay": 631.41552734375,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.439948872851674
+        },
+        "clientPing": 352,
+        "sentShotTime": 1788719622662.2166,
+        "sentAt": 1788719623325,
+        "receivedInterpolationDelay": 631.41552734375,
+        "processedAt": 1788719623507,
+        "serverRtt": 351,
+        "rewindTime": 1788719622662.2166,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -6.436289558270294
+        },
+        "targetDifferenceMetres": 0.003659314581379469,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1098,
+        "renderTime": 1788719623364.1606,
+        "shotTime": 1788719623364.1606,
+        "renderedAt": 1788719623994.632,
+        "interpolationDelay": 630.471435546875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.393554180758074
+        },
+        "clientPing": 355,
+        "sentShotTime": 1788719623364.1606,
+        "sentAt": 1788719624030,
+        "receivedInterpolationDelay": 630.471435546875,
+        "processedAt": 1788719624224,
+        "serverRtt": 351,
+        "rewindTime": 1788719623364.1606,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.393147537359893
+        },
+        "targetDifferenceMetres": 0.0004066433981808615,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1140,
+        "renderTime": 1788719624065.6057,
+        "shotTime": 1788719624065.6057,
+        "renderedAt": 1788719624695.632,
+        "interpolationDelay": 630.0263671875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 1.9624452046791703
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719624065.6057,
+        "sentAt": 1788719624731,
+        "receivedInterpolationDelay": 630.0263671875,
+        "processedAt": 1788719624923,
+        "serverRtt": 351,
+        "rewindTime": 1788719624065.6057,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 1.962453570550262
+        },
+        "targetDifferenceMetres": 8.365871091653432e-06,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1182,
+        "renderTime": 1788719624762.996,
+        "shotTime": 1788719624762.996,
+        "renderedAt": 1788719625396.632,
+        "interpolationDelay": 633.635986328125,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.2120049544705116
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719624762.996,
+        "sentAt": 1788719625432,
+        "receivedInterpolationDelay": 633.635986328125,
+        "processedAt": 1788719625623,
+        "serverRtt": 351,
+        "rewindTime": 1788719624762.996,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.2093373023909897
+        },
+        "targetDifferenceMetres": 0.0026676520795219094,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1224,
+        "renderTime": 1788719625460.9084,
+        "shotTime": 1788719625460.9084,
+        "renderedAt": 1788719626092.632,
+        "interpolationDelay": 631.7236328125,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.473309956687301
+        },
+        "clientPing": 355,
+        "sentShotTime": 1788719625460.9084,
+        "sentAt": 1788719626133,
+        "receivedInterpolationDelay": 631.7236328125,
+        "processedAt": 1788719626324,
+        "serverRtt": 351,
+        "rewindTime": 1788719625460.9084,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.4754769690584375
+        },
+        "targetDifferenceMetres": 0.0021670123711361455,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1266,
+        "renderTime": 1788719626164.6711,
+        "shotTime": 1788719626164.6711,
+        "renderedAt": 1788719626795.632,
+        "interpolationDelay": 630.9609375,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.3478457912379573
+        },
+        "clientPing": 352,
+        "sentShotTime": 1788719626164.6711,
+        "sentAt": 1788719626835,
+        "receivedInterpolationDelay": 630.9609375,
+        "processedAt": 1788719627024,
+        "serverRtt": 351,
+        "rewindTime": 1788719626164.6711,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -3.3516220529473335
+        },
+        "targetDifferenceMetres": 0.003776261709376172,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1308,
+        "renderTime": 1788719626866.5637,
+        "shotTime": 1788719626866.5637,
+        "renderedAt": 1788719627496.632,
+        "interpolationDelay": 630.068359375,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.9161860150999535
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719626866.5637,
+        "sentAt": 1788719627536,
+        "receivedInterpolationDelay": 630.068359375,
+        "processedAt": 1788719627724,
+        "serverRtt": 351,
+        "rewindTime": 1788719626866.5637,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.91619575234035
+        },
+        "targetDifferenceMetres": 9.737240396656688e-06,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1350,
+        "renderTime": 1788719627557.3818,
+        "shotTime": 1788719627557.3818,
+        "renderedAt": 1788719628193.632,
+        "interpolationDelay": 636.250244140625,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.053579663661367
+        },
+        "clientPing": 355,
+        "sentShotTime": 1788719627557.3818,
+        "sentAt": 1788719628237,
+        "receivedInterpolationDelay": 636.250244140625,
+        "processedAt": 1788719628423,
+        "serverRtt": 351,
+        "rewindTime": 1788719627557.3818,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.0575057726257633
+        },
+        "targetDifferenceMetres": 0.003926108964396491,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1392,
+        "renderTime": 1788719628260.4026,
+        "shotTime": 1788719628260.4026,
+        "renderedAt": 1788719628893.632,
+        "interpolationDelay": 633.2294921875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -8.150819161094306
+        },
+        "clientPing": 355,
+        "sentShotTime": 1788719628260.4026,
+        "sentAt": 1788719628938,
+        "receivedInterpolationDelay": 633.2294921875,
+        "processedAt": 1788719629123,
+        "serverRtt": 351,
+        "rewindTime": 1788719628260.4026,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -8.148831363409542
+        },
+        "targetDifferenceMetres": 0.001987797684764203,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1434,
+        "renderTime": 1788719628964.925,
+        "shotTime": 1788719628964.925,
+        "renderedAt": 1788719629596.632,
+        "interpolationDelay": 631.70703125,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.4510965328556678
+        },
+        "clientPing": 354,
+        "sentShotTime": 1788719628964.925,
+        "sentAt": 1788719629640,
+        "receivedInterpolationDelay": 631.70703125,
+        "processedAt": 1788719629823,
+        "serverRtt": 351,
+        "rewindTime": 1788719628964.925,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.4484996593305572
+        },
+        "targetDifferenceMetres": 0.00259687352511051,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1476,
+        "renderTime": 1788719629666.9675,
+        "shotTime": 1788719629666.9675,
+        "renderedAt": 1788719630297.632,
+        "interpolationDelay": 630.66455078125,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 3.0387106638791384
+        },
+        "clientPing": 356,
+        "sentShotTime": 1788719629666.9675,
+        "sentAt": 1788719630341,
+        "receivedInterpolationDelay": 630.66455078125,
+        "processedAt": 1788719630524,
+        "serverRtt": 351,
+        "rewindTime": 1788719629666.9675,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 3.040341626634764
+        },
+        "targetDifferenceMetres": 0.0016309627556254647,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1518,
+        "renderTime": 1788719630359.5159,
+        "shotTime": 1788719630359.5159,
+        "renderedAt": 1788719630995.632,
+        "interpolationDelay": 636.1162109375,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.970043666524176
+        },
+        "clientPing": 373,
+        "sentShotTime": 1788719630359.5159,
+        "sentAt": 1788719631044,
+        "receivedInterpolationDelay": 636.1162109375,
+        "processedAt": 1788719631224,
+        "serverRtt": 351,
+        "rewindTime": 1788719630359.5159,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -2.9703039009640126
+        },
+        "targetDifferenceMetres": 0.00026023443983680394,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1560,
+        "renderTime": 1788719631059.843,
+        "shotTime": 1788719631059.843,
+        "renderedAt": 1788719631692.632,
+        "interpolationDelay": 632.7890625,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.751616346696392
+        },
+        "clientPing": 355,
+        "sentShotTime": 1788719631059.843,
+        "sentAt": 1788719631695,
+        "receivedInterpolationDelay": 632.7890625,
+        "processedAt": 1788719631874,
+        "serverRtt": 351,
+        "rewindTime": 1788719631059.843,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -7.7564632112824174
+        },
+        "targetDifferenceMetres": 0.004846864586025568,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1602,
+        "renderTime": 1788719631764.1965,
+        "shotTime": 1788719631764.1965,
+        "renderedAt": 1788719632395.632,
+        "interpolationDelay": 631.435546875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.4076776198812249
+        },
+        "clientPing": 354,
+        "sentShotTime": 1788719631764.1965,
+        "sentAt": 1788719632446,
+        "receivedInterpolationDelay": 631.435546875,
+        "processedAt": 1788719632639,
+        "serverRtt": 350,
+        "rewindTime": 1788719631764.1965,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -1.409254492552909
+        },
+        "targetDifferenceMetres": 0.0015768726716840487,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1644,
+        "renderTime": 1788719632462.8274,
+        "shotTime": 1788719632462.8274,
+        "renderedAt": 1788719633093.632,
+        "interpolationDelay": 630.8046875,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.2335535127378536
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719632462.8274,
+        "sentAt": 1788719633096,
+        "receivedInterpolationDelay": 630.8046875,
+        "processedAt": 1788719633289,
+        "serverRtt": 350,
+        "rewindTime": 1788719632462.8274,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": 2.23239887337033
+        },
+        "targetDifferenceMetres": 0.001154639367523469,
+        "hit": true,
+        "originDifferenceMetres": 0
+      },
+      {
+        "seq": 1686,
+        "renderTime": 1788719633163.8928,
+        "shotTime": 1788719633163.8928,
+        "renderedAt": 1788719633793.632,
+        "interpolationDelay": 629.7392578125,
+        "reserve": 452.38867400000163,
+        "cameraOrigin": {
+          "x": -28,
+          "y": 1.62,
+          "z": -2
+        },
+        "renderedTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.059850802691169
+        },
+        "clientPing": 353,
+        "sentShotTime": 1788719633163.8928,
+        "sentAt": 1788719633796,
+        "receivedInterpolationDelay": 629.7392578125,
+        "processedAt": 1788719633991,
+        "serverRtt": 350,
+        "rewindTime": 1788719633163.8928,
+        "timestampDifferenceMs": 0,
+        "rewoundTarget": {
+          "x": -34,
+          "y": 0,
+          "z": -4.060502107464631
+        },
+        "targetDifferenceMetres": 0.0006513047734619803,
+        "hit": true,
+        "originDifferenceMetres": 0
+      }
+    ]
+  }
+]

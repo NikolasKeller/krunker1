@@ -1,0 +1,20 @@
+✔ lobby: team is visible immediately and survives stale, intermediate and acknowledged snapshots (127.574416ms)
+✔ lobby: class is visible immediately and survives stale, intermediate and acknowledged snapshots (33.33725ms)
+✔ lobby: team-class is visible immediately and survives stale, intermediate and acknowledged snapshots (43.536084ms)
+✔ lobby: class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (30.321458ms)
+✔ lobby: class-class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (51.310917ms)
+✔ playing: team is visible immediately and survives stale, intermediate and acknowledged snapshots (25.994291ms)
+✔ playing: class is visible immediately and survives stale, intermediate and acknowledged snapshots (20.620417ms)
+✔ playing: team-class is visible immediately and survives stale, intermediate and acknowledged snapshots (26.772959ms)
+✔ playing: class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (31.564959ms)
+✔ playing: class-class-team is visible immediately and survives stale, intermediate and acknowledged snapshots (33.687666ms)
+✔ pending class presentation never masks incoming server damage or death (0.34125ms)
+✔ class cycling retains depleted ammo through selection acknowledgements; rejected selections roll back (4.23525ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1403.712

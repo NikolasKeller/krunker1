@@ -57,6 +57,6 @@ export function traceShot(weapon: WeaponId, origin: Vec3, dirs: Vec3[], targets:
     });
     return { ends, hits: [...hits.values()] };
 }
-export function visibleTargets(shooter: PlayerState, players: PlayerState[], mode: Mode, now: number) {
-    return players.filter(q => q.id !== shooter.id && q.alive && q.protectionEnd <= now && (mode !== 'tdm' || q.team !== shooter.team));
+export function visibleTargets(shooter: PlayerState, players: PlayerState[], mode: Mode, _now: number) {
+    return players.filter(q => q.id !== shooter.id && q.alive && (mode !== 'tdm' || q.team !== shooter.team));
 }

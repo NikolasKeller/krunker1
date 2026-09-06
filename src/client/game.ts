@@ -7,8 +7,8 @@ import { Renderer } from './renderer';
 import { AudioEngine } from './audio';
 import type { UI } from './ui';
 import { wireInput } from '../shared/protocol';
-import { type Input, type WeaponId } from '../shared/types';
-import { WEAPONS } from '../shared/weapons';
+import { type Input } from '../shared/types';
+import { CLASSES, WEAPONS } from '../shared/weapons';
 import { clamp, distance } from '../shared/math';
 import { FrameBudget } from './frame-budget';
 // Lobby/network ownership stays in lobby-app; only gameplay waits for Three.js.
@@ -21,7 +21,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     const budget = new FrameBudget(controls.touchMode);
     const motion = new LocalMotion();
     let spawnReadyAt = 0, lastCombatLog = 0;
-    let playing = false, lastLife = -1, lastWeapon: WeaponId = 'sniper', previousReload = 0, lastStep = 0, lastTime = performance.now();
+    let playing = false, lastLife = -1, previousReload = 0, lastStep = 0, lastTime = performance.now();
     ui.onClass = id => { renderer.setClass(id); };
     ui.onRoom = () => { playing = false; ui.menu = true; ui.paused = false; ui.visibility(); controls.unlock(); net.connect(ui.joinConfig); };
     const deploy = () => {
@@ -61,7 +61,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
     shots.onRetract = key => { net.remoteHealth.retract(key); ui.retractHit(key, performance.now()); };
     shots.onConfirm = (key, e) => ui.confirmHit(key, e);
     net.onCombat = m => shots.resolve(m);
-    net.weapons.onCorrection = slot => { controls.slot = slot; };
+    net.weapons.onCorrection = slot => { controls.slot = slot; pendingFireAim = undefined; };
     net.onEvents = events => {
         for (const e of events) {
             const provisional = shots.reconcileEvent(e);
@@ -139,7 +139,7 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             pendingFireAim = undefined;
             controls.yaw = p.yaw;
             controls.pitch = p.pitch;
-            controls.slot = 1;
+            controls.slot = p.weapon === CLASSES[p.classId].weapon ? 1 : p.weapon === 'pistol' ? 2 : 3;
             spawnReadyAt = time + 250;
             audio.spawn();
         }
@@ -153,12 +153,9 @@ export function startGame(net: Network, ui: UI, canvas: HTMLCanvasElement): Prom
             if (pendingFireAim?.seq === input.seq) pendingFireAim = undefined;
         });
         if (p && playing && controls.locked && !controls.typing && !ui.menu) net.selectWeapon(controls.slot);
-        if (p?.weapon !== lastWeapon && p) {
-            lastWeapon = p.weapon;
-            renderer.viewmodel.setWeapon(p.weapon);
-        }
+        if (p && renderer.viewmodel.weapon !== p.weapon) renderer.viewmodel.setWeapon(p.weapon);
         if (p && playing && controls.locked && !controls.typing && !ui.menu && p.alive && net.round?.phase === 'playing') {
-            if (controls.fire && net.weapons.canFire && !pendingFireAim && time >= spawnReadyAt && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
+            if (controls.fire && !net.changingClass && net.weapons.canFire && !pendingFireAim && time >= spawnReadyAt && p.reloadEnd <= now && (p.ammo > 0 || p.weapon === 'knife')) {
                 const input = sampleInput(net.seq + 1);
                 input.fire = !(input.reload && p.weapon !== 'knife' && p.ammo < WEAPONS[p.weapon].magazine);
                 const clock = net.weapons.preview(p, input);

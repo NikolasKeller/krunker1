@@ -62,7 +62,7 @@ export class LobbyPanel {
     }
     update(team: Team, gameReady = true) {
         this.polls++;
-        const before = this.writes, net = this.net, round = net.round, local = net.local;
+        const before = this.writes, net = this.net, round = net.round, local = net.selectionState ?? net.local;
         const connected = !!local && ['CONNECTED', 'CONNECTION SLOW'].includes(net.status), host = connected && net.host === net.id;
         const active = round?.phase === 'playing', countdown = round?.phase === 'countdown', results = round?.phase === 'results';
         const seconds = Math.max(0, Math.ceil(((round?.nextAt ?? 0) - net.serverNow) / 1000));
@@ -79,7 +79,7 @@ export class LobbyPanel {
         this.label('deploy-note', !gameReady ? 'PREPARING THE ARENA · PICK YOUR CLASS WHILE YOU WAIT' : active ? 'MATCH IN PROGRESS · SPAWN AND PLAY' : countdown ? `EVERYONE DEPLOYS IN ${seconds}…` : 'MATCH STARTS WHEN EVERY PLAYER IS READY');
         this.label('lobby-heading', net.room && net.id ? `FURO LOBBY / ${net.room}` : 'YOUR NEXT FURO ROUND');
         // Keep your card in view, then humans before bots. Combat never reorders the lobby.
-        const players = [...net.players.values()].sort((a, b) => Number(b.id === net.id) - Number(a.id === net.id) || Number(a.bot) - Number(b.bot) || a.id.localeCompare(b.id));
+        const players = (net.displayPlayers ?? [...net.players.values()]).sort((a, b) => Number(b.id === net.id) - Number(a.id === net.id) || Number(a.bot) - Number(b.bot) || a.id.localeCompare(b.id));
         const lineup = summarizeLineup(players), ffa = round?.mode !== 'tdm';
         this.label('lineup-title', ffa ? 'MEET YOUR MATCH' : 'CHOOSE YOUR SIDE');
         this.label('lobby-status', !net.ws ? 'Create a lobby, then invite your friends.' : !connected ? net.status : net.status === 'CONNECTION SLOW' ? 'Connection slow · waiting for updates…' : countdown ? `MATCH STARTING IN ${seconds}…` : active ? 'Round live. You can join at any time.' : results ? 'Good game! Getting the lobby ready…' : `${lineup.ready} / ${lineup.humans} ready · ${ffa ? 'Pick a class' : 'Pick a team'} and ready up.`);
@@ -107,13 +107,14 @@ export class LobbyPanel {
             this.toggle(b, 'selected', selected);
             this.attribute(b, 'aria-pressed', String(selected));
             this.attribute(b, 'aria-label', `Join ${b.dataset.team} team`);
-            this.disabled(b, !connected || active || results);
+            this.disabled(b, !connected || results);
             this.toggle(b.parentElement!, 'is-local-team', selected && connected);
-            this.toggle(b.parentElement!, 'can-join', connected && !active && !results);
-            this.label(`${b.dataset.team}-action`, selected && connected ? '✓ YOUR TEAM' : active || results ? 'TEAM LOCKED' : 'JOIN TEAM ↗');
+            this.toggle(b.parentElement!, 'can-join', connected && !results);
+            this.label(`${b.dataset.team}-action`, selected && connected ? '✓ YOUR TEAM' : results ? 'TEAM LOCKED' : 'JOIN TEAM ↗');
         }
         this.label('player-count', `${lineup.humans} / ${MAX_HUMANS} + ${lineup.bots} BOTS`);
-        this.label('lineup-help', active || results ? 'The lineup returns here after the match.' : ffa ? 'No teams. Every player is a rival.' : host ? 'Click a team to join · Use MOVE on a card to set the matchups.' : 'Click a team to join it.');
+        this.label('lineup-help', results ? 'The lineup returns here after the match.' : active ? 'Class changes apply now. Switching team moves you to its spawn. Health stays unchanged.' : ffa ? 'No teams. Every player is a rival.' : host ? 'Click a team to join · Use MOVE on a card to set the matchups.' : 'Click a team to join it.');
+        document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => this.disabled(b, results));
         this.toggle(this.node('roster'), 'is-ffa', ffa);
         const focused = document.activeElement as HTMLElement | null;
         const focusedCard = focused?.closest('[data-player-id]');

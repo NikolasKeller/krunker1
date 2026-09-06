@@ -6,6 +6,7 @@ import { clamp, lerp } from '../shared/math';
 import { decodeServerMessage, encodeClientMessage, INPUT_SEND_MS, WIRE_PROTOCOL } from '../shared/protocol';
 import { WeaponPrediction } from './weapon-prediction';
 import { InputBuffer } from '../shared/input-buffer';
+import { CLASSES } from '../shared/weapons';
 export const JOIN_RETRY_MS = 2000;
 export const CONNECT_TIMEOUT_MS = 30000;
 export const SLOW_CONNECTION_MS = 5000;
@@ -17,6 +18,12 @@ export function retryDelay(attempt: number, base = RECONNECT_BASE_MS, cap = RECO
 }
 export class Network {
     readonly weapons = new WeaponPrediction();
+    private selectionSeq = 0;
+    private selections: { requestId: number; patch: Partial<PlayerState> }[] = [];
+    get changingClass() { return this.selections.some(s => s.patch.classId !== undefined); }
+    get selectionState() { return this.selections.length ? this.predicted : this.local; }
+    get displayPlayers() { return [...this.players.values()].map(p => p.id === this.id ? this.selectionState ?? p : p); }
+    private applySelections(p: PlayerState) { for (const s of this.selections) Object.assign(p, s.patch); }
     onCombat: (message: Extract<ServerMessage, { type: 'combat' }>) => void = () => {};
     combatDelays: number[] = [];
     selectWeapon(slot: Input['slot'], seq = this.seq + 1, _time = performance.now()) {
@@ -134,6 +141,7 @@ export class Network {
         this.lastMessageAt = Date.now();
         this.lastSyncAt = 0;
         this.players.clear();
+        this.selections = []; this.selectionSeq = 0;
         this.weapons.reset(); this.combatDelays = [];
         this.frames = [];
         this.interpolation.reset();
@@ -197,8 +205,24 @@ export class Network {
         // retry, so late error callbacks cannot flicker an established session.
         ws.onerror = () => {};
     }
-    send(message: ClientMessage) { if (this.ws?.readyState === WebSocket.OPEN)
-        this.ws.send(encodeClientMessage(message)); }
+    send(message: ClientMessage) {
+        if (this.ws?.readyState !== WebSocket.OPEN) return;
+        if (this.predicted && (message.type === 'class' || (message.type === 'team' && (!message.playerId || message.playerId === this.id)))) {
+            message = { ...message, requestId: ++this.selectionSeq };
+            const patch: Partial<PlayerState> = {};
+            if (this.round?.phase !== 'results') {
+                if (message.type === 'class' && CLASSES[message.classId] && message.classId !== this.predicted.classId) {
+                    this.weapons.selectClass(this.predicted, message.classId);
+                    const { classId, weapon, ammo, reloadEnd, bloom, aiming } = this.predicted;
+                    Object.assign(patch, { classId, weapon, ammo, reloadEnd, bloom, aiming, ready: false });
+                }
+                if (message.team !== undefined && ['blue', 'red'].includes(message.team)) Object.assign(patch, { team: message.team, ready: false });
+            }
+            this.selections.push({ requestId: message.requestId!, patch });
+            this.applySelections(this.predicted);
+        }
+        this.ws.send(encodeClientMessage(message));
+    }
     get serverNow() { return Date.now() + this.offset; }
     get interpolationDelay() { return this.interpolation.delay(this.ping); }
     shotTiming(shotTime = this.interpolation.playbackTime ?? this.serverNow - this.interpolationDelay) {
@@ -268,7 +292,7 @@ export class Network {
             this.onNotice(m.message);
         }
         if (m.type === 'shot-rejected') this.onNotice('Shot expired during connection delay. Fire again.');
-        if (m.type === 'weapon' && this.predicted) this.weapons.confirm(m, this.predicted);
+        if (m.type === 'weapon' && this.predicted && !this.changingClass) this.weapons.confirm(m, this.predicted);
         if (m.type === 'combat') {
             this.combatDelays.push(this.serverNow - m.time);
             if (this.combatDelays.length > 24000) this.combatDelays.shift();
@@ -292,6 +316,8 @@ export class Network {
                 return;
             }
             this.receivedAt = Date.now();
+            const selectionConfirmed = m.selectionAck !== undefined && this.selections.some(s => s.requestId <= m.selectionAck!);
+            if (m.selectionAck !== undefined) this.selections = this.selections.filter(s => s.requestId > m.selectionAck!);
             this.interpolation.observe(m.time, performance.now());
             this.lastSnapshot = m.n;
             if (m.host !== undefined) this.host = m.host;
@@ -321,7 +347,9 @@ export class Network {
                 this.pending = this.pending.filter(i => i.seq > local.ack);
                 this.seq = Math.max(this.seq, local.ack);
                 this.predicted = this.predictionHistory.reconcile(local, this.round?.phase === 'playing', old);
-                this.weapons.reconcile(local, this.predicted);
+                if (selectionConfirmed && old?.life !== local.life && local.alive) this.weapons.acceptSelection(local);
+                if (!this.changingClass) this.weapons.reconcile(local, this.predicted);
+                this.applySelections(this.predicted);
                 if (old && old.life === local.life && old.alive === local.alive) {
                     if (!this.movementMeasuredAt) this.movementMeasuredAt = performance.now();
                     const raw = Math.hypot(old.x - this.predicted.x, old.y - this.predicted.y, old.z - this.predicted.z);

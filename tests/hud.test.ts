@@ -35,7 +35,7 @@ test('health, empty magazine, reload lifecycle and authoritative team scores rea
     const { restore, a, net, renderer, ui } = setup();
     try {
         ui.update(100, renderer, false);
-        assert.equal(node('health').textContent, '60'); assert.equal(node('health-max').textContent, '|60');
+        assert.equal(node('health').textContent, '100'); assert.equal(node('health-max').textContent, '|100');
         assert.equal(node('health-bar').style.width, '100%');
         a.hp = 20; a.ammo = 0; net.round!.mode = 'tdm'; net.round!.red = 13; net.round!.blue = 17;
         ui.update(200, renderer, false);
@@ -125,7 +125,7 @@ test('an aimed authoritative TDM headshot reaches combat feedback and increments
         assert.ok(message.events.some(e => e.type === 'kill' && e.killer === a.id));
         for (const event of message.events) ui.event(event, renderer, 100);
         ui.update(100, renderer, false);
-        assert.equal(node('damage-numbers').textContent, '+60', 'server reports the actual HP removed');
+        assert.equal(node('damage-numbers').textContent, '+100', 'server reports the actual HP removed');
         assert.equal(styleOf(node('hitmarker')).opacity, '1');
         assert.equal(node('kill-notice').textContent, 'HEADSHOT+50');
         assert.equal(styleOf(node('team-scores')).display, 'flex');

@@ -67,7 +67,7 @@ test('shared traces respect nearest target, walls, protection, teams, sliding an
     assert.equal(traceShot('rifle', origin, dir, [farther, b.state]).hits[0].victim, b.state.id);
     assert.equal(traceShot('shotgun', origin, [...dir, ...dir], [b.state]).hits[0].damage, traceShot('shotgun', origin, dir, [b.state]).hits[0].damage * 2);
     assert.equal(visibleTargets(a.state, [{ ...b.state, team: 'blue' }], 'tdm', 1000).length, 0);
-    assert.equal(visibleTargets(a.state, [{ ...b.state, protectionEnd: 1500 }], 'ffa', 1000).length, 0);
+    assert.equal(visibleTargets(a.state, [{ ...b.state, protectionEnd: 1500 }], 'ffa', 1000).length, 1);
     assert.equal(traceShot('rifle', { x: 34, y: 1.6, z: 20 }, dir, [{ ...b.state, slide: 1 }]).hits.length, 0);
     assert.equal(traceShot('rifle', { x: -28, y: 1, z: 0 }, [{ x: 1, y: 0, z: 0 }], [{ ...b.state, x: 28, z: 0 }]).hits.length, 0);
 });

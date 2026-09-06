@@ -164,10 +164,12 @@ export type ClientMessage = {
     type: 'class';
     classId: ClassId;
     team?: Team;
+    requestId?: number;
 } | {
     type: 'team';
     team: Team;
     playerId?: string;
+    requestId?: number;
 } | {
     type: 'start';
 } | {
@@ -215,6 +217,7 @@ export type ServerMessage = CombatMessage | WeaponMessage | {
     serverTime: number;
 } | {
     type: 'snapshot';
+    selectionAck?: number;
     n: number;
     base: number;
     time: number;

@@ -1,6 +1,6 @@
 import { CombatClock } from '../shared/combat';
 import { CLASSES, WEAPONS } from '../shared/weapons';
-import type { Input, PlayerState, WeaponId, WeaponMessage } from '../shared/types';
+import type { ClassId, Input, PlayerState, WeaponId, WeaponMessage } from '../shared/types';
 export const slotWeapon = (p: PlayerState, slot: Input['slot']): WeaponId => slot === 1 ? CLASSES[p.classId].weapon : slot === 2 ? 'pistol' : 'knife';
 
 // Presentation/inventory estimate only. Health, score and permission to fire
@@ -22,6 +22,22 @@ export class WeaponPrediction {
         this.clock = new CombatClock(p.weapon);
         for (const [id, w] of Object.entries(WEAPONS)) this.ammo.set(id as WeaponId, w.magazine);
         this.ammo.set(p.weapon, p.ammo);
+    }
+    selectClass(p: PlayerState, classId: ClassId) {
+        this.init(p);
+        this.ammo.set(p.weapon, p.ammo);
+        const weapon = CLASSES[classId].weapon;
+        Object.assign(p, { classId, weapon, ammo: this.ammo.get(weapon) ?? WEAPONS[weapon].magazine, reloadEnd: 0, bloom: 0, aiming: false });
+        this.pending = undefined; this.shots = []; this.reload = undefined;
+        this.clock = new CombatClock(weapon);
+        this.onCorrection(1);
+    }
+    acceptSelection(p: PlayerState) {
+        // Selection generations retain inventory; only an actual respawn fills it.
+        this.life = p.life;
+        this.ammo.set(p.weapon, p.ammo);
+        this.pending = undefined; this.shots = []; this.reload = undefined; this.active = false;
+        this.clock = new CombatClock(p.weapon);
     }
     select(p: PlayerState, slot: Input['slot'], seq: number) {
         this.init(p); this.active = true;

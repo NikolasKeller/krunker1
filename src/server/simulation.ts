@@ -31,7 +31,6 @@ export interface Actor {
     botBrain?: BotBrain;
     rtt: number;
     connected: boolean;
-    pendingClass?: ClassId;
 }
 const ammo = () => Object.fromEntries(Object.entries(WEAPONS).map(([id, w]) => [id, w.magazine])) as Record<WeaponId, number>;
 export class Room {
@@ -85,13 +84,38 @@ export class Room {
         const requester = this.players.get(requesterId), player = this.players.get(playerId);
         if (!requester?.connected || requester.state.bot || !player?.connected ||
             (requesterId !== playerId && this.host !== requesterId) ||
-            !['lobby', 'countdown'].includes(this.round.phase) || !['blue', 'red'].includes(team)) return false;
+            this.round.phase === 'results' ||
+            (this.round.phase === 'playing' && requesterId !== playerId) || !['blue', 'red'].includes(team)) return false;
         if (player.state.team === team) return true;
         player.state.team = team;
         player.state.ready = false;
         this.cancelCountdown();
-        this.spawn(player, now);
+        this.positionAtSpawn(player);
+        this.selectionChanged(player, now);
         return true;
+    }
+    changeClass(a: Actor, classId: ClassId, now: number) {
+        if (!a.connected || !CLASS_IDS.includes(classId) || this.round.phase === 'results') return false;
+        if (a.state.classId === classId) return true;
+        a.ammo[a.state.weapon] = a.state.ammo;
+        const weapon = CLASSES[classId].weapon;
+        Object.assign(a.state, { classId, weapon, ammo: a.ammo[weapon], reloadEnd: 0, bloom: 0, aiming: false, ready: false });
+        this.cancelCountdown();
+        this.selectionChanged(a, now);
+        return true;
+    }
+    private selectionChanged(a: Actor, now: number) {
+        // A selection is an input boundary, not a respawn: retain health, death
+        // deadline, inventory and fire cooldown. Old controls cannot reselect the
+        // old loadout, and class cycling cannot heal or refill a magazine.
+        a.state.life++;
+        a.state.protectionEnd = 0;
+        a.queue = [];
+        a.state.ack = a.lastSeq;
+        a.credit = 1;
+        a.spawnFireAt = a.nextShot = Math.max(a.nextShot, now + 180);
+        a.combat = undefined;
+        a.aimTime = a.recoilIndex = 0;
     }
     add(name: string, classId: ClassId, team: Team, bot = false): Actor {
         const id = randomUUID().slice(0, 8), c = CLASSES[classId];
@@ -108,21 +132,9 @@ export class Room {
     spawn(a: Actor, now: number) {
         this.shotRejections.delete(a.state.id);
         a.lastShotRejection = undefined;
-        if (a.pendingClass) {
-            a.state.classId = a.pendingClass;
-            a.pendingClass = undefined;
-        }
         const p = a.state, c = CLASSES[p.classId];
-        const occupants = [...this.players.values()].filter(a => a.state.id !== p.id && a.state.alive && a.connected).map(a => a.state);
-        const enemies = occupants.filter(q => this.round.mode === 'ffa' || q.team !== p.team);
-        const candidates = SPAWNS.filter((_, i) => this.round.mode === 'ffa' || (p.team === 'blue' ? i % 2 === 0 : i % 2 === 1));
-        const safety = (point: typeof candidates[number]) => {
-            const occupied = occupants.some(q => distance(point, q) < 2);
-            const nearest = Math.min(100, ...enemies.map(q => distance(point, q)));
-            return (occupied ? -1000 : 0) + nearest;
-        };
-        const spawn = [...candidates].sort((a, b) => safety(b) - safety(a))[0];
-        Object.assign(p, moveState(spawn.x, spawn.y, spawn.z), { yaw: spawn.yaw, pitch: 0, hp: c.hp, maxHp: c.hp, alive: true, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: now + 1500, aiming: false, bloom: 0, life: p.life + 1 });
+        this.positionAtSpawn(a);
+        Object.assign(p, { hp: c.hp, maxHp: c.hp, alive: true, weapon: c.weapon, ammo: WEAPONS[c.weapon].magazine, reloadEnd: 0, respawnAt: 0, protectionEnd: 0, aiming: false, bloom: 0, life: p.life + 1 });
         a.ammo = ammo();
         a.nextShot = now + 250;
         a.spawnFireAt = now + 250;
@@ -134,6 +146,19 @@ export class Room {
         // These received commands were discarded by the new life. Release their
         // transmission credit without pretending to have simulated their movement.
         if (!p.bot) p.ack = a.lastSeq;
+    }
+    private positionAtSpawn(a: Actor) {
+        const p = a.state;
+        const occupants = [...this.players.values()].filter(a => a.state.id !== p.id && a.state.alive && a.connected).map(a => a.state);
+        const enemies = occupants.filter(q => this.round.mode === 'ffa' || q.team !== p.team);
+        const candidates = SPAWNS.filter((_, i) => this.round.mode === 'ffa' || (p.team === 'blue' ? i % 2 === 0 : i % 2 === 1));
+        const safety = (point: typeof candidates[number]) => {
+            const occupied = occupants.some(q => distance(point, q) < 2);
+            const nearest = Math.min(100, ...enemies.map(q => distance(point, q)));
+            return (occupied ? -1000 : 0) + nearest;
+        };
+        const spawn = [...candidates].sort((a, b) => safety(b) - safety(a))[0];
+        Object.assign(p, moveState(spawn.x, spawn.y, spawn.z), { yaw: spawn.yaw, pitch: 0 });
     }
     fillBots(now: number) {
         const humans = [...this.players.values()].filter(a => !a.state.bot).length;
@@ -149,7 +174,6 @@ export class Room {
             const blue = [...this.players.values()].filter(a => a.state.team === 'blue').length;
             const team = blue > this.players.size / 2 ? 'red' : 'blue';
             const a = this.add(name, CLASS_IDS[bots.length % 4], team, true);
-            a.state.protectionEnd = now + 1500;
             bots.push(a);
         }
     }
@@ -182,6 +206,7 @@ export class Room {
         }
         this.updateLobby(now);
         const states = [...this.players.values()].map(a => a.state);
+        const connectedStates = states.filter(p => this.players.get(p.id)!.connected);
         for (const a of this.players.values()) {
             const p = a.state;
             if (!a.connected) continue;
@@ -200,7 +225,7 @@ export class Room {
             if (now - a.lastShot > 450)
                 a.recoilIndex = 0;
             if (a.botBrain && this.round.phase === 'playing' && p.alive)
-                a.queue = [botInput(p, a.botBrain, states, this.round.mode, this.difficulty, now)];
+                a.queue = [botInput(p, a.botBrain, connectedStates, this.round.mode, this.difficulty, now)];
             let processed = 0;
             while (a.queue.length && a.credit >= 1 && processed < MAX_INPUT_BATCH) {
                 const i = a.queue.shift()!;
@@ -286,9 +311,11 @@ export class Room {
         const time = a.botBrain ? now : rewindTime(i.shotTime, now, a.rtt, i.interpolationDelay);
         const targets = [...this.players.values()].flatMap(other => {
             const q = other.state;
-            if (q.id === p.id || !q.alive || q.protectionEnd > now || (this.round.mode === 'tdm' && q.team === p.team)) return [];
+            if (q.id === p.id || !other.connected || !q.alive || (this.round.mode === 'tdm' && q.team === p.team)) return [];
             const rewound = a.botBrain ? q : this.history.rewind(q.id, time) ?? q;
-            return rewound.alive && rewound.life === q.life ? [{ ...rewound, id: q.id }] : [];
+            // A client can already be drawing the new life while playback still
+            // predates it. Never erase its hitbox or reuse an obsolete life pose.
+            return [rewound.alive && rewound.life === q.life ? rewound : q];
         });
         const { ends, hits } = traceShot(p.weapon, origin, dirs, targets);
         this.events.push({ type: 'shot', shooter: p.id, weapon: p.weapon, origin, ends, seq: i.seq });

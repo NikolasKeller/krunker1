@@ -151,8 +151,8 @@ export function encodeServerMessage(m: ServerMessage, selfId?: string): string |
         for (const p of m.players) writePlayer(w, p, p.id === selfId);
         w.u8(m.removed.length); for (const id of m.removed) w.string(id);
         // Infrequent round/lobby metadata includes results and arbitrary player names.
-        const { round, host, difficulty, bots } = m;
-        w.string(round || host !== undefined || difficulty || bots !== undefined ? JSON.stringify({ round, host, difficulty, bots }) : '');
+        const { round, host, difficulty, bots, selectionAck } = m;
+        w.string(round || host !== undefined || difficulty || bots !== undefined || selectionAck !== undefined ? JSON.stringify({ round, host, difficulty, bots, selectionAck }) : '');
     } else {
         w.u8(EVENTS); w.u32(m.events.length); for (const e of m.events) writeEvent(w, e);
     }

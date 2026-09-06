@@ -85,7 +85,7 @@ try {
     a.input.jump = false;
     assert.ok(b.players.get(a.id)!.y > 0.3);
     await delay(750);
-    const reset = (classId: ClassId, targetHp = 100) => { a.input = neutralInput(); b.input = neutralInput(); actorA.state.classId = classId; actorA.pendingClass = undefined; r.spawn(actorA, Date.now()); r.spawn(actorB, Date.now()); Object.assign(actorA.state, moveState(32, 0, 18), { protectionEnd: 0 }); Object.assign(actorB.state, moveState(32, 0, 8), { protectionEnd: 0, hp: targetHp, maxHp: targetHp }); actorA.nextShot = 0; a.events = []; b.events = []; r.history.frames = []; r.history.record(Date.now() - 150, [actorA.state, actorB.state]); };
+    const reset = (classId: ClassId, targetHp = 100) => { a.input = neutralInput(); b.input = neutralInput(); actorA.state.classId = classId; r.spawn(actorA, Date.now()); r.spawn(actorB, Date.now()); Object.assign(actorA.state, moveState(32, 0, 18), { protectionEnd: 0 }); Object.assign(actorB.state, moveState(32, 0, 8), { protectionEnd: 0, hp: targetHp, maxHp: targetHp }); actorA.nextShot = 0; a.events = []; b.events = []; r.history.frames = []; r.history.record(Date.now() - 150, [actorA.state, actorB.state]); };
     for (const cls of ['hunter', 'triggerman', 'vince', 'runngun'] as ClassId[]) {
         reset(cls, cls === 'hunter' ? 100 : 1000);
         a.input.aim = true;
@@ -103,8 +103,8 @@ try {
             assert.ok(a.events.some(e => e.type === 'kill' && e.headshot));
             assert.ok(b.events.some(e => e.type === 'kill'));
             await waitFor(() => actorB.state.alive, 'victim respawns', 3000);
-            assert.ok(actorB.state.protectionEnd > Date.now());
-            console.log('PASS: headshot, killfeed, score, timed respawn and spawn protection');
+            assert.equal(actorB.state.protectionEnd, 0);
+            console.log('PASS: headshot, killfeed, score, timed respawn without immunity');
         }
         a.input.reload = true;
         await delay(100);
