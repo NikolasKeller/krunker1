@@ -1,10 +1,12 @@
 // Self-contained, production DOM/CSS fixtures. Rendering belongs to the calling agent.
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { build } from 'esbuild';
 import { createTextLayoutFixture, layoutStates, layoutViewports } from './text-layout-fixture';
 
 const out = new URL('../artifacts/text-layout/', import.meta.url);
 await mkdir(out, { recursive: true });
+// Retire the old home class-picker pages so screenshot reviews cannot use stale markup.
+for (const file of ['class-selection.html', 'class-selection-touch.html']) await rm(new URL(file, out), { force: true });
 let css = await readFile(new URL('../src/client/style.css', import.meta.url), 'utf8');
 for (const match of css.matchAll(/url\('(?<path>\/fonts\/[^']+)'\)/g)) {
     const font = await readFile(new URL(`../public${match.groups!.path}`, import.meta.url));
@@ -24,4 +26,4 @@ await writeFile(new URL('index.html', out), `<!doctype html><html lang="en"><met
 const matrix = window.__textLayoutMatrix = { ready: false, reports: [], assert() { if (!this.ready) throw Error('Matrix is not ready'); const failures = this.reports.filter(r => r.failures.length); if (failures.length) throw Error(JSON.stringify(failures, null, 2)); return this.reports; } };
 const poll = setInterval(() => { const frames = [...document.querySelectorAll('iframe')]; if (!frames.every(f => f.contentWindow.__textLayout?.ready)) return; clearInterval(poll); matrix.reports = frames.map(f => ({ name: f.title, ...f.contentWindow.__textLayout.report })); matrix.ready = true; document.getElementById('report').textContent = JSON.stringify(matrix.reports, null, 2); document.documentElement.dataset.textLayout = matrix.reports.some(r => r.failures.length) ? 'fail' : 'pass'; }, 100);
 </script></html>`);
-console.log('Generated artifacts/text-layout/index.html and 10 embedded-font fixtures; no browser launched.');
+console.log(`Generated artifacts/text-layout/index.html and ${layoutStates.length * 2} embedded-font fixtures; no browser launched.`);

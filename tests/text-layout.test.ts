@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
-import { assertTextFits, inspectTextOverflow, overflowAxes } from './text-overflow';
+import { assertTextFits, inspectTextOverflow, layoutTargets, overflowAxes } from './text-overflow';
 import { createTextLayoutFixture, layoutStates } from './text-layout-fixture';
 import { CLASS_IDS, CLASSES } from '../src/shared/weapons';
 
@@ -22,7 +22,9 @@ function withRules(check: (rules: CSSStyleRule[]) => void) {
 
 test('class cards reserve intrinsic content height and wrapping at every CSS breakpoint', () => withRules(rules => {
     const cards = rules.filter(r => r.selectorText.split(',').some(s => /\.class-card(?:\.[\w-]+)?$/.test(s.trim())));
-    assert.ok(cards.length > 10, 'inspect base, home, lobby, desktop and touch overrides');
+    for (const selector of ['.class-card', '.room-sidebar .class-card', '.touch-device .room-sidebar .class-card']) {
+        assert.ok(cards.some(rule => rule.selectorText === selector), `inspect ${selector} sizing`);
+    }
     for (const rule of cards) {
         for (const property of ['height', 'block-size']) {
             const value = rule.style.getPropertyValue(property);
@@ -123,13 +125,29 @@ test('preview states use the live home, lobby, team cards, HUD and scoreboard ma
     for (const state of layoutStates) for (const touch of [false, true]) {
         const fixture = createTextLayoutFixture(state, touch);
         try {
-            const selector = state === 'class-selection' ? '#home .class-card' : '.room-sidebar .class-card';
-            const cards = [...document.querySelectorAll(selector)];
-            assert.deepEqual(cards.map(c => c.querySelector('strong')!.textContent), CLASS_IDS.map(id => CLASSES[id].name));
-            assert.deepEqual(cards.map(c => c.querySelector('small')!.textContent), CLASS_IDS.map(id => CLASSES[id].role));
+            const home = document.getElementById('home')!;
+            assert.equal(home.querySelector('.class-card, [data-home-class], [data-class]'), null, 'class selection belongs only in the lobby');
+            assert.equal(home.closest('.hidden') === null, state === 'home');
+            if (state === 'home') {
+                assert.ok(document.querySelector('.room-panel')!.classList.contains('hidden'));
+                for (const selector of ['.home-profile input', '#home-create', '#home-join']) {
+                    assert.ok(home.querySelector(selector)!.matches(layoutTargets), `${selector} is checked for overflow`);
+                }
+            }
+            if (state.startsWith('lobby')) {
+                const sidebar = document.querySelector('.room-sidebar')!;
+                assert.equal(sidebar.closest('.hidden'), null, `${state} must render the class picker`);
+                const cards = [...sidebar.querySelectorAll('.class-card')];
+                assert.deepEqual(cards.map(c => c.querySelector('strong')!.textContent), CLASS_IDS.map(id => CLASSES[id].name));
+                assert.deepEqual(cards.map(c => c.querySelector('small')!.textContent), CLASS_IDS.map(id => CLASSES[id].role));
+                for (const card of cards) for (const target of [card, card.querySelector('strong')!, card.querySelector('small')!]) {
+                    assert.equal(target.closest('.hidden'), null, `${state}: ${target.textContent} must be visible`);
+                    assert.ok(target.matches(layoutTargets), `${state}: ${target.textContent} is checked for overflow`);
+                }
+                assert.equal(document.querySelectorAll('.lineup-card').length, state === 'lobby-full' ? 17 : 6);
+            }
             assert.equal(document.documentElement.classList.contains('touch-device'), touch);
             if (state === 'scoreboard') assert.equal(document.querySelectorAll('#board-table tbody tr').length, 17);
-            if (state.startsWith('lobby')) assert.equal(document.querySelectorAll('.lineup-card').length, state === 'lobby-full' ? 17 : 6);
             if (state === 'hud') assert.ok(!document.getElementById('hud')!.classList.contains('hidden'));
         } finally { fixture.restore(); }
     }

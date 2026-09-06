@@ -5,7 +5,8 @@ import { CLASS_IDS } from '../src/shared/weapons';
 import { Room } from './sandyard-room';
 import { installDOM } from './dom';
 
-export const layoutStates = ['class-selection', 'lobby', 'lobby-full', 'hud', 'scoreboard'] as const;
+// Home has no class picker; both lobby states exercise the sidebar class cards.
+export const layoutStates = ['home', 'lobby', 'lobby-full', 'hud', 'scoreboard'] as const;
 export type LayoutState = typeof layoutStates[number];
 export const layoutViewports = [
     { width: 1440, height: 900, touch: false }, { width: 1280, height: 800, touch: false },
@@ -13,7 +14,7 @@ export const layoutViewports = [
 ];
 
 export function createTextLayoutFixture(state: LayoutState, touch = false) {
-    const home = state === 'class-selection';
+    const home = state === 'home';
     const env = installDOM(`https://furo.example/${home ? '' : '?room=FRND5'}`);
     try {
         localStorage.setItem('arena-name', 'LongCallsign1234');

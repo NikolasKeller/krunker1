@@ -66,7 +66,7 @@ export class UI {
         $('ui').innerHTML = `
       <div id="menu" class="menu">
         <header class="menu-header"><div class="brand"><span class="brand-mark">F</span><div>FURO<span class="brand-sub">LOCAL ARENA <i> / </i> 01</span></div></div><div class="header-right"><span class="status-dot"></span><span id="connection">CONNECTING</span><span class="divider"></span><button id="leave-lobby" class="leave-button">← HOME</button><button id="settings-button" class="icon-button" aria-label="Settings">⚙</button></div></header>
-        ${homeMarkup(gunIcon)}
+        ${homeMarkup()}
         <main class="room-panel">
           <section class="lineup-panel" aria-labelledby="lineup-title">
             <div class="lineup-heading">
@@ -131,7 +131,7 @@ export class UI {
         $('home-join-form').onkeydown = e => { if (e.key === 'Escape') { $('home-join-form').classList.add('hidden'); $('home-join').setAttribute('aria-expanded', 'false'); $('home-join').focus(); } };
         for (const id of ['leave-lobby', 'leave-match']) $(id).onclick = () => this.leave();
         this.navigation.onBack = route => this.restoreRoute(route);
-        document.querySelectorAll<HTMLButtonElement>('[data-class], [data-home-class]').forEach(b => b.onclick = () => this.choose((b.dataset.class ?? b.dataset.homeClass) as ClassId));
+        document.querySelectorAll<HTMLButtonElement>('[data-class]').forEach(b => b.onclick = () => this.choose(b.dataset.class as ClassId));
         document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.onclick = () => net.send({ type: 'configure', mode: b.dataset.mode as 'ffa' | 'tdm' }));
         document.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => {
             b.onclick = () => { this.team = b.dataset.team as Team; localStorage.setItem('arena-team', this.team); net.send({ type: 'team', team: this.team }); this.updateLobby(); };
@@ -276,8 +276,8 @@ export class UI {
         const ability = ABILITIES[id];
         if (ability) $('ability-help').textContent = `Q · ${ability.name} / ${ability.cooldown / 1000}s. ${ability.hint}. G · Grenade / 60s.`;
         this.selected = id; localStorage.setItem('arena-class', id);
-        document.querySelectorAll<HTMLElement>('[data-class], [data-home-class]').forEach(b => {
-            const selected = (b.dataset.class ?? b.dataset.homeClass) === id;
+        document.querySelectorAll<HTMLElement>('[data-class]').forEach(b => {
+            const selected = b.dataset.class === id;
             b.classList.toggle('selected', selected);
             b.setAttribute('aria-pressed', String(selected));
         });
@@ -285,7 +285,6 @@ export class UI {
         $('home-class-name').textContent = c.name;
         $('home-role').textContent = `${c.role} / ${WEAPONS[c.weapon].name}`;
         $('home-class-index').textContent = `0${CLASS_IDS.indexOf(id) + 1} / 04`;
-        $('home-class-description').textContent = c.description;
         $('home-character').setAttribute('aria-label', `${c.name} character with ${WEAPONS[c.weapon].name}`);
         this.onClass(id);
         if (send) { this.net.send({ type: 'class', classId: id }); if (this.net.changingClass) this.updateLobby(); }

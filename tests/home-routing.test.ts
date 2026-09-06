@@ -4,9 +4,12 @@ import { installDOM } from './dom';
 import { Network } from '../src/client/network';
 import { UI } from '../src/client/ui';
 import { Room } from './sandyard-room';
+import { CLASS_IDS, CLASSES, WEAPONS } from '../src/shared/weapons';
 
-function setup(url = 'https://furo.example/') {
-    const env = installDOM(url), net = new Network(), ui = new UI(net);
+function setup(url = 'https://furo.example/', savedClass?: string) {
+    const env = installDOM(url);
+    if (savedClass !== undefined) localStorage.setItem('arena-class', savedClass);
+    const net = new Network(), ui = new UI(net);
     const joins: UI['joinConfig'][] = [];
     ui.onRoom = () => { joins.push(ui.joinConfig); };
     const enter = (code = 'FRND5') => {
@@ -34,25 +37,54 @@ test('bare URL opens home, ignores a saved room, and remembers the player and cl
         assert.equal(document.querySelector('.room-panel')!.classList.contains('hidden'), true);
         assert.equal((document.getElementById('home-name') as HTMLInputElement).value, 'Niko');
         assert.equal(document.getElementById('home-class-name')!.textContent, 'VINCE');
+        const home = document.getElementById('home')!;
+        assert.equal(home.querySelector('.class-card, .class-cards, .home-loadout, .picker-heading, #home-class-description'), null);
+        assert.doesNotMatch(home.textContent!, /YOUR CLASS|CHOOSE YOUR PLAYSTYLE/);
+        for (const id of CLASS_IDS) assert.ok(!home.textContent!.includes(CLASSES[id].description));
+        assert.equal(document.querySelectorAll('.room-panel [data-class]').length, CLASS_IDS.length);
     } finally { net.disconnect(); env.restore(); }
 });
 
-test('home class and callsign changes immediately reach the character callback and create request', () => {
+test('a lobby class change follows the character home and into the next create request with the edited callsign', () => {
     const env = setup();
     try {
         const { ui, dom } = env;
         let displayed = ''; ui.onClass = id => { displayed = id; };
+        env.enter();
+        document.querySelector<HTMLButtonElement>('.room-panel [data-class="runngun"]')!.click();
+        assert.equal(displayed, 'runngun'); assert.equal(localStorage.getItem('arena-class'), 'runngun');
+        document.getElementById('leave-lobby')!.click();
+        assert.equal(ui.home, true);
+        assert.equal(document.getElementById('home-class-name')!.textContent, 'RUN N GUN');
+        assert.match(document.getElementById('home-character')!.getAttribute('aria-label')!, /RUN N GUN.*COMPACT SMG/);
         const name = document.getElementById('home-name') as HTMLInputElement;
         name.value = 'New callsign'; name.dispatchEvent(new dom.window.Event('input'));
-        document.querySelector<HTMLButtonElement>('#home [data-home-class="runngun"]')!.click();
-        assert.equal(displayed, 'runngun'); assert.equal(localStorage.getItem('arena-class'), 'runngun');
-        assert.match(document.getElementById('home-character')!.getAttribute('aria-label')!, /RUN N GUN.*COMPACT SMG/);
-        assert.equal(document.querySelector('#home [aria-pressed="true"]')!.getAttribute('data-home-class'), 'runngun');
         document.getElementById('home-create')!.click();
         assert.deepEqual(env.joins, [{ name: 'New callsign', room: '', classId: 'runngun', team: 'blue', create: true }]);
         assert.equal(ui.home, false); assert.equal(ui.navigation.route.screen, 'lobby');
     } finally { env.close(); }
 });
+
+for (const savedClass of [undefined, 'removed-class']) for (const entry of ['create', 'invite'] as const) {
+    test(`${entry}: ${savedClass === undefined ? 'a first-time player' : 'an invalid saved class'} starts with a loaded Hunter without selecting a class`, () => {
+        const env = setup(`https://furo.example/${entry === 'invite' ? '?room=FRND5' : ''}`, savedClass);
+        try {
+            assert.equal(env.ui.selected, 'hunter');
+            assert.match(document.getElementById('home-character')!.getAttribute('aria-label')!, /HUNTER.*TRIANGLE \.50/);
+            if (entry === 'create') document.getElementById('home-create')!.click();
+            const config = entry === 'create' ? env.joins[0] : env.ui.joinConfig;
+            assert.equal(config.classId, 'hunter');
+            const room = new Room(config.room || 'NEW55'); room.botCount = 0;
+            const player = room.add(config.name, config.classId, config.team);
+            room.start(1000);
+            assert.equal(room.round.phase, 'playing');
+            assert.equal(player.state.alive, true);
+            assert.equal(player.state.classId, 'hunter');
+            assert.equal(player.state.weapon, CLASSES.hunter.weapon);
+            assert.equal(player.state.ammo, WEAPONS[CLASSES.hunter.weapon].magazine);
+        } finally { env.close(); }
+    });
+}
 
 test('Join Lobby asks for a code; empty input cannot create a lobby and Enter joins the normalized room', () => {
     const env = setup();
